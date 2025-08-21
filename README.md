@@ -33,10 +33,10 @@ A modern task management app that helps you organize your day with style and sim
 
 ```bash
 # Clone the project
-git clone https://github.com/yourusername/dayflow-app.git
+git clone https://github.com/aozple/DayFlow.git
 
 # Install dependencies
-cd dayflow-app
+cd DayFlow
 flutter pub get
 
 # Run the app
@@ -91,6 +91,10 @@ Create your feature branch (git checkout -b feature/amazing-feature)
 Commit your changes (git commit -m 'Add amazing feature')
 Push to the branch (git push origin feature/amazing-feature)
 Open a Pull Request
+
+## 📲 Contact
+
+telegram: https://t.me/Aozple
 
 ## 📄 License
 
