@@ -24,8 +24,10 @@ class SpeedDialFab extends StatefulWidget {
 // The state class for our SpeedDialFab, managing its animation and open/close state.
 class _SpeedDialFabState extends State<SpeedDialFab>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController; // Controls the FAB's animation.
+  late AnimationController
+  _animationController; // Controls the FAB's animation.
   bool _isOpen = false; // Tracks whether the FAB is currently open or closed.
+  OverlayEntry? _overlayEntry; //
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
   @override
   void dispose() {
     // Clean up the animation controller to prevent memory leaks.
+    _removeOverlay();
     _animationController.dispose();
     super.dispose();
   }
@@ -50,10 +53,43 @@ class _SpeedDialFabState extends State<SpeedDialFab>
       _isOpen = !_isOpen; // Flip the open state.
       if (_isOpen) {
         _animationController.forward(); // Animate open.
+        _insertOverlay();
       } else {
         _animationController.reverse(); // Animate closed.
+        _removeOverlay();
       }
     });
+  }
+
+  void _close() {
+    if (_isOpen) {
+      setState(() {
+        _isOpen = false;
+        _animationController.reverse();
+        _removeOverlay();
+      });
+    }
+  }
+
+  void _insertOverlay() {
+    _overlayEntry = OverlayEntry(
+      builder:
+          (context) => Positioned.fill(
+            child: GestureDetector(
+              onTap: _close,
+              onTapDown: (_) => _toggle(),
+              onPanStart: (_) => _toggle(),
+              behavior: HitTestBehavior.opaque,
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry!.remove();
+    _overlayEntry = null;
   }
 
   @override
@@ -62,24 +98,16 @@ class _SpeedDialFabState extends State<SpeedDialFab>
       width: 56, // Fixed width to prevent layout issues during animation.
       height: 200, // Enough height to accommodate the expanded state.
       child: Stack(
-        alignment: Alignment.bottomCenter, // Align children to the bottom center.
+        alignment:
+            Alignment.bottomCenter, // Align children to the bottom center.
         clipBehavior: Clip.none, // Allow children to overflow the bounds.
         children: [
-          // Background overlay when the FAB is open.
-          if (_isOpen)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _toggle, // Close the FAB when tapping the background.
-                child: Container(color: Colors.transparent), // Make the background tappable.
-              ),
-            ),
-
           // Note button (appears when FAB is open).
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250), // Animation duration.
             curve: Curves.easeOutBack, // Animation curve.
             bottom: _isOpen ? 140 : 0, // Position when open/closed.
-            right: 4,
+            right: 2,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: _isOpen ? 1.0 : 0.0, // Fade in/out based on open state.
@@ -116,20 +144,22 @@ class _SpeedDialFabState extends State<SpeedDialFab>
 
                   // The note button itself.
                   SizedBox(
-                    width: 54,
-                    height: 54,
+                    width: 56,
+                    height: 56,
                     child: FloatingActionButton(
                       heroTag: 'note_fab', // Unique tag for hero animation.
                       onPressed: () {
                         _toggle(); // Close the FAB.
-                        widget.onCreateNote(); // Execute the create note callback.
+                        widget
+                            .onCreateNote(); // Execute the create note callback.
                       },
-                      backgroundColor: AppColors.warning, // Warning color for notes.
+                      backgroundColor:
+                          AppColors.warning, // Warning color for notes.
                       elevation: 4, // Shadow elevation.
                       child: const Icon(
                         CupertinoIcons.doc_text, // Note icon.
                         color: Colors.white,
-                        size: 22,
+                        size: 28,
                       ),
                     ),
                   ),
@@ -143,7 +173,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutBack,
             bottom: _isOpen ? 70 : 0, // Position when open/closed.
-            right: 4,
+            right: 2,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: _isOpen ? 1.0 : 0.0, // Fade in/out based on open state.
@@ -180,20 +210,22 @@ class _SpeedDialFabState extends State<SpeedDialFab>
 
                   // The task button itself.
                   SizedBox(
-                    width: 54,
-                    height: 54,
+                    width: 56,
+                    height: 56,
                     child: FloatingActionButton(
                       heroTag: 'task_fab', // Unique tag for hero animation.
                       onPressed: () {
                         _toggle(); // Close the FAB.
-                        widget.onCreateTask(); // Execute the create task callback.
+                        widget
+                            .onCreateTask(); // Execute the create task callback.
                       },
-                      backgroundColor: AppColors.success, // Success color for tasks.
+                      backgroundColor:
+                          AppColors.success, // Success color for tasks.
                       elevation: 4, // Shadow elevation.
                       child: const Icon(
                         CupertinoIcons.checkmark_square, // Task icon.
                         color: Colors.white,
-                        size: 22,
+                        size: 28,
                       ),
                     ),
                   ),
@@ -209,12 +241,19 @@ class _SpeedDialFabState extends State<SpeedDialFab>
             backgroundColor: AppColors.accent, // Accent color.
             elevation: 8, // Shadow elevation.
             child: AnimatedBuilder(
-              animation: _animationController, // Rebuild when animation changes.
+              animation:
+                  _animationController, // Rebuild when animation changes.
               builder: (context, child) {
                 return Transform.rotate(
-                  angle: _animationController.value * 0.25 * 2 * math.pi, // Rotate the icon.
+                  angle:
+                      _animationController.value *
+                      0.25 *
+                      2 *
+                      math.pi, // Rotate the icon.
                   child: Icon(
-                    _isOpen ? Icons.close : Icons.add, // Show add or close icon.
+                    _isOpen
+                        ? Icons.close
+                        : Icons.add, // Show add or close icon.
                     color: Colors.white,
                     size: 28,
                   ),

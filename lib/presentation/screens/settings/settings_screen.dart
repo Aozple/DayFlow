@@ -49,7 +49,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // Use CustomScrollView for a scrollable screen with a sticky app bar.
               return CustomScrollView(
-                physics: const BouncingScrollPhysics(), // iOS-style scroll physics.
+                physics:
+                    const BouncingScrollPhysics(), // iOS-style scroll physics.
                 slivers: [
                   _buildHeader(), // The app bar for the settings screen.
                   SliverToBoxAdapter(
@@ -63,7 +64,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildDataSection(),
                         const SizedBox(height: 16),
                         _buildAboutSection(),
-                        const SizedBox(height: 100), // Extra space at the bottom.
+                        const SizedBox(
+                          height: 100,
+                        ), // Extra space at the bottom.
                       ],
                     ),
                   ),
@@ -92,7 +95,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: AppColors.textPrimary,
               size: 22,
             ),
-            onPressed: () => context.pop(), // Pop the current screen to go back.
+            onPressed:
+                () => context.pop(), // Pop the current screen to go back.
           ),
         ),
       ),
@@ -128,7 +132,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   color:
                       settings != null
-                          ? AppColors.fromHex(settings.accentColor) // Use current setting.
+                          ? AppColors.fromHex(
+                            settings.accentColor,
+                          ) // Use current setting.
                           : AppColors.accent, // Fallback to default accent.
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.divider, width: 2),
@@ -137,7 +143,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: (settings != null
                               ? AppColors.fromHex(settings.accentColor)
                               : AppColors.accent)
-                          .withAlpha(100), // Subtle shadow for the color circle.
+                          .withAlpha(
+                            100,
+                          ), // Subtle shadow for the color circle.
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -153,7 +161,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           onTap:
-              () => _showAccentColorPicker(settings?.accentColor ?? '#0A84FF'), // Open color picker.
+              () => _showAccentColorPicker(
+                settings?.accentColor ?? '#0A84FF',
+              ), // Open color picker.
           icon: CupertinoIcons.drop_fill, // Droplet icon.
         ),
       ],
@@ -174,7 +184,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                settings?.firstDayOfWeek == 'saturday' ? 'Saturday' : 'Monday', // Display current selection.
+                settings?.firstDayOfWeek == 'saturday'
+                    ? 'Saturday'
+                    : 'Monday', // Display current selection.
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.accent,
@@ -190,7 +202,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           onTap:
-              () => _showFirstDayPicker(settings?.firstDayOfWeek ?? 'monday'), // Open day picker.
+              () => _showFirstDayPicker(
+                settings?.firstDayOfWeek ?? 'monday',
+              ), // Open day picker.
           icon: CupertinoIcons.calendar, // Calendar icon.
         ),
 
@@ -208,12 +222,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: _getPriorityColor(
+                  color: AppColors.getPriorityColor(
                     settings?.defaultTaskPriority ?? 3,
                   ).withAlpha(20), // Background color based on priority.
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: _getPriorityColor(
+                    color: AppColors.getPriorityColor(
                       settings?.defaultTaskPriority ?? 3,
                     ).withAlpha(50),
                     width: 1,
@@ -224,7 +238,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _getPriorityColor(
+                    color: AppColors.getPriorityColor(
                       settings?.defaultTaskPriority ?? 3,
                     ),
                   ),
@@ -238,18 +252,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-          onTap: () => _showPriorityPicker(settings?.defaultTaskPriority ?? 3), // Open priority picker.
+          onTap:
+              () => _showPriorityPicker(
+                settings?.defaultTaskPriority ?? 3,
+              ), // Open priority picker.
           icon: CupertinoIcons.flag_fill, // Flag icon.
         ),
       ],
     );
-  }
-
-  // Helper method to get a color based on task priority.
-  Color _getPriorityColor(int priority) {
-    if (priority >= 4) return AppColors.error; // High priority.
-    if (priority == 3) return AppColors.warning; // Medium priority.
-    return AppColors.textSecondary; // Low priority.
   }
 
   // Builds the "Data Management" section of the settings.
@@ -429,7 +439,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   'Apply',
                   style: TextStyle(
-                    color: AppColors.fromHex(selectedColorHex), // Apply button color matches selected accent.
+                    color: AppColors.fromHex(
+                      selectedColorHex,
+                    ), // Apply button color matches selected accent.
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -549,8 +561,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       // Define human-readable names for the colors.
                       final colorNames = [
-                        'Blue', 'Green', 'Red', 'Orange', 'Yellow',
-                        'Indigo', 'Purple', 'Cyan', 'Pink',
+                        'Blue',
+                        'Green',
+                        'Red',
+                        'Orange',
+                        'Yellow',
+                        'Indigo',
+                        'Purple',
+                        'Cyan',
+                        'Pink',
                       ];
                       final colorName =
                           index < colorNames.length
@@ -559,7 +578,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       return GestureDetector(
                         onTap: () {
-                          setModalState(() => selectedColorHex = colorHex); // Update local selection.
+                          setModalState(
+                            () => selectedColorHex = colorHex,
+                          ); // Update local selection.
                           HapticFeedback.selectionClick(); // Provide haptic feedback.
                         },
                         child: AnimatedContainer(
@@ -571,7 +592,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           decoration: BoxDecoration(
                             color:
                                 isSelected
-                                    ? color.withAlpha(10) // Subtle background if selected.
+                                    ? color.withAlpha(
+                                      10,
+                                    ) // Subtle background if selected.
                                     : Colors.transparent,
                             border: const Border(
                               bottom: BorderSide(
@@ -593,8 +616,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   border: Border.all(
                                     color:
                                         isSelected
-                                            ? Colors.white // White border if selected.
-                                            : AppColors.divider.withAlpha(100), // Subtle border otherwise.
+                                            ? Colors
+                                                .white // White border if selected.
+                                            : AppColors.divider.withAlpha(
+                                              100,
+                                            ), // Subtle border otherwise.
                                     width: isSelected ? 2 : 1,
                                   ),
                                   boxShadow:
@@ -646,12 +672,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     isSelected
                                         ? Icon(
                                           CupertinoIcons.checkmark_circle_fill,
-                                          key: ValueKey(colorHex), // Key for animation.
+                                          key: ValueKey(
+                                            colorHex,
+                                          ), // Key for animation.
                                           color: color,
                                           size: 24,
                                         )
                                         : const SizedBox(
-                                          key: ValueKey('empty'), // Key for animation.
+                                          key: ValueKey(
+                                            'empty',
+                                          ), // Key for animation.
                                           width: 24,
                                         ),
                               ),
@@ -682,7 +712,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Material(
-              type: MaterialType.transparency, // Needed for InkWell/ListTile to work correctly.
+              type:
+                  MaterialType
+                      .transparency, // Needed for InkWell/ListTile to work correctly.
               child: Column(
                 children: [
                   // Header for the picker.
@@ -701,7 +733,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         CupertinoButton(
                           padding: EdgeInsets.zero,
-                          onPressed: () => Navigator.pop(context), // Cancel button.
+                          onPressed:
+                              () => Navigator.pop(context), // Cancel button.
                           child: const Text(
                             'Cancel',
                             style: TextStyle(color: AppColors.textSecondary),
@@ -716,7 +749,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         CupertinoButton(
                           padding: EdgeInsets.zero,
-                          onPressed: () => Navigator.pop(context), // Done button.
+                          onPressed:
+                              () => Navigator.pop(context), // Done button.
                           child: Text(
                             'Done',
                             style: TextStyle(
@@ -759,14 +793,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             trailing:
                                 currentDay == 'saturday'
                                     ? Icon(
-                                      CupertinoIcons.checkmark_circle_fill, // Checkmark if selected.
+                                      CupertinoIcons
+                                          .checkmark_circle_fill, // Checkmark if selected.
                                       color: AppColors.accent,
                                       size: 24,
                                     )
                                     : null,
                             onTap: () {
                               context.read<SettingsBloc>().add(
-                                const UpdateFirstDayOfWeek('saturday'), // Dispatch update event.
+                                const UpdateFirstDayOfWeek(
+                                  'saturday',
+                                ), // Dispatch update event.
                               );
                               Navigator.pop(context); // Close modal.
                               HapticFeedback.selectionClick(); // Provide haptic feedback.
@@ -807,7 +844,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     : null,
                             onTap: () {
                               context.read<SettingsBloc>().add(
-                                const UpdateFirstDayOfWeek('monday'), // Dispatch update event.
+                                const UpdateFirstDayOfWeek(
+                                  'monday',
+                                ), // Dispatch update event.
                               );
                               Navigator.pop(context); // Close modal.
                               HapticFeedback.selectionClick(); // Provide haptic feedback.
@@ -835,20 +874,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return Container(
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)), // Top border.
+        border: Border(
+          top: BorderSide(color: AppColors.divider, width: 0.5),
+        ), // Top border.
       ),
       child: ListTile(
         leading: Icon(
           icon,
           size: 20,
-          color: isDestructive ? AppColors.error : AppColors.textSecondary, // Red if destructive.
+          color:
+              isDestructive
+                  ? AppColors.error
+                  : AppColors.textSecondary, // Red if destructive.
         ),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: isDestructive ? AppColors.error : AppColors.textPrimary, // Red if destructive.
+            color:
+                isDestructive
+                    ? AppColors.error
+                    : AppColors.textPrimary, // Red if destructive.
           ),
         ),
         subtitle: Text(
@@ -873,7 +920,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
       ),
       child: ListTile(
-        leading: Icon(icon, size: 20, color: AppColors.textSecondary), // Leading icon.
+        leading: Icon(
+          icon,
+          size: 20,
+          color: AppColors.textSecondary,
+        ), // Leading icon.
         title: Text(
           title,
           style: const TextStyle(
@@ -988,7 +1039,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           decoration: BoxDecoration(
                             color:
                                 isSelected
-                                    ? priorityColor.withAlpha(10) // Subtle background if selected.
+                                    ? priorityColor.withAlpha(
+                                      10,
+                                    ) // Subtle background if selected.
                                     : Colors.transparent,
                             border: const Border(
                               bottom: BorderSide(
@@ -1165,7 +1218,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog on error.
-        _showErrorDialog('Export failed. Please try again.'); // Show error message.
+        _showErrorDialog(
+          'Export failed. Please try again.',
+        ); // Show error message.
       }
     }
   }
@@ -1260,7 +1315,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        data!.text!.length > 100 // Truncate long text for preview.
+                        data!.text!.length >
+                                100 // Truncate long text for preview.
                             ? '${data.text!.substring(0, 100)}...'
                             : data.text!,
                         style: const TextStyle(
@@ -1281,7 +1337,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   CupertinoDialogAction(
                     onPressed: () {
                       Navigator.pop(context); // Close dialog.
-                      _processImportData(data.text!); // Process the imported data.
+                      _processImportData(
+                        data.text!,
+                      ); // Process the imported data.
                     },
                     child: const Text('Import'),
                   ),
@@ -1291,7 +1349,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog('Failed to read clipboard data.'); // Show error if clipboard access fails.
+        _showErrorDialog(
+          'Failed to read clipboard data.',
+        ); // Show error if clipboard access fails.
       }
     }
   }
@@ -1343,7 +1403,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog on error.
-        _showErrorDialog('Import failed. Please check your data format.'); // Show error message.
+        _showErrorDialog(
+          'Import failed. Please check your data format.',
+        ); // Show error message.
       }
     }
   }
@@ -1435,7 +1497,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   CupertinoDialogAction(
                     onPressed: () {
                       Navigator.pop(context); // Close dialog.
-                      context.go('/'); // Navigate to home and clear navigation stack.
+                      context.go(
+                        '/',
+                      ); // Navigate to home and clear navigation stack.
                     },
                     child: const Text('OK'),
                   ),
@@ -1549,7 +1613,9 @@ Additional Notes:
 [Any other information that might be helpful]
 ''';
 
-    await Clipboard.setData(ClipboardData(text: template)); // Copy to clipboard.
+    await Clipboard.setData(
+      ClipboardData(text: template),
+    ); // Copy to clipboard.
 
     if (mounted) {
       // Show a success dialog.
