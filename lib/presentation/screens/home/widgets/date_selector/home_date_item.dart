@@ -30,78 +30,83 @@ class HomeDateItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = _isSameDay(
-      date,
-      selectedDate,
-    ); // Check if this date is currently selected.
-    final isToday = _isSameDay(
-      date,
-      DateTime.now(),
-    ); // Check if this date is today.
+    final isSelected = _isSameDay(date, selectedDate);
+    final isToday = _isSameDay(date, DateTime.now());
     final screenWidth = MediaQuery.of(context).size.width;
     final itemWidth =
-        (screenWidth - 16) / 7; // Calculate width for each day item.
+        (screenWidth - 32) / 7; // Better spacing like week navigation
 
     return GestureDetector(
-      onTap: onTap, // Update selected date on tap.
+      onTap: onTap,
       child: Container(
         width: itemWidth,
         height: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
         child: Container(
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? AppColors
-                        .accent // Highlight color if selected.
+                    ? AppColors.accent
                     : isToday
-                    ? AppColors.accent.withAlpha(
-                      30,
-                    ) // Subtle highlight if today.
-                    : Colors.transparent, // No background if neither.
-            borderRadius: BorderRadius.circular(12),
+                    ? AppColors.accent.withAlpha(25)
+                    : AppColors.surface, // Card-like background
+            borderRadius: BorderRadius.circular(8), // Match week navigation
+            border:
+                isToday && !isSelected
+                    ? Border.all(
+                      color: AppColors.accent.withAlpha(60),
+                      width: 0.5,
+                    )
+                    : Border.all(
+                      color: AppColors.divider.withAlpha(100),
+                      width: 0.5,
+                    ), // Consistent border style
+            boxShadow:
+                isSelected
+                    ? [
+                      BoxShadow(
+                        color: AppColors.accent.withAlpha(30),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                    : null,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Display the day name (e.g., "MON", "TUE").
+              // Day name
               Text(
                 _getDayName(date),
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0.5, // Match week navigation
                   color:
                       isSelected
-                          ? Colors
-                              .white // White text if selected.
+                          ? Colors.white
                           : isToday
-                          ? AppColors
-                              .accent // Accent color if today.
-                          : AppColors
-                              .textSecondary, // Secondary text color otherwise.
+                          ? AppColors.accent
+                          : AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
-              // Display the day number (e.g., "21").
+              // Day number
               Text(
                 date.day.toString(),
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 16, // Slightly smaller for better proportion
                   fontWeight: FontWeight.w700,
                   color:
                       isSelected
-                          ? Colors
-                              .white // White text if selected.
+                          ? Colors.white
                           : isToday
-                          ? AppColors
-                              .accent // Accent color if today.
-                          : AppColors
-                              .textPrimary, // Primary text color otherwise.
+                          ? AppColors.accent
+                          : AppColors.textPrimary,
                 ),
               ),
-              // Small dot indicator for "Today" if not selected.
+              // Today indicator dot
               if (isToday && !isSelected) ...[
                 const SizedBox(height: 2),
                 Container(
@@ -113,7 +118,7 @@ class HomeDateItem extends StatelessWidget {
                   ),
                 ),
               ] else
-                const SizedBox(height: 6), // Spacer if no dot.
+                const SizedBox(height: 6),
             ],
           ),
         ),

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -39,21 +37,16 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 10,
-          sigmaY: 10,
-        ), // Apply a blur effect.
-        child: Container(
-          color: AppColors.surface.withAlpha(
-            200,
-          ), // Semi-transparent background.
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Column for displaying the selected date.
-              Column(
+      child: Container(
+        color: AppColors.surface.withAlpha(200), // Semi-transparent background.
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Column for displaying the selected date.
+            Padding(
+              padding: const EdgeInsets.only(left: 4.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -79,95 +72,95 @@ class HomeHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              // Row for action buttons (Today, Filter, Search, Settings).
-              Row(
-                children: [
-                  // "Today" button, visible only if the selected date is not today.
-                  if (!_isSameDay(selectedDate, DateTime.now()))
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        final today = DateTime.now();
-                        onDateSelected(today); // Set selected date to today.
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Text(
-                          'Today',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 12),
-                  // Filter button with an indicator if filters are active.
-                  CupertinoButton(
-                    padding: const EdgeInsets.all(4),
-                    minSize: 28,
-                    onPressed: onFilterPressed, // Open the filter modal.
-                    child: Stack(
-                      children: [
-                        const Icon(
-                          CupertinoIcons.slider_horizontal_3, // Filter icon.
-                          color: AppColors.textSecondary,
-                          size: 24,
-                        ),
-                        // Small dot indicator if any filters are applied.
-                        if (hasActiveFilters)
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppColors.accent,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Search button.
-                  CupertinoButton(
-                    padding: const EdgeInsets.all(4),
-                    minSize: 28,
-                    onPressed: onSearchPressed, // Open the search delegate.
-                    child: const Icon(
-                      CupertinoIcons.search, // Search icon.
-                      color: AppColors.textSecondary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Settings button.
+            ),
+            // Row for action buttons (Today, Filter, Search, Settings).
+            Row(
+              children: [
+                // "Today" button, visible only if the selected date is not today.
+                if (!_isSameDay(selectedDate, DateTime.now()))
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     onPressed: () {
-                      context.push('/settings'); // Navigate to settings screen.
+                      final today = DateTime.now();
+                      onDateSelected(today); // Set selected date to today.
                     },
-                    child: const Icon(
-                      CupertinoIcons.gear, // Settings icon.
-                      color: AppColors.textSecondary,
-                      size: 24,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Text(
+                        'Today',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                // Filter button with an indicator if filters are active.
+                CupertinoButton(
+                  padding: const EdgeInsets.all(4),
+                  minSize: 28,
+                  onPressed: onFilterPressed, // Open the filter modal.
+                  child: Stack(
+                    children: [
+                      const Icon(
+                        CupertinoIcons.slider_horizontal_3, // Filter icon.
+                        color: AppColors.textSecondary,
+                        size: 24,
+                      ),
+                      // Small dot indicator if any filters are applied.
+                      if (hasActiveFilters)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: AppColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Search button.
+                CupertinoButton(
+                  padding: const EdgeInsets.all(4),
+                  minSize: 28,
+                  onPressed: onSearchPressed, // Open the search delegate.
+                  child: const Icon(
+                    CupertinoIcons.search, // Search icon.
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Settings button.
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    context.push('/settings'); // Navigate to settings screen.
+                  },
+                  child: const Icon(
+                    CupertinoIcons.gear, // Settings icon.
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

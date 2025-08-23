@@ -27,49 +27,60 @@ class HomeDateSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
-        // Get the "Saturday first" setting from the SettingsBloc.
         final isSaturdayFirst =
             settingsState is SettingsLoaded
                 ? settingsState.isSaturdayFirst
-                : false; // Default to false if settings not loaded.
+                : false;
 
         return Container(
-          height: 90,
-          color: AppColors.surface, // Background color for the date selector.
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.divider.withAlpha(50),
+                width: 0.5,
+              ),
+            ),
+          ),
           child: Column(
             children: [
-              // Row displaying the current week range and navigation buttons.
+              // Week navigation
               HomeWeekNavigation(
                 selectedDate: selectedDate,
                 isSaturdayFirst: isSaturdayFirst,
-                onWeekChanged: (newDate) {
-                  onDateSelected(newDate);
-                },
+                onWeekChanged: onDateSelected,
               ),
 
-              // Horizontal list of days in the current week.
-              Expanded(
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Prevent manual scrolling.
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: 7, // Always show 7 days.
-                  itemBuilder: (context, index) {
+              // Date items container with consistent styling
+              Container(
+                height: 64, // Compact height
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight.withAlpha(100),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.divider.withAlpha(100),
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  children: List.generate(7, (index) {
                     final weekStart = _getWeekStart(
                       selectedDate,
                       isSaturdayFirst,
-                    ); // Get the start of the week.
-                    final date = weekStart.add(
-                      Duration(days: index),
-                    ); // Calculate each day's date.
-                    return HomeDateItem(
-                      date: date,
-                      selectedDate: selectedDate,
-                      isSaturdayFirst: isSaturdayFirst,
-                      onTap: () => onDateSelected(date),
-                    ); // Build the widget for each day.
-                  },
+                    );
+                    final date = weekStart.add(Duration(days: index));
+
+                    return Expanded(
+                      child: HomeDateItem(
+                        date: date,
+                        selectedDate: selectedDate,
+                        isSaturdayFirst: isSaturdayFirst,
+                        onTap: () => onDateSelected(date),
+                      ),
+                    );
+                  }),
                 ),
               ),
             ],

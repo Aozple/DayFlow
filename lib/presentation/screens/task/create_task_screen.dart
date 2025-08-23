@@ -139,75 +139,77 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // The header section with cancel and save buttons.
-            CreateTaskHeader(
-              isEditMode: isEditMode,
-              canSave: _canSave(),
-              onCancel: () => context.pop(),
-              onSave: _saveTask,
-            ),
-            // The main scrollable content area for task details.
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    // Section for task title and description.
-                    CreateTaskMainContent(
-                      titleController: _titleController,
-                      descriptionController: _descriptionController,
-                      titleFocus: _titleFocus,
-                      descriptionFocus: _descriptionFocus,
-                      onChanged:
-                          () => setState(
-                            () {},
-                          ), // Rebuild to update save button state.
-                    ),
-                    const SizedBox(height: 16),
-                    // Section for selecting date and time.
-                    CreateTaskDateTimeSection(
-                      selectedDate: _selectedDate,
-                      selectedTime: _selectedTime,
-                      hasTime: _hasTime,
-                      isPrefilled: widget.prefilledDate != null,
-                      onDateChanged:
-                          (date) => setState(() => _selectedDate = date),
-                      onTimeChanged: (hasTime, time) {
-                        setState(() {
-                          _hasTime = hasTime;
-                          _selectedTime = time;
-                        });
-                      },
-                      onSelectDate: _selectDate,
-                      onSelectTime: _selectTime,
-                    ),
-                    const SizedBox(height: 16),
-                    // Section for choosing task priority.
-                    CreateTaskPrioritySection(
-                      priority: _priority,
-                      onPriorityChanged:
-                          (priority) => setState(() => _priority = priority),
-                    ),
-                    const SizedBox(height: 16),
-                    // Section for selecting a task color.
-                    CreateTaskColorSection(
-                      selectedColor: _selectedColor,
-                      onColorChanged:
-                          (color) => setState(() => _selectedColor = color),
-                    ),
-                    const SizedBox(height: 16),
-                    // Section for adding tags to the task.
-                    CreateTaskTagsSection(tagsController: _tagsController),
-                    const SizedBox(height: 100), // Extra space for keyboard.
-                  ],
-                ),
+      body: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            color: AppColors.surface.withAlpha(200),
+          ),
+          // The header section with cancel and save buttons.
+          CreateTaskHeader(
+            isEditMode: isEditMode,
+            canSave: _canSave(),
+            onCancel: () => context.pop(),
+            onSave: _saveTask,
+          ),
+          // The main scrollable content area for task details.
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // Section for task title and description.
+                  CreateTaskMainContent(
+                    titleController: _titleController,
+                    descriptionController: _descriptionController,
+                    titleFocus: _titleFocus,
+                    descriptionFocus: _descriptionFocus,
+                    onChanged:
+                        () => setState(
+                          () {},
+                        ), // Rebuild to update save button state.
+                  ),
+                  const SizedBox(height: 16),
+                  // Section for selecting date and time.
+                  CreateTaskDateTimeSection(
+                    selectedDate: _selectedDate,
+                    selectedTime: _selectedTime,
+                    hasTime: _hasTime,
+                    isPrefilled: widget.prefilledDate != null,
+                    onDateChanged:
+                        (date) => setState(() => _selectedDate = date),
+                    onTimeChanged: (hasTime, time) {
+                      setState(() {
+                        _hasTime = hasTime;
+                        _selectedTime = time;
+                      });
+                    },
+                    onSelectDate: _selectDate,
+                    onSelectTime: _selectTime,
+                  ),
+                  const SizedBox(height: 16),
+                  // Section for choosing task priority.
+                  CreateTaskPrioritySection(
+                    priority: _priority,
+                    onPriorityChanged:
+                        (priority) => setState(() => _priority = priority),
+                  ),
+                  const SizedBox(height: 16),
+                  // Section for selecting a task color.
+                  CreateTaskColorSection(
+                    selectedColor: _selectedColor,
+                    onColorChanged:
+                        (color) => setState(() => _selectedColor = color),
+                  ),
+                  const SizedBox(height: 16),
+                  // Section for adding tags to the task.
+                  CreateTaskTagsSection(tagsController: _tagsController),
+                  const SizedBox(height: 100), // Extra space for keyboard.
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

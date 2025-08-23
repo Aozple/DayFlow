@@ -413,65 +413,68 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, settingsState) {
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: SafeArea(
-            child: Column(
-              children: [
-                // The header section of the home screen.
-                HomeHeader(
-                  selectedDate: _selectedDate,
-                  onDateSelected: (date) {
-                    setState(() => _selectedDate = date);
-                    context.read<TaskBloc>().add(LoadTasksByDate(date));
-                    _scrollToCurrentTime();
+          body: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top,
+                ),
+                color: AppColors.surface.withAlpha(200),
+              ),
+              // The header section of the home screen.
+              HomeHeader(
+                selectedDate: _selectedDate,
+                onDateSelected: (date) {
+                  setState(() => _selectedDate = date);
+                  context.read<TaskBloc>().add(LoadTasksByDate(date));
+                  _scrollToCurrentTime();
+                },
+                hasActiveFilters: _hasActiveFilters(),
+                onFilterPressed: _openFilterModal,
+                onSearchPressed: _openSearch,
+              ),
+
+              // Horizontal date selector for navigating days.
+              HomeDateSelector(
+                selectedDate: _selectedDate,
+                onDateSelected: (date) {
+                  setState(() => _selectedDate = date);
+                  context.read<TaskBloc>().add(LoadTasksByDate(date));
+                },
+              ),
+
+              // A thin divider line.
+              Container(height: 0.5, color: AppColors.divider),
+
+              // The main timeline area where tasks are displayed by hour.
+              Expanded(
+                child: BlocBuilder<TaskBloc, TaskState>(
+                  builder: (context, taskState) {
+                    List<TaskModel> dayTasks = [];
+                    if (taskState is TaskLoaded) {
+                      dayTasks =
+                          taskState.tasks.where((task) {
+                            if (task.dueDate == null) return false;
+                            return _isSameDay(task.dueDate!, _selectedDate);
+                          }).toList();
+                    }
+
+                    return HomeTimeline(
+                      scrollController: _scrollController,
+                      selectedDate: _selectedDate,
+                      tasks: dayTasks,
+                      filteredTasks:
+                          _hasActiveFilters() ? _filteredTasks : dayTasks,
+                      hasActiveFilters: _hasActiveFilters(),
+                      onQuickAddMenu: _showQuickAddMenu,
+                      onTaskToggled: _toggleTaskCompletion,
+                      onTaskOptions: _showTaskOptionsMenu,
+                      onNoteOptions: _showNoteOptionsMenu,
+                    );
                   },
-                  hasActiveFilters: _hasActiveFilters(),
-                  onFilterPressed: _openFilterModal,
-                  onSearchPressed: _openSearch,
                 ),
-
-                // Horizontal date selector for navigating days.
-                HomeDateSelector(
-                  selectedDate: _selectedDate,
-                  onDateSelected: (date) {
-                    setState(() => _selectedDate = date);
-                    context.read<TaskBloc>().add(LoadTasksByDate(date));
-                  },
-                ),
-
-                // A thin divider line.
-                Container(height: 0.5, color: AppColors.divider),
-
-                // The main timeline area where tasks are displayed by hour.
-                Expanded(
-                  child: BlocBuilder<TaskBloc, TaskState>(
-                    builder: (context, taskState) {
-                      List<TaskModel> dayTasks = [];
-                      if (taskState is TaskLoaded) {
-                        // Filter tasks to show only those due on the selected date.
-                        dayTasks =
-                            taskState.tasks.where((task) {
-                              if (task.dueDate == null) return false;
-                              return _isSameDay(task.dueDate!, _selectedDate);
-                            }).toList();
-                      }
-
-                      return HomeTimeline(
-                        scrollController: _scrollController,
-                        selectedDate: _selectedDate,
-                        tasks: dayTasks,
-                        filteredTasks:
-                            _hasActiveFilters() ? _filteredTasks : dayTasks,
-                        hasActiveFilters: _hasActiveFilters(),
-                        onQuickAddMenu: _showQuickAddMenu,
-                        onTaskToggled: _toggleTaskCompletion,
-                        onTaskOptions: _showTaskOptionsMenu,
-                        onNoteOptions: _showNoteOptionsMenu,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           floatingActionButton: SpeedDialFab(
             onCreateTask: () => context.push('/create-task'),

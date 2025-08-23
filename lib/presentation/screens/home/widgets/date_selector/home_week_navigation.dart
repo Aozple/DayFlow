@@ -1,5 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 /// The week navigation component showing the current week range and navigation buttons.
@@ -27,72 +28,124 @@ class HomeWeekNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 26,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 42,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.divider.withAlpha(100), width: 0.5),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                _getWeekRange(
-                  selectedDate,
-                ), // Display the date range of the current week.
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+          // Week range and indicator
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(
+                  CupertinoIcons.calendar,
+                  size: 16,
                   color: AppColors.textSecondary,
                 ),
-              ),
-              // Show a "SAT" indicator if Saturday is set as the first day of the week.
-              if (isSaturdayFirst) ...[
                 const SizedBox(width: 8),
+                Text(
+                  _getWeekRange(selectedDate),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                // Saturday indicator
+                if (isSaturdayFirst) ...[
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withAlpha(25),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: AppColors.accent.withAlpha(60),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Text(
+                      'SAT',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accent,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Navigation buttons
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Previous week button
+                GestureDetector(
+                  onTap: () => _navigateWeek(1),
+                  child: Container(
+                    width: 40,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.horizontal(
+                        left: Radius.circular(8),
+                        right: Radius.zero,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.chevron_left_rounded,
+                      size: 24,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                // Divider
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withAlpha(20),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'SAT',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.accent,
+                  width: 0.5,
+                  height: 24,
+                  color: AppColors.divider.withAlpha(80),
+                ),
+                // Next week button
+                GestureDetector(
+                  onTap: () => _navigateWeek(1),
+                  child: Container(
+                    width: 40,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.horizontal(
+                        left: Radius.zero,
+                        right: Radius.circular(8),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 24,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
               ],
-            ],
-          ),
-          // Buttons for navigating to the previous and next week.
-          Row(
-            children: [
-              CupertinoButton(
-                padding: const EdgeInsets.all(4),
-                minSize: 28,
-                onPressed: () => _navigateWeek(-1), // Go to previous week.
-                child: const Icon(
-                  CupertinoIcons.chevron_left,
-                  size: 18,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              CupertinoButton(
-                padding: const EdgeInsets.all(4),
-                minSize: 28,
-                onPressed: () => _navigateWeek(1), // Go to next week.
-                child: const Icon(
-                  CupertinoIcons.chevron_right,
-                  size: 18,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

@@ -30,47 +30,44 @@ class CreateTaskHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          color: AppColors.surface.withAlpha(200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Button to cancel and go back.
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: onCancel,
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.accent, fontSize: 17),
-                ),
+      child: Container(
+        color: AppColors.surface.withAlpha(200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Button to cancel and go back.
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: onCancel,
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.accent, fontSize: 17),
               ),
-              // Title of the screen, changes based on edit or new task mode.
-              Text(
-                isEditMode ? 'Edit Task' : 'New Task',
-                style: const TextStyle(
+            ),
+            // Title of the screen, changes based on edit or new task mode.
+            Text(
+              isEditMode ? 'Edit Task' : 'New Task',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            // Button to save or update the task. It's disabled if the title is empty.
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: canSave ? onSave : null,
+              child: Text(
+                isEditMode ? 'Update' : 'Add',
+                style: TextStyle(
+                  color: canSave ? AppColors.accent : AppColors.textTertiary,
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
-              // Button to save or update the task. It's disabled if the title is empty.
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                onPressed: canSave ? onSave : null,
-                child: Text(
-                  isEditMode ? 'Update' : 'Add',
-                  style: TextStyle(
-                    color: canSave ? AppColors.accent : AppColors.textTertiary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
