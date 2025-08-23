@@ -55,11 +55,11 @@ class HomeCurrentTimeIndicator extends StatelessWidget {
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
-                  color: AppColors.currentTimeIndicator,
+                  color: AppColors.accent.withAlpha(50),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.currentTimeIndicator.withAlpha(100),
+                      color: AppColors.accent.withAlpha(25),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -69,7 +69,7 @@ class HomeCurrentTimeIndicator extends StatelessWidget {
               Expanded(
                 child: Container(
                   height: 1.5,
-                  color: AppColors.currentTimeIndicator.withAlpha(150),
+                  color: AppColors.accent.withAlpha(50),
                 ),
               ),
             ],

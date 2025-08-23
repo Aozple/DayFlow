@@ -67,9 +67,7 @@ class HomeTimeSlot extends StatelessWidget {
                     right: BorderSide(
                       color:
                           isCurrentHour
-                              ? AppColors.currentTimeIndicator.withAlpha(
-                                100,
-                              ) // Highlight if current hour.
+                              ? AppColors.accent.withAlpha(150) // Highlight if current hour.
                               : AppColors
                                   .timelineLineColor, // Regular timeline line.
                       width:

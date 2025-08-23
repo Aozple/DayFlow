@@ -1,3 +1,4 @@
+import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_event.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_state.dart';
@@ -408,77 +409,76 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // The header section of the home screen.
-            HomeHeader(
-              selectedDate: _selectedDate,
-              onDateSelected: (date) {
-                setState(() => _selectedDate = date);
-                context.read<TaskBloc>().add(LoadTasksByDate(date));
-                _scrollToCurrentTime();
-              },
-              hasActiveFilters: _hasActiveFilters(),
-              onFilterPressed: _openFilterModal,
-              onSearchPressed: _openSearch,
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // The header section of the home screen.
+                HomeHeader(
+                  selectedDate: _selectedDate,
+                  onDateSelected: (date) {
+                    setState(() => _selectedDate = date);
+                    context.read<TaskBloc>().add(LoadTasksByDate(date));
+                    _scrollToCurrentTime();
+                  },
+                  hasActiveFilters: _hasActiveFilters(),
+                  onFilterPressed: _openFilterModal,
+                  onSearchPressed: _openSearch,
+                ),
+
+                // Horizontal date selector for navigating days.
+                HomeDateSelector(
+                  selectedDate: _selectedDate,
+                  onDateSelected: (date) {
+                    setState(() => _selectedDate = date);
+                    context.read<TaskBloc>().add(LoadTasksByDate(date));
+                  },
+                ),
+
+                // A thin divider line.
+                Container(height: 0.5, color: AppColors.divider),
+
+                // The main timeline area where tasks are displayed by hour.
+                Expanded(
+                  child: BlocBuilder<TaskBloc, TaskState>(
+                    builder: (context, taskState) {
+                      List<TaskModel> dayTasks = [];
+                      if (taskState is TaskLoaded) {
+                        // Filter tasks to show only those due on the selected date.
+                        dayTasks =
+                            taskState.tasks.where((task) {
+                              if (task.dueDate == null) return false;
+                              return _isSameDay(task.dueDate!, _selectedDate);
+                            }).toList();
+                      }
+
+                      return HomeTimeline(
+                        scrollController: _scrollController,
+                        selectedDate: _selectedDate,
+                        tasks: dayTasks,
+                        filteredTasks:
+                            _hasActiveFilters() ? _filteredTasks : dayTasks,
+                        hasActiveFilters: _hasActiveFilters(),
+                        onQuickAddMenu: _showQuickAddMenu,
+                        onTaskToggled: _toggleTaskCompletion,
+                        onTaskOptions: _showTaskOptionsMenu,
+                        onNoteOptions: _showNoteOptionsMenu,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-
-            // Horizontal date selector for navigating days.
-            HomeDateSelector(
-              selectedDate: _selectedDate,
-              onDateSelected: (date) {
-                setState(() => _selectedDate = date);
-                context.read<TaskBloc>().add(LoadTasksByDate(date));
-              },
-            ),
-
-            // A thin divider line.
-            Container(height: 0.5, color: AppColors.divider),
-
-            // The main timeline area where tasks are displayed by hour.
-            Expanded(
-              child: BlocBuilder<TaskBloc, TaskState>(
-                builder: (context, state) {
-                  List<TaskModel> dayTasks = [];
-                  if (state is TaskLoaded) {
-                    // Filter tasks to show only those due on the selected date.
-                    dayTasks =
-                        state.tasks.where((task) {
-                          if (task.dueDate == null) return false;
-                          return _isSameDay(task.dueDate!, _selectedDate);
-                        }).toList();
-                  }
-
-                  return HomeTimeline(
-                    scrollController: _scrollController,
-                    selectedDate: _selectedDate,
-                    tasks: dayTasks,
-                    filteredTasks:
-                        _hasActiveFilters() ? _filteredTasks : dayTasks,
-                    hasActiveFilters: _hasActiveFilters(),
-                    onQuickAddMenu: _showQuickAddMenu,
-                    onTaskToggled: _toggleTaskCompletion,
-                    onTaskOptions: _showTaskOptionsMenu,
-                    onNoteOptions: _showNoteOptionsMenu,
-                  ); // Build the timeline with relevant tasks.
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      // Floating action button for quickly creating new tasks or notes.
-      floatingActionButton: SpeedDialFab(
-        onCreateTask:
-            () =>
-                context.push('/create-task'), // Navigate to create task screen.
-        onCreateNote:
-            () =>
-                context.push('/create-note'), // Navigate to create note screen.
-      ),
+          ),
+          floatingActionButton: SpeedDialFab(
+            onCreateTask: () => context.push('/create-task'),
+            onCreateNote: () => context.push('/create-note'),
+          ),
+        );
+      },
     );
   }
 
