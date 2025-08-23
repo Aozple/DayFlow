@@ -19,7 +19,9 @@ class SettingsRepository {
   // If no settings are found or an error occurs, it returns default settings.
   AppSettings getSettings() {
     try {
-      final settingsJson = _prefs.getString(_settingsKey); // Try to get the settings JSON string.
+      final settingsJson = _prefs.getString(
+        _settingsKey,
+      ); // Try to get the settings JSON string.
       if (settingsJson != null) {
         // If found, decode the JSON string into a Map.
         final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
@@ -64,7 +66,9 @@ class SettingsRepository {
   // It fetches current settings, updates the color, and saves the new settings.
   Future<bool> updateAccentColor(String colorHex) async {
     final currentSettings = getSettings(); // Get the current settings.
-    final updatedSettings = currentSettings.copyWith(accentColor: colorHex); // Create a copy with the new color.
+    final updatedSettings = currentSettings.copyWith(
+      accentColor: colorHex,
+    ); // Create a copy with the new color.
     return await saveSettings(updatedSettings); // Save the updated settings.
   }
 
@@ -100,8 +104,12 @@ class SettingsRepository {
   // It decodes the JSON, converts it to AppSettings, and saves it.
   Future<bool> importSettings(String jsonString) async {
     try {
-      final Map<String, dynamic> settingsMap = jsonDecode(jsonString); // Decode the JSON string.
-      final settings = AppSettings.fromMap(settingsMap); // Convert to AppSettings object.
+      final Map<String, dynamic> settingsMap = jsonDecode(
+        jsonString,
+      ); // Decode the JSON string.
+      final settings = AppSettings.fromMap(
+        settingsMap,
+      ); // Convert to AppSettings object.
       return await saveSettings(settings); // Save the imported settings.
     } catch (e) {
       print('Error importing settings: $e');

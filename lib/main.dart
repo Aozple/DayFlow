@@ -68,14 +68,18 @@ class DayFlowApp extends StatelessWidget {
         // Provide the TaskBloc, which handles all task-related logic.
         // We also immediately tell it to load tasks when it's created.
         BlocProvider(
-          create: (context) => TaskBloc(repository: TaskRepository())
-            ..add(const LoadTasks()),
+          create:
+              (context) =>
+                  TaskBloc(repository: TaskRepository())
+                    ..add(const LoadTasks()),
         ),
         // Provide the SettingsBloc, which manages app settings.
         // It also loads settings right after creation.
         BlocProvider(
-          create: (context) => SettingsBloc(repository: settingsRepository)
-            ..add(const LoadSettings()),
+          create:
+              (context) =>
+                  SettingsBloc(repository: settingsRepository)
+                    ..add(const LoadSettings()),
         ),
       ],
       // BlocBuilder listens to changes in the SettingsBloc state.
@@ -88,7 +92,8 @@ class DayFlowApp extends StatelessWidget {
             debugShowCheckedModeBanner: false, // Hide the debug banner.
             theme: AppTheme.lightTheme, // Define our light theme.
             darkTheme: AppTheme.darkTheme, // Define our dark theme.
-            themeMode: ThemeMode.dark, // For now, we're defaulting to dark mode.
+            themeMode:
+                ThemeMode.dark, // For now, we're defaulting to dark mode.
             routerConfig: AppRouter.router, // Our routing configuration.
           );
         },
