@@ -25,7 +25,7 @@ A modern task management app that helps you organize your day with style and sim
 
 | Timeline | Create Task | Settings |
 |----------|-------------|----------|
-| ![Timeline](screenshots/timeline.png) | ![Create](screenshots/create.png) | ![Settings](screenshots/settings.png) |
+| ![Timeline](screenshots/timeline.jpg) | ![Create](screenshots/create.jpg) | ![Settings](screenshots/settings.jpg) |
 
 ---
 
