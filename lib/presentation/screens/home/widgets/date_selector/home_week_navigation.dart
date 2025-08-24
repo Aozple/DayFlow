@@ -100,7 +100,7 @@ class HomeWeekNavigation extends StatelessWidget {
               children: [
                 // Previous week button
                 GestureDetector(
-                  onTap: () => _navigateWeek(1),
+                  onTap: () => _navigateWeek(-1),
                   child: Container(
                     width: 40,
                     height: 32,

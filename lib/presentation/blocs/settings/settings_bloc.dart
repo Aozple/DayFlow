@@ -248,17 +248,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     try {
       emit(const SettingsLoading());
       
-      final defaultSettings = const AppSettings();
+      const defaultSettings = AppSettings();
       final success = await _repository.saveSettings(defaultSettings);
       
       if (success) {
         _cachedSettings = defaultSettings;
         AppColors.setAccentColor(defaultSettings.accentColor);
-        emit(SettingsOperationSuccess(
+        emit(const SettingsOperationSuccess(
           message: 'Settings reset to defaults',
           settings: defaultSettings,
         ));
-        emit(SettingsLoaded(defaultSettings));
+        emit(const SettingsLoaded(defaultSettings));
       } else {
         emit(const SettingsError('Failed to reset settings'));
       }
