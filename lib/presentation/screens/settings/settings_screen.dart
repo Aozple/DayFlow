@@ -1,4 +1,5 @@
 import 'package:dayflow/data/models/app_settings.dart';
+import 'package:dayflow/presentation/screens/settings/widgets/notification_time_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,6 +74,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildPersonalizationSection(settings),
                         const SizedBox(height: 16),
                         _buildPreferencesSection(settings),
+                        const SizedBox(height: 16),
+                        _buildNotificationSection(settings),
                         const SizedBox(height: 16),
                         _buildDataSection(),
                         const SizedBox(height: 16),
@@ -229,6 +232,110 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           onTap: () => _showPriorityPicker(settings?.defaultTaskPriority ?? 3),
           icon: CupertinoIcons.flag_fill, // Flag icon.
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationSection(AppSettings? settings) {
+    return SettingsSection(
+      title: 'Notifications',
+      icon: CupertinoIcons.bell_fill,
+      children: [
+        // Default notification toggle
+        SettingsTile(
+          title: 'Default Reminder',
+          subtitle: 'Enable reminders for new tasks',
+          trailing: CupertinoSwitch(
+            value: settings?.defaultNotificationEnabled ?? false,
+            onChanged: (value) {
+              context.read<SettingsBloc>().add(
+                UpdateNotificationEnabled(value),
+              );
+            },
+            activeTrackColor: AppColors.accent,
+          ),
+          onTap: () {},
+          icon: CupertinoIcons.bell,
+        ),
+
+        // Default notification time
+        if (settings?.defaultNotificationEnabled ?? false)
+          SettingsTile(
+            title: 'Default Reminder Time',
+            subtitle: 'When to remind before tasks',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withAlpha(20),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.accent.withAlpha(50),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    _getNotificationTimeText(
+                      settings?.defaultNotificationMinutesBefore ?? 5,
+                    ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  CupertinoIcons.chevron_right,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+            onTap:
+                () => _showNotificationTimePicker(
+                  settings?.defaultNotificationMinutesBefore ?? 5,
+                ),
+            icon: CupertinoIcons.time,
+          ),
+
+        // Notification sound toggle
+        SettingsTile(
+          title: 'Notification Sound',
+          subtitle: 'Play sound for reminders',
+          trailing: CupertinoSwitch(
+            value: settings?.notificationSound ?? true,
+            onChanged: (value) {
+              context.read<SettingsBloc>().add(UpdateNotificationSound(value));
+            },
+            activeTrackColor: AppColors.accent,
+          ),
+          onTap: () {},
+          icon: CupertinoIcons.speaker_2_fill,
+        ),
+
+        // Notification vibration toggle
+        SettingsTile(
+          title: 'Vibration',
+          subtitle: 'Vibrate for reminders',
+          trailing: CupertinoSwitch(
+            value: settings?.notificationVibration ?? true,
+            onChanged: (value) {
+              context.read<SettingsBloc>().add(
+                UpdateNotificationVibration(value),
+              );
+            },
+            activeTrackColor: AppColors.accent,
+          ),
+          onTap: () {},
+          icon: CupertinoIcons.waveform,
         ),
       ],
     );
@@ -750,6 +857,32 @@ Additional Notes:
               CupertinoDialogAction(onPressed: null, child: Text('OK')),
             ],
           ),
+    );
+  }
+
+  String _getNotificationTimeText(int minutes) {
+    if (minutes == 0) return 'At time';
+    if (minutes == 5) return '5 min before';
+    if (minutes == 10) return '10 min before';
+    if (minutes == 15) return '15 min before';
+    if (minutes == 30) return '30 min before';
+    if (minutes == 60) return '1 hour before';
+    return '$minutes min before';
+  }
+
+  void _showNotificationTimePicker(int currentMinutes) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return NotificationTimePicker(
+          currentMinutes: currentMinutes,
+          onTimeSelected: (minutes) {
+            context.read<SettingsBloc>().add(
+              UpdateDefaultNotificationTime(minutes),
+            );
+          },
+        );
+      },
     );
   }
 }

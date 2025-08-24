@@ -25,6 +25,9 @@ class TaskModel {
 
   final String? markdownContent;
 
+  final bool hasNotification;
+  final int? notificationMinutesBefore;
+
   TaskModel({
     String? id,
     required this.title,
@@ -42,6 +45,8 @@ class TaskModel {
     this.estimatedMinutes,
     this.actualMinutes,
     this.markdownContent,
+    this.hasNotification = false,
+    this.notificationMinutesBefore,
   }) : id = id ?? const Uuid().v4(),
        createdAt = createdAt ?? DateTime.now(),
        tags = tags ?? [];
@@ -64,6 +69,8 @@ class TaskModel {
       'estimatedMinutes': estimatedMinutes,
       'actualMinutes': actualMinutes,
       'markdownContent': markdownContent,
+      'hasNotification': hasNotification,
+      'notificationMinutesBefore': notificationMinutesBefore,
     };
   }
 
@@ -91,6 +98,8 @@ class TaskModel {
       estimatedMinutes: map['estimatedMinutes'] as int?,
       actualMinutes: map['actualMinutes'] as int?,
       markdownContent: map['markdownContent'] as String?,
+      hasNotification: map['hasNotification'] as bool? ?? false,
+      notificationMinutesBefore: map['notificationMinutesBefore'] as int?,
     );
   }
 
@@ -111,6 +120,8 @@ class TaskModel {
     int? estimatedMinutes,
     int? actualMinutes,
     String? markdownContent,
+    bool? hasNotification,
+    int? notificationMinutesBefore,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -129,6 +140,9 @@ class TaskModel {
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
       actualMinutes: actualMinutes ?? this.actualMinutes,
       markdownContent: markdownContent ?? this.markdownContent,
+      hasNotification: hasNotification ?? this.hasNotification,
+      notificationMinutesBefore:
+          notificationMinutesBefore ?? this.notificationMinutesBefore,
     );
   }
 }

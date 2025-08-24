@@ -1,3 +1,4 @@
+import 'package:dayflow/core/services/notification_service.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
@@ -30,14 +31,14 @@ void main() async {
   // Enable edge-to-edge display, so our app content can go behind the system bars.
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Initialize notification service
-
-  // Initialize Hive, our local database, for Flutter.
+  // Initialize Hive
   await Hive.initFlutter();
-
-  // Open the 'tasks' and 'settings' boxes in Hive. Think of these as tables for our data.
   await Hive.openBox('tasks');
   await Hive.openBox('settings');
+
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   // Set up the Settings Repository and initialize it.
   final settingsRepository = SettingsRepository();

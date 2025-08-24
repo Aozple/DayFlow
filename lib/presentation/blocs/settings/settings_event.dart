@@ -43,3 +43,69 @@ class UpdateDefaultPriority extends SettingsEvent {
   @override
   List<Object?> get props => [priority];
 }
+
+// Event to update default notification enabled
+class UpdateNotificationEnabled extends SettingsEvent {
+  final bool enabled;
+
+  const UpdateNotificationEnabled(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+// Event to update default notification time
+class UpdateDefaultNotificationTime extends SettingsEvent {
+  final int minutesBefore;
+
+  const UpdateDefaultNotificationTime(this.minutesBefore);
+
+  @override
+  List<Object?> get props => [minutesBefore];
+}
+
+// Event to update notification sound
+class UpdateNotificationSound extends SettingsEvent {
+  final bool enabled;
+
+  const UpdateNotificationSound(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+// Event to update notification vibration
+class UpdateNotificationVibration extends SettingsEvent {
+  final bool enabled;
+
+  const UpdateNotificationVibration(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+// Event to reset all settings to defaults
+class ResetSettings extends SettingsEvent {
+  const ResetSettings();
+}
+
+// Event to export settings data
+class ExportSettings extends SettingsEvent {
+  final String format; // 'json' or 'csv'
+
+  const ExportSettings({required this.format});
+
+  @override
+  List<Object?> get props => [format];
+}
+
+// Event to import settings data
+class ImportSettings extends SettingsEvent {
+  final String data;
+  final String format; // 'json' or 'csv'
+
+  const ImportSettings({required this.data, required this.format});
+
+  @override
+  List<Object?> get props => [data, format];
+}

@@ -1,6 +1,9 @@
+import 'package:dayflow/core/services/notification_service.dart';
 import 'package:dayflow/data/models/task_model.dart';
+import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'task_event.dart';
@@ -67,13 +70,53 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   // It adds a new task to the repository and then reloads all tasks.
   Future<void> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     try {
-      // Add the new task to the database via the repository.
+      debugPrint('\n➕ === ADDING NEW TASK ===');
+      debugPrint('Title: ${event.task.title}');
+      debugPrint('Has notification: ${event.task.hasNotification}');
+      debugPrint('Due date: ${event.task.dueDate}');
+      debugPrint('Minutes before: ${event.task.notificationMinutesBefore}');
+
+      // First add the task to the repository
       await _repository.addTask(event.task);
 
-      // After adding, trigger a full reload to update the UI.
+      // Then schedule notification if enabled and due date is set
+      if (event.task.hasNotification && event.task.dueDate != null) {
+        debugPrint('🔔 Scheduling notification for task...');
+
+        // Get the app settings
+        final settingsRepo = SettingsRepository();
+        await settingsRepo.init();
+        final settings = settingsRepo.getSettings();
+        debugPrint(
+          'Settings loaded - default minutes: ${settings.defaultNotificationMinutesBefore}',
+        );
+
+        // Make sure the notification service is initialized
+        final notificationService = NotificationService();
+        if (!notificationService.isInitialized) {
+          await notificationService.initialize();
+        }
+
+        // Schedule the notification
+        final success = await notificationService.scheduleTaskNotification(
+          task: event.task,
+          settings: settings,
+        );
+
+        if (success) {
+          debugPrint('✅ Notification scheduled successfully');
+        } else {
+          debugPrint('❌ Failed to schedule notification');
+        }
+      } else {
+        debugPrint('🔕 No notification needed for this task');
+      }
+
+      // Reload tasks to update UI
       add(const LoadTasks());
     } catch (e) {
-      emit(TaskError(e.toString())); // Handle errors during task addition.
+      debugPrint('❌ Error in _onAddTask: $e');
+      emit(TaskError(e.toString()));
     }
   }
 
@@ -81,10 +124,43 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   // It updates an existing task in the repository and then reloads all tasks.
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {
-      await _repository.updateTask(event.task); // Update the task in the database.
-      add(const LoadTasks()); // Reload tasks to reflect the changes.
+      debugPrint('✏️ Updating task: ${event.task.title}');
+
+      // First update the task in the repository
+      await _repository.updateTask(event.task);
+
+      // Get the app settings
+      final settingsRepo = SettingsRepository();
+      await settingsRepo.init();
+      final settings = settingsRepo.getSettings();
+
+      // Make sure the notification service is initialized
+      final notificationService = NotificationService();
+      if (!notificationService.isInitialized) {
+        await notificationService.initialize();
+      }
+
+      // Update notification if needed
+      if (event.task.hasNotification && event.task.dueDate != null) {
+        debugPrint('🔔 Updating notification for task');
+        final success = await notificationService.scheduleTaskNotification(
+          task: event.task,
+          settings: settings,
+        );
+
+        if (!success) {
+          debugPrint('❌ Failed to update notification');
+        }
+      } else {
+        debugPrint('🔕 Canceling notifications for task');
+        await notificationService.cancelTaskNotifications(event.task.id);
+      }
+
+      // Reload tasks to update UI
+      add(const LoadTasks());
     } catch (e) {
-      emit(TaskError(e.toString())); // Handle errors during task update.
+      debugPrint('❌ Error in _onUpdateTask: $e');
+      emit(TaskError(e.toString()));
     }
   }
 
@@ -95,14 +171,19 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     Emitter<TaskState> emit,
   ) async {
     try {
-      await _repository.toggleTaskComplete(event.taskId); // Toggle completion status in the repository.
+      await _repository.toggleTaskComplete(
+        event.taskId,
+      ); // Toggle completion status in the repository.
 
       // If we're already in a `TaskLoaded` state, we can update it directly
       // without a full reload, which is a bit smoother.
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
-        final tasks = _repository.getAllTasks(); // Get the updated list of tasks.
-        emit(TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate)); // Emit the new state.
+        final tasks =
+            _repository.getAllTasks(); // Get the updated list of tasks.
+        emit(
+          TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate),
+        ); // Emit the new state.
       } else {
         add(const LoadTasks()); // Otherwise, just trigger a full reload.
       }
@@ -122,7 +203,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
         final tasks = _repository.getAllTasks(); // Get the updated list.
-        emit(TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate)); // Emit the new state.
+        emit(
+          TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate),
+        ); // Emit the new state.
       } else {
         add(const LoadTasks()); // Fallback to full reload.
       }

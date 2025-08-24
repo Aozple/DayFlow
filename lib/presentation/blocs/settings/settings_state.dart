@@ -23,7 +23,6 @@ class SettingsLoading extends SettingsState {
 // It's the main state when settings are ready for display or use.
 class SettingsLoaded extends SettingsState {
   final AppSettings settings; // The actual settings data.
-
   const SettingsLoaded(this.settings);
 
   @override
@@ -33,6 +32,11 @@ class SettingsLoaded extends SettingsState {
   String get accentColor => settings.accentColor;
   String get firstDayOfWeek => settings.firstDayOfWeek;
   int get defaultPriority => settings.defaultTaskPriority;
+  bool get defaultNotificationEnabled => settings.defaultNotificationEnabled;
+  int get defaultNotificationMinutesBefore =>
+      settings.defaultNotificationMinutesBefore;
+  bool get notificationSound => settings.notificationSound;
+  bool get notificationVibration => settings.notificationVibration;
 
   // Returns a human-readable label for the first day of the week.
   String get firstDayLabel {
@@ -57,6 +61,17 @@ class SettingsLoaded extends SettingsState {
     }
   }
 
+  // Returns a human-readable label for notification time.
+  String get notificationTimeLabel {
+    if (settings.defaultNotificationMinutesBefore == 0) return 'At time';
+    if (settings.defaultNotificationMinutesBefore == 5) return '5 min before';
+    if (settings.defaultNotificationMinutesBefore == 10) return '10 min before';
+    if (settings.defaultNotificationMinutesBefore == 15) return '15 min before';
+    if (settings.defaultNotificationMinutesBefore == 30) return '30 min before';
+    if (settings.defaultNotificationMinutesBefore == 60) return '1 hour before';
+    return '${settings.defaultNotificationMinutesBefore} min before';
+  }
+
   // Checks if Saturday is set as the first day of the week.
   bool get isSaturdayFirst => settings.firstDayOfWeek == 'saturday';
 
@@ -67,7 +82,6 @@ class SettingsLoaded extends SettingsState {
 // This state is emitted when an error occurs during settings operations.
 class SettingsError extends SettingsState {
   final String message; // A message describing the error.
-
   const SettingsError(this.message);
 
   @override
@@ -78,7 +92,8 @@ class SettingsError extends SettingsState {
 // to show to the user (e.g., "Settings saved!").
 class SettingsOperationSuccess extends SettingsState {
   final String message; // The success message.
-  final AppSettings settings; // The current settings after the successful operation.
+  final AppSettings
+  settings; // The current settings after the successful operation.
 
   const SettingsOperationSuccess({
     required this.message,

@@ -3,170 +3,295 @@ import 'package:dayflow/data/models/app_settings.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/repositories/settings_repository.dart';
+import 'package:flutter/foundation.dart'; // For debug logging
 
 part 'settings_event.dart';
 part 'settings_state.dart';
 
-// This is our SettingsBloc, responsible for managing all app settings.
-// It takes SettingsEvent (actions) and emits SettingsState (UI updates).
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  // We need a SettingsRepository to handle saving and loading settings.
   final SettingsRepository _repository;
+  AppSettings? _cachedSettings; // Cache for settings to reduce repository calls
 
-  // The constructor sets up the repository and registers all event handlers.
   SettingsBloc({required SettingsRepository repository})
     : _repository = repository,
       super(const SettingsInitial()) {
-    // When a LoadSettings event comes in, call _onLoadSettings.
     on<LoadSettings>(_onLoadSettings);
-    // When an UpdateAccentColor event comes in, call _onUpdateAccentColor.
     on<UpdateAccentColor>(_onUpdateAccentColor);
-    // When an UpdateFirstDayOfWeek event comes in, call _onUpdateFirstDayOfWeek.
     on<UpdateFirstDayOfWeek>(_onUpdateFirstDayOfWeek);
-    // When an UpdateDefaultPriority event comes in, call _onUpdateDefaultPriority.
     on<UpdateDefaultPriority>(_onUpdateDefaultPriority);
+    on<UpdateNotificationEnabled>(_onUpdateNotificationEnabled);
+    on<UpdateDefaultNotificationTime>(_onUpdateDefaultNotificationTime);
+    on<UpdateNotificationSound>(_onUpdateNotificationSound);
+    on<UpdateNotificationVibration>(_onUpdateNotificationVibration);
+    on<ResetSettings>(_onResetSettings);
   }
 
-  // This method handles the `LoadSettings` event.
-  // It fetches settings from the repository and updates the app's accent color.
   Future<void> _onLoadSettings(
     LoadSettings event,
     Emitter<SettingsState> emit,
   ) async {
     try {
-      emit(const SettingsLoading()); // Indicate that settings are being loaded.
-      await _repository.init(); // Make sure the repository is initialized.
-      final settings = _repository.getSettings(); // Get the current settings.
-
-      // Apply the loaded accent color to our global AppColors.
+      emit(const SettingsLoading());
+      
+      // Initialize repository if not already initialized
+      if (!_repository.isInitialized) {
+        await _repository.init();
+      }
+      
+      final settings = _repository.getSettings();
+      _cachedSettings = settings; // Cache the settings
+      
+      // Apply the loaded accent color
       AppColors.setAccentColor(settings.accentColor);
-
-      emit(SettingsLoaded(settings)); // Emit the loaded settings state.
+      emit(SettingsLoaded(settings));
     } catch (e) {
-      emit(SettingsError('Failed to load settings: ${e.toString()}')); // Handle any errors.
+      debugPrint('Failed to load settings: $e');
+      emit(SettingsError('Failed to load settings: ${e.toString()}'));
     }
   }
 
-  // This method handles the `UpdateAccentColor` event.
-  // It updates the accent color in settings and immediately applies it.
   Future<void> _onUpdateAccentColor(
     UpdateAccentColor event,
     Emitter<SettingsState> emit,
   ) async {
     try {
-      final currentSettings = _getCurrentSettings(); // Get the current settings.
-      // Create a new settings object with the updated accent color.
-      final updatedSettings = currentSettings.copyWith(
-        accentColor: event.colorHex,
-      );
-
-      // Immediately update the AppColors for instant UI feedback.
+      final currentSettings = _getCurrentSettings();
+      final updatedSettings = currentSettings.copyWith(accentColor: event.colorHex);
+      
+      // Apply color immediately for instant feedback
       AppColors.setAccentColor(event.colorHex);
-
-      // Emit the updated settings state right away.
       emit(SettingsLoaded(updatedSettings));
-
-      // Now, save the updated settings to persistent storage.
+      
+      // Save to persistent storage
       final success = await _repository.saveSettings(updatedSettings);
-
       if (success) {
-        // If saving was successful, emit a success message.
-        emit(
-          SettingsOperationSuccess(
-            message: 'Accent color updated',
-            settings: updatedSettings,
-          ),
-        );
-        emit(SettingsLoaded(updatedSettings)); // Re-emit loaded state to ensure consistency.
+        _cachedSettings = updatedSettings; // Update cache
+        emit(SettingsOperationSuccess(
+          message: 'Accent color updated',
+          settings: updatedSettings,
+        ));
       } else {
-        // If saving failed, revert the accent color and emit an error.
+        // Revert on failure
         AppColors.setAccentColor(currentSettings.accentColor);
+        emit(SettingsLoaded(currentSettings));
         emit(const SettingsError('Failed to save accent color'));
-        emit(SettingsLoaded(currentSettings)); // Revert to previous state.
       }
     } catch (e) {
-      emit(SettingsError('Color update failed: ${e.toString()}')); // Handle any exceptions.
+      debugPrint('Failed to update accent color: $e');
+      emit(SettingsError('Color update failed: ${e.toString()}'));
     }
   }
 
-  // This method handles the `UpdateFirstDayOfWeek` event.
-  // It updates the setting for which day the week starts on.
   Future<void> _onUpdateFirstDayOfWeek(
     UpdateFirstDayOfWeek event,
     Emitter<SettingsState> emit,
   ) async {
     try {
-      final currentSettings = _getCurrentSettings(); // Get current settings.
-      // Create a new settings object with the updated first day of the week.
-      final updatedSettings = currentSettings.copyWith(
-        firstDayOfWeek: event.day,
+      final success = await _updateSetting(
+        (settings) => settings.copyWith(firstDayOfWeek: event.day),
       );
-
-      // Save the updated settings to storage.
-      final success = await _repository.saveSettings(updatedSettings);
-
+      
       if (success) {
-        // If successful, emit a success message and the new loaded state.
-        emit(
-          SettingsOperationSuccess(
-            message:
-                'First day of week updated to ${event.day == 'saturday' ? 'Saturday' : 'Monday'}',
-            settings: updatedSettings,
-          ),
-        );
-        emit(SettingsLoaded(updatedSettings));
+        final settings = _repository.getSettings();
+        _cachedSettings = settings;
+        emit(SettingsOperationSuccess(
+          message: 'First day of week updated to ${event.day == 'saturday' ? 'Saturday' : 'Monday'}',
+          settings: settings,
+        ));
+        emit(SettingsLoaded(settings));
       } else {
-        emit(const SettingsError('Failed to update first day of week')); // Emit error on failure.
+        emit(const SettingsError('Failed to update first day of week'));
       }
     } catch (e) {
-      emit(SettingsError('Update failed: ${e.toString()}')); // Handle any exceptions.
+      debugPrint('Failed to update first day of week: $e');
+      emit(SettingsError('Update failed: ${e.toString()}'));
     }
   }
 
-  // This method handles the `UpdateDefaultPriority` event.
-  // It updates the default priority for new tasks.
   Future<void> _onUpdateDefaultPriority(
     UpdateDefaultPriority event,
     Emitter<SettingsState> emit,
   ) async {
     try {
-      // Use a generic helper to update and save the setting.
       final success = await _updateSetting(
         (settings) => settings.copyWith(defaultTaskPriority: event.priority),
       );
-
+      
       if (success) {
-        final settings = _repository.getSettings(); // Get the latest settings.
-        // Emit a success message and the new loaded state.
-        emit(
-          SettingsOperationSuccess(
-            message: 'Default priority updated to P${event.priority}',
-            settings: settings,
-          ),
-        );
+        final settings = _repository.getSettings();
+        _cachedSettings = settings;
+        emit(SettingsOperationSuccess(
+          message: 'Default priority updated to P${event.priority}',
+          settings: settings,
+        ));
         emit(SettingsLoaded(settings));
       } else {
-        emit(const SettingsError('Failed to update default priority')); // Emit error on failure.
+        emit(const SettingsError('Failed to update default priority'));
       }
     } catch (e) {
-      emit(SettingsError('Priority update failed: ${e.toString()}')); // Handle any exceptions.
+      debugPrint('Failed to update default priority: $e');
+      emit(SettingsError('Priority update failed: ${e.toString()}'));
     }
   }
 
-  // Helper method to get the current settings, either from the bloc's state
-  // or directly from the repository if the state isn't loaded yet.
+  Future<void> _onUpdateNotificationEnabled(
+    UpdateNotificationEnabled event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final success = await _updateSetting(
+        (settings) => settings.copyWith(defaultNotificationEnabled: event.enabled),
+      );
+      
+      if (success) {
+        final settings = _repository.getSettings();
+        _cachedSettings = settings;
+        emit(SettingsOperationSuccess(
+          message: 'Default reminder ${event.enabled ? 'enabled' : 'disabled'}',
+          settings: settings,
+        ));
+        emit(SettingsLoaded(settings));
+      } else {
+        emit(const SettingsError('Failed to update notification setting'));
+      }
+    } catch (e) {
+      debugPrint('Failed to update notification enabled: $e');
+      emit(SettingsError('Update failed: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onUpdateDefaultNotificationTime(
+    UpdateDefaultNotificationTime event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final success = await _updateSetting(
+        (settings) => settings.copyWith(
+          defaultNotificationMinutesBefore: event.minutesBefore,
+        ),
+      );
+      
+      if (success) {
+        final settings = _repository.getSettings();
+        _cachedSettings = settings;
+        emit(SettingsOperationSuccess(
+          message: 'Default reminder time updated',
+          settings: settings,
+        ));
+        emit(SettingsLoaded(settings));
+      } else {
+        emit(const SettingsError('Failed to update reminder time'));
+      }
+    } catch (e) {
+      debugPrint('Failed to update notification time: $e');
+      emit(SettingsError('Update failed: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onUpdateNotificationSound(
+    UpdateNotificationSound event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final success = await _updateSetting(
+        (settings) => settings.copyWith(notificationSound: event.enabled),
+      );
+      
+      if (success) {
+        final settings = _repository.getSettings();
+        _cachedSettings = settings;
+        emit(SettingsOperationSuccess(
+          message: 'Notification sound ${event.enabled ? 'enabled' : 'disabled'}',
+          settings: settings,
+        ));
+        emit(SettingsLoaded(settings));
+      } else {
+        emit(const SettingsError('Failed to update sound setting'));
+      }
+    } catch (e) {
+      debugPrint('Failed to update notification sound: $e');
+      emit(SettingsError('Update failed: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onUpdateNotificationVibration(
+    UpdateNotificationVibration event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      final success = await _updateSetting(
+        (settings) => settings.copyWith(notificationVibration: event.enabled),
+      );
+      
+      if (success) {
+        final settings = _repository.getSettings();
+        _cachedSettings = settings;
+        emit(SettingsOperationSuccess(
+          message: 'Vibration ${event.enabled ? 'enabled' : 'disabled'}',
+          settings: settings,
+        ));
+        emit(SettingsLoaded(settings));
+      } else {
+        emit(const SettingsError('Failed to update vibration setting'));
+      }
+    } catch (e) {
+      debugPrint('Failed to update notification vibration: $e');
+      emit(SettingsError('Update failed: ${e.toString()}'));
+    }
+  }
+
+  // New event handler for resetting settings
+  Future<void> _onResetSettings(
+    ResetSettings event,
+    Emitter<SettingsState> emit,
+  ) async {
+    try {
+      emit(const SettingsLoading());
+      
+      final defaultSettings = const AppSettings();
+      final success = await _repository.saveSettings(defaultSettings);
+      
+      if (success) {
+        _cachedSettings = defaultSettings;
+        AppColors.setAccentColor(defaultSettings.accentColor);
+        emit(SettingsOperationSuccess(
+          message: 'Settings reset to defaults',
+          settings: defaultSettings,
+        ));
+        emit(SettingsLoaded(defaultSettings));
+      } else {
+        emit(const SettingsError('Failed to reset settings'));
+      }
+    } catch (e) {
+      debugPrint('Failed to reset settings: $e');
+      emit(SettingsError('Reset failed: ${e.toString()}'));
+    }
+  }
+
+  // Enhanced helper methods
   AppSettings _getCurrentSettings() {
-    if (state is SettingsLoaded) {
-      return (state as SettingsLoaded).settings;
+    if (_cachedSettings != null) {
+      return _cachedSettings!;
     }
-    return _repository.getSettings();
+    
+    if (state is SettingsLoaded) {
+      _cachedSettings = (state as SettingsLoaded).settings;
+      return _cachedSettings!;
+    }
+    
+    final settings = _repository.getSettings();
+    _cachedSettings = settings;
+    return settings;
   }
 
-  // A generic helper method to update a setting.
-  // It takes a function that modifies the settings and then saves them.
   Future<bool> _updateSetting(AppSettings Function(AppSettings) updater) async {
-    final currentSettings = _getCurrentSettings(); // Get the current settings.
-    final updatedSettings = updater(currentSettings); // Apply the update function.
-    return await _repository.saveSettings(updatedSettings); // Save the modified settings.
+    try {
+      final currentSettings = _getCurrentSettings();
+      final updatedSettings = updater(currentSettings);
+      return await _repository.saveSettings(updatedSettings);
+    } catch (e) {
+      debugPrint('Failed to update setting: $e');
+      return false;
+    }
   }
 }

@@ -14,7 +14,6 @@ class SettingsSection extends StatelessWidget {
 
   /// The list of widgets to display as children in the section.
   final List<Widget> children;
-
   const SettingsSection({
     super.key,
     required this.title,
@@ -27,31 +26,51 @@ class SettingsSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface, // Background color for the section.
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header with icon and title.
+          // Section header with icon and title
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.divider.withAlpha(30),
+                  width: 0.5,
+                ),
+              ),
+            ),
             child: Row(
               children: [
-                Icon(icon, size: 20, color: AppColors.accent), // Section icon.
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 18, color: AppColors.accent),
+                ),
                 const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          // The content of the section (list of tiles).
+          // The content of the section (list of tiles)
           ...children,
         ],
       ),

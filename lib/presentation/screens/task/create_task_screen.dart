@@ -1,4 +1,5 @@
 import 'package:dayflow/presentation/screens/task/widgets/create_task_date_picker.dart';
+import 'package:dayflow/presentation/screens/task/widgets/create_task_notification_section.dart';
 import 'package:dayflow/presentation/screens/task/widgets/create_task_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -50,31 +51,40 @@ class CreateTaskScreen extends StatefulWidget {
 /// This class manages the UI state and interactions for the task creation/editing screen,
 /// including handling form inputs and saving the task.
 class _CreateTaskScreenState extends State<CreateTaskScreen> {
-  /// Text controllers for our input fields.
-  late TextEditingController _titleController;
-  late TextEditingController _descriptionController;
-  late TextEditingController _tagsController;
+  // Text controllers for input fields
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _tagsController;
 
-  /// Variables to hold the selected date, time, priority, and color.
+  // Notification settings
+  late bool _hasNotification;
+  late int? _notificationMinutesBefore;
+  late String _repeatInterval;
+
+  // Task properties
   late DateTime _selectedDate;
   late TimeOfDay? _selectedTime;
   late int _priority;
   late String _selectedColor;
-
-  /// Flag to check if a specific time is set for the task.
   bool _hasTime = false;
 
-  /// Focus nodes to manage keyboard focus on text fields.
+  // Focus nodes for text fields
   final FocusNode _titleFocus = FocusNode();
   final FocusNode _descriptionFocus = FocusNode();
 
-  /// A getter to easily check if we are in edit mode.
+  // Getters
   bool get isEditMode => widget.taskToEdit != null;
 
   @override
   void initState() {
     super.initState();
-    // Initialize text controllers with existing task data if in edit mode, otherwise empty.
+    _initializeControllers();
+    _initializeFormValues();
+    _setupAutoFocus();
+  }
+
+  /// Initialize text controllers with appropriate values
+  void _initializeControllers() {
     _titleController = TextEditingController(
       text: widget.taskToEdit?.title ?? '',
     );
@@ -84,38 +94,72 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     _tagsController = TextEditingController(
       text: widget.taskToEdit?.tags.join(', ') ?? '',
     );
+  }
 
-    // Initialize form values based on whether we're editing an existing task or creating a new one.
+  /// Initialize form values based on edit mode or defaults
+  void _initializeFormValues() {
     if (isEditMode && widget.taskToEdit != null) {
-      final task = widget.taskToEdit!;
-      _selectedDate = task.dueDate ?? DateTime.now();
-      _selectedTime =
-          task.dueDate != null
-              ? TimeOfDay.fromDateTime(task.dueDate!)
-              : TimeOfDay.now();
-      _hasTime = task.dueDate != null;
-      _priority = task.priority;
-      _selectedColor = task.color;
+      _initializeEditModeValues();
     } else {
-      // If creating a new task, use prefilled date or current date.
-      _selectedDate = widget.prefilledDate ?? DateTime.now();
-      // If a prefilled hour is provided, set the time and enable the time picker.
-      if (widget.prefilledHour != null) {
-        _selectedTime = TimeOfDay(hour: widget.prefilledHour!, minute: 0);
-        _hasTime = true; // Automatically enable time
-      } else {
-        _selectedTime = TimeOfDay.now();
-        _hasTime = false;
-      }
-      // Get the default priority from the app settings.
-      final settingsState = context.read<SettingsBloc>().state;
-      _priority =
-          settingsState is SettingsLoaded ? settingsState.defaultPriority : 3;
-      // Set the default color for new tasks.
-      _selectedColor = AppColors.toHex(AppColors.userColors[0]);
+      _initializeNewTaskValues();
+    }
+  }
+
+  /// Initialize values for editing an existing task
+  void _initializeEditModeValues() {
+    final task = widget.taskToEdit!;
+    _selectedDate = task.dueDate ?? DateTime.now();
+    _selectedTime =
+        task.dueDate != null
+            ? TimeOfDay.fromDateTime(task.dueDate!)
+            : TimeOfDay.now();
+    _hasTime = task.dueDate != null;
+    _priority = task.priority;
+    _selectedColor = task.color;
+    _hasNotification = task.hasNotification;
+    _notificationMinutesBefore = task.notificationMinutesBefore;
+  }
+
+  /// Initialize values for creating a new task
+  void _initializeNewTaskValues() {
+    // Set date and time
+    _selectedDate = widget.prefilledDate ?? DateTime.now();
+    if (widget.prefilledHour != null) {
+      _selectedTime = TimeOfDay(hour: widget.prefilledHour!, minute: 0);
+      _hasTime = true;
+    } else {
+      _selectedTime = TimeOfDay.now();
+      _hasTime = false;
     }
 
-    // For new tasks, automatically focus on the title input field.
+    // Get default settings
+    final settingsState = context.read<SettingsBloc>().state;
+    _priority =
+        settingsState is SettingsLoaded ? settingsState.defaultPriority : 3;
+    _selectedColor = AppColors.toHex(AppColors.userColors[0]);
+
+    // Set notification defaults
+    if (settingsState is SettingsLoaded) {
+      _hasNotification = settingsState.settings.defaultNotificationEnabled;
+      _notificationMinutesBefore =
+          settingsState.settings.defaultNotificationMinutesBefore;
+      _debugPrintNotificationSettings();
+    } else {
+      _hasNotification = false;
+      _notificationMinutesBefore = 0;
+    }
+    _repeatInterval = 'none';
+  }
+
+  /// Debug print notification settings
+  void _debugPrintNotificationSettings() {
+    debugPrint('📱 Default notification settings loaded:');
+    debugPrint('  - Enabled: $_hasNotification');
+    debugPrint('  - Minutes before: $_notificationMinutesBefore');
+  }
+
+  /// Setup auto-focus for new tasks
+  void _setupAutoFocus() {
     if (!isEditMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _titleFocus.requestFocus();
@@ -125,7 +169,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   @override
   void dispose() {
-    // Clean up controllers and focus nodes to prevent memory leaks.
+    // Clean up controllers and focus nodes to prevent memory leaks
     _titleController.dispose();
     _descriptionController.dispose();
     _tagsController.dispose();
@@ -140,24 +184,21 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            color: AppColors.surface.withAlpha(200),
-          ),
-          // The header section with cancel and save buttons.
+          _buildStatusBarPadding(),
+          // The header section with cancel and save buttons
           CreateTaskHeader(
             isEditMode: isEditMode,
             canSave: _canSave(),
             onCancel: () => context.pop(),
             onSave: _saveTask,
           ),
-          // The main scrollable content area for task details.
+          // The main scrollable content area for task details
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  // Section for task title and description.
+                  // Section for task title and description
                   CreateTaskMainContent(
                     titleController: _titleController,
                     descriptionController: _descriptionController,
@@ -166,10 +207,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     onChanged:
                         () => setState(
                           () {},
-                        ), // Rebuild to update save button state.
+                        ), // Rebuild to update save button state
                   ),
                   const SizedBox(height: 16),
-                  // Section for selecting date and time.
+                  // Section for selecting date and time
                   CreateTaskDateTimeSection(
                     selectedDate: _selectedDate,
                     selectedTime: _selectedTime,
@@ -187,23 +228,36 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     onSelectTime: _selectTime,
                   ),
                   const SizedBox(height: 16),
-                  // Section for choosing task priority.
+                  // Section for choosing task priority
                   CreateTaskPrioritySection(
                     priority: _priority,
                     onPriorityChanged:
                         (priority) => setState(() => _priority = priority),
                   ),
                   const SizedBox(height: 16),
-                  // Section for selecting a task color.
+                  // Section for selecting a task color
                   CreateTaskColorSection(
                     selectedColor: _selectedColor,
                     onColorChanged:
                         (color) => setState(() => _selectedColor = color),
                   ),
                   const SizedBox(height: 16),
-                  // Section for adding tags to the task.
+                  // Section for notification settings
+                  CreateTaskNotificationSection(
+                    hasNotification: _hasNotification,
+                    minutesBefore: _notificationMinutesBefore,
+                    hasDate: _hasTime,
+                    onNotificationToggle:
+                        (value) => setState(() => _hasNotification = value),
+                    onMinutesChanged:
+                        (minutes) => setState(
+                          () => _notificationMinutesBefore = minutes,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Section for adding tags to the task
                   CreateTaskTagsSection(tagsController: _tagsController),
-                  const SizedBox(height: 100), // Extra space for keyboard.
+                  const SizedBox(height: 100), // Extra space for keyboard
                 ],
               ),
             ),
@@ -213,12 +267,20 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  /// Checks if the task can be saved (i.e., if the title is not empty).
+  /// Builds status bar padding container
+  Widget _buildStatusBarPadding() {
+    return Container(
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      color: AppColors.surface.withAlpha(200),
+    );
+  }
+
+  /// Checks if the task can be saved (i.e., if the title is not empty)
   bool _canSave() {
     return _titleController.text.trim().isNotEmpty;
   }
 
-  /// Shows a Cupertino-style modal for selecting a date.
+  /// Shows a Cupertino-style modal for selecting a date
   void _selectDate() async {
     await showCupertinoModalPopup(
       context: context,
@@ -230,7 +292,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  /// Shows a Cupertino-style modal for selecting a time.
+  /// Shows a Cupertino-style modal for selecting a time
   void _selectTime() async {
     await showCupertinoModalPopup(
       context: context,
@@ -242,61 +304,123 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  /// Handles saving or updating the task based on the current mode.
+  /// Handles saving or updating the task based on the current mode
   void _saveTask() {
     final title = _titleController.text.trim();
-    if (title.isEmpty) return; // Don't save if the title is empty.
+    if (title.isEmpty) return;
 
-    // Get the TaskBloc instance to dispatch events.
+    _debugPrintTaskDetails(title);
+
     final taskBloc = context.read<TaskBloc>();
-
-    // Parse tags from the input field, splitting by comma and cleaning up.
-    final tags =
-        _tagsController.text
-            .split(',')
-            .map((tag) => tag.trim())
-            .where((tag) => tag.isNotEmpty)
-            .toList();
-
-    // Combine the selected date and time into a single DateTime object.
-    DateTime? dueDateTime;
-    if (_hasTime && _selectedTime != null) {
-      dueDateTime = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        _selectedTime!.hour,
-        _selectedTime!.minute,
-      );
-    } else {
-      dueDateTime = _selectedDate; // If no time, just use the date.
-    }
+    final tags = _parseTags();
+    final dueDateTime = _createDueDateTime();
 
     if (isEditMode) {
-      // If in edit mode, create an updated task object and dispatch an UpdateTask event.
-      final updatedTask = widget.taskToEdit!.copyWith(
-        title: title,
-        description: _descriptionController.text.trim(),
-        dueDate: dueDateTime,
-        priority: _priority,
-        color: _selectedColor,
-        tags: tags,
-      );
-      taskBloc.add(UpdateTask(updatedTask));
+      _updateTask(taskBloc, title, dueDateTime, tags);
     } else {
-      // If creating a new task, create a new TaskModel and dispatch an AddTask event.
-      final newTask = TaskModel(
-        title: title,
-        description: _descriptionController.text.trim(),
-        dueDate: dueDateTime,
-        priority: _priority,
-        color: _selectedColor,
-        tags: tags,
-      );
-      taskBloc.add(AddTask(newTask));
+      _createTask(taskBloc, title, dueDateTime, tags);
     }
 
-    // Navigate back to the previous screen after saving.
     context.pop();
+  }
+
+  /// Debug print task details before saving
+  void _debugPrintTaskDetails(String title) {
+    debugPrint('\n💾 === SAVING TASK ===');
+    debugPrint('Title: $title');
+    debugPrint('Has Time: $_hasTime');
+    debugPrint('Selected Date: $_selectedDate');
+    debugPrint('Selected Time: $_selectedTime');
+    debugPrint('Has Notification: $_hasNotification');
+    debugPrint('Minutes Before: ${_notificationMinutesBefore ?? 0}');
+    debugPrint('Repeat: $_repeatInterval');
+  }
+
+  /// Parse tags from text input
+  List<String> _parseTags() {
+    return _tagsController.text
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+  }
+
+  /// Create due datetime if time is set
+  DateTime? _createDueDateTime() {
+    if (!_hasTime || _selectedTime == null) return null;
+
+    final dueDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+
+    debugPrint('Final Due DateTime: $dueDateTime');
+    return dueDateTime;
+  }
+
+  /// Update an existing task
+  void _updateTask(
+    TaskBloc taskBloc,
+    String title,
+    DateTime? dueDateTime,
+    List<String> tags,
+  ) {
+    final updatedTask = widget.taskToEdit!.copyWith(
+      title: title,
+      description: _descriptionController.text.trim(),
+      dueDate: dueDateTime,
+      priority: _priority,
+      color: _selectedColor,
+      tags: tags,
+      hasNotification: _hasNotification && _hasTime,
+      notificationMinutesBefore: _notificationMinutesBefore ?? 0,
+    );
+
+    _debugPrintUpdatedTaskDetails(updatedTask);
+    taskBloc.add(UpdateTask(updatedTask));
+  }
+
+  /// Debug print updated task details
+  void _debugPrintUpdatedTaskDetails(TaskModel updatedTask) {
+    debugPrint('📝 Updated task notification settings:');
+    debugPrint('  - hasNotification: ${updatedTask.hasNotification}');
+    debugPrint(
+      '  - notificationMinutesBefore: ${updatedTask.notificationMinutesBefore}',
+    );
+  }
+
+  /// Create a new task
+  void _createTask(
+    TaskBloc taskBloc,
+    String title,
+    DateTime? dueDateTime,
+    List<String> tags,
+  ) {
+    final newTask = TaskModel(
+      title: title,
+      description: _descriptionController.text.trim(),
+      dueDate: dueDateTime,
+      priority: _priority,
+      color: _selectedColor,
+      tags: tags,
+      hasNotification: _hasNotification && _hasTime,
+      notificationMinutesBefore: _notificationMinutesBefore ?? 0,
+    );
+
+    _debugPrintNewTaskDetails(newTask);
+    taskBloc.add(AddTask(newTask));
+  }
+
+  /// Debug print new task details
+  void _debugPrintNewTaskDetails(TaskModel newTask) {
+    debugPrint('📝 New task notification settings:');
+    debugPrint('  - hasNotification: ${newTask.hasNotification}');
+    debugPrint(
+      '  - notificationMinutesBefore: ${newTask.notificationMinutesBefore}',
+    );
+    debugPrint('  - dueDate: ${newTask.dueDate}');
   }
 }

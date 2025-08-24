@@ -1,119 +1,197 @@
-import 'dart:convert'; // For encoding and decoding JSON.
-import 'package:shared_preferences/shared_preferences.dart'; // For local key-value storage.
-import '../models/app_settings.dart'; // Our custom settings model.
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/app_settings.dart';
+import 'package:flutter/foundation.dart'; // For debug logging
 
-// This class handles saving and loading application settings using SharedPreferences.
-// It acts as a data layer for user preferences.
 class SettingsRepository {
-  // The key under which our settings JSON will be stored in SharedPreferences.
   static const String _settingsKey = 'app_settings';
-  // An instance of SharedPreferences to interact with local storage.
   late SharedPreferences _prefs;
+  bool _isInitialized = false;
 
-  // Initializes SharedPreferences. This must be called before using other methods.
+  // Enhanced initialization with error handling
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('Failed to initialize SharedPreferences: $e');
+      rethrow;
+    }
   }
 
-  // Retrieves the current application settings.
-  // If no settings are found or an error occurs, it returns default settings.
+  // Enhanced getSettings with caching and validation
   AppSettings getSettings() {
-    try {
-      final settingsJson = _prefs.getString(
-        _settingsKey,
-      ); // Try to get the settings JSON string.
-      if (settingsJson != null) {
-        // If found, decode the JSON string into a Map.
-        final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
-        // Convert the Map into an AppSettings object.
-        return AppSettings.fromMap(settingsMap);
-      }
-    } catch (e) {
-      // Log any errors during loading, but don't crash the app.
-      print('Error loading settings: $e');
+    if (!_isInitialized) {
+      debugPrint('Warning: SettingsRepository not initialized');
+      return const AppSettings();
     }
 
-    // If anything goes wrong or no settings are saved yet, return default settings.
+    try {
+      final settingsJson = _prefs.getString(_settingsKey);
+      if (settingsJson != null) {
+        final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
+        final settings = AppSettings.fromMap(settingsMap);
+
+        // Validate settings and fix if necessary
+        if (!settings.isValid()) {
+          debugPrint('Invalid settings detected, using defaults');
+          final fixedSettings = _fixInvalidSettings(settings);
+          saveSettings(fixedSettings); // Save the fixed version
+          return fixedSettings;
+        }
+
+        return settings;
+      }
+    } catch (e) {
+      debugPrint('Error loading settings: $e');
+    }
+
     return const AppSettings();
   }
 
-  // Saves the provided AppSettings object to SharedPreferences.
-  // Returns true if successful, false otherwise.
-  Future<bool> saveSettings(AppSettings settings) async {
-    try {
-      // Encode the AppSettings object into a JSON string.
-      final settingsJson = jsonEncode(settings.toMap());
-      // Save the JSON string to SharedPreferences.
-      return await _prefs.setString(_settingsKey, settingsJson);
-    } catch (e) {
-      print('Error saving settings: $e');
-      return false;
-    }
-  }
-
-  // Clears all saved application settings.
-  // This is useful for a "reset to default" feature.
-  Future<bool> clearSettings() async {
-    try {
-      return await _prefs.remove(_settingsKey); // Remove the settings entry.
-    } catch (e) {
-      print('Error clearing settings: $e');
-      return false;
-    }
-  }
-
-  // Updates only the accent color setting.
-  // It fetches current settings, updates the color, and saves the new settings.
-  Future<bool> updateAccentColor(String colorHex) async {
-    final currentSettings = getSettings(); // Get the current settings.
-    final updatedSettings = currentSettings.copyWith(
-      accentColor: colorHex,
-    ); // Create a copy with the new color.
-    return await saveSettings(updatedSettings); // Save the updated settings.
-  }
-
-  // Updates only the first day of the week setting.
-  Future<bool> updateFirstDayOfWeek(String day) async {
-    final currentSettings = getSettings();
-    final updatedSettings = currentSettings.copyWith(firstDayOfWeek: day);
-    return await saveSettings(updatedSettings);
-  }
-
-  // Updates only the default task priority setting.
-  Future<bool> updateDefaultPriority(int priority) async {
-    final currentSettings = getSettings();
-    final updatedSettings = currentSettings.copyWith(
-      defaultTaskPriority: priority,
+  // Helper to fix invalid settings
+  AppSettings _fixInvalidSettings(AppSettings settings) {
+    return AppSettings(
+      accentColor: AppSettings.validateHexColor(settings.accentColor),
+      firstDayOfWeek: AppSettings.validateFirstDay(settings.firstDayOfWeek),
+      defaultTaskPriority: AppSettings.validatePriority(
+        settings.defaultTaskPriority,
+      ),
+      defaultNotificationEnabled: settings.defaultNotificationEnabled,
+      defaultNotificationMinutesBefore: AppSettings.validateMinutesBefore(
+        settings.defaultNotificationMinutesBefore,
+      ),
+      notificationSound: settings.notificationSound,
+      notificationVibration: settings.notificationVibration,
     );
-    return await saveSettings(updatedSettings);
   }
 
-  // Exports the current settings as a JSON string.
-  // Useful for backup or sharing settings.
+  // Enhanced saveSettings with validation and error handling
+  Future<bool> saveSettings(AppSettings settings) async {
+    if (!_isInitialized) {
+      debugPrint('Warning: SettingsRepository not initialized');
+      return false;
+    }
+
+    try {
+      // Validate settings before saving
+      if (!settings.isValid()) {
+        debugPrint('Attempted to save invalid settings');
+        return false;
+      }
+
+      final settingsJson = jsonEncode(settings.toMap());
+      final result = await _prefs.setString(_settingsKey, settingsJson);
+
+      if (result) {
+        debugPrint('Settings saved successfully');
+      } else {
+        debugPrint('Failed to save settings');
+      }
+
+      return result;
+    } catch (e) {
+      debugPrint('Error saving settings: $e');
+      return false;
+    }
+  }
+
+  // Enhanced clearSettings with confirmation
+  Future<bool> clearSettings() async {
+    if (!_isInitialized) {
+      debugPrint('Warning: SettingsRepository not initialized');
+      return false;
+    }
+
+    try {
+      final result = await _prefs.remove(_settingsKey);
+      if (result) {
+        debugPrint('Settings cleared successfully');
+      } else {
+        debugPrint('Failed to clear settings');
+      }
+      return result;
+    } catch (e) {
+      debugPrint('Error clearing settings: $e');
+      return false;
+    }
+  }
+
+  // Enhanced update methods with validation
+  Future<bool> updateAccentColor(String colorHex) async {
+    try {
+      final validatedColor = AppSettings.validateHexColor(colorHex);
+      final currentSettings = getSettings();
+      final updatedSettings = currentSettings.copyWith(
+        accentColor: validatedColor,
+      );
+      return await saveSettings(updatedSettings);
+    } catch (e) {
+      debugPrint('Error updating accent color: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateFirstDayOfWeek(String day) async {
+    try {
+      final validatedDay = AppSettings.validateFirstDay(day);
+      final currentSettings = getSettings();
+      final updatedSettings = currentSettings.copyWith(
+        firstDayOfWeek: validatedDay,
+      );
+      return await saveSettings(updatedSettings);
+    } catch (e) {
+      debugPrint('Error updating first day of week: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateDefaultPriority(int priority) async {
+    try {
+      final validatedPriority = AppSettings.validatePriority(priority);
+      final currentSettings = getSettings();
+      final updatedSettings = currentSettings.copyWith(
+        defaultTaskPriority: validatedPriority,
+      );
+      return await saveSettings(updatedSettings);
+    } catch (e) {
+      debugPrint('Error updating default priority: $e');
+      return false;
+    }
+  }
+
+  // Enhanced export/import with error handling
   String exportSettings() {
     try {
-      final settings = getSettings(); // Get the current settings.
-      return jsonEncode(settings.toMap()); // Encode them to a JSON string.
+      final settings = getSettings();
+      if (!settings.isValid()) {
+        debugPrint('Cannot export invalid settings');
+        return '{}';
+      }
+      return jsonEncode(settings.toMap());
     } catch (e) {
-      print('Error exporting settings: $e');
-      return '{}'; // Return an empty JSON object on error.
+      debugPrint('Error exporting settings: $e');
+      return '{}';
     }
   }
 
-  // Imports settings from a provided JSON string.
-  // It decodes the JSON, converts it to AppSettings, and saves it.
   Future<bool> importSettings(String jsonString) async {
     try {
-      final Map<String, dynamic> settingsMap = jsonDecode(
-        jsonString,
-      ); // Decode the JSON string.
-      final settings = AppSettings.fromMap(
-        settingsMap,
-      ); // Convert to AppSettings object.
-      return await saveSettings(settings); // Save the imported settings.
+      final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
+      final settings = AppSettings.fromMap(settingsMap);
+
+      if (!settings.isValid()) {
+        debugPrint('Imported settings are invalid');
+        return false;
+      }
+
+      return await saveSettings(settings);
     } catch (e) {
-      print('Error importing settings: $e');
+      debugPrint('Error importing settings: $e');
       return false;
     }
   }
+
+  // New method to check if repository is initialized
+  bool get isInitialized => _isInitialized;
 }
