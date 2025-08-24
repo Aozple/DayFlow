@@ -380,7 +380,7 @@ class NotificationService {
           ),
         ],
         // Better sound
-        sound: 'notification_sound.aiff',
+        sound: 'notification_sound.wav',
         threadIdentifier: 'dayflow_notifications',
       );
 
@@ -574,7 +574,7 @@ class NotificationService {
           ),
         ],
         // Sound based on priority
-        sound: '$sound.aiff',
+        sound: '$sound.wav',
         threadIdentifier: 'dayflow_task_${task.id}',
       ),
     );

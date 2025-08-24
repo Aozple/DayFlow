@@ -73,9 +73,22 @@ class HomeTimeline extends StatelessWidget {
             final hour = index;
             // Filter tasks that are due in the current hour.
             final hourTasks =
-                displayTasks.where((task) {
-                  return task.dueDate?.hour == hour;
-                }).toList();
+                displayTasks
+                    .where((task) => task.dueDate?.hour == hour)
+                    .toList()
+                  ..sort((a, b) {
+                    // First sort by minute
+                    final minuteComparison = (a.dueDate?.minute ?? 0).compareTo(
+                      b.dueDate?.minute ?? 0,
+                    );
+
+                    // If same minute, sort by priority (higher priority first)
+                    if (minuteComparison == 0) {
+                      return b.priority.compareTo(a.priority);
+                    }
+
+                    return minuteComparison;
+                  });
             // Build each hourly time slot.
             return HomeTimeSlot(
               hour: hour,

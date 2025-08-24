@@ -59,7 +59,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   // Notification settings
   late bool _hasNotification;
   late int? _notificationMinutesBefore;
-  late String _repeatInterval;
 
   // Task properties
   late DateTime _selectedDate;
@@ -148,7 +147,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _hasNotification = false;
       _notificationMinutesBefore = 0;
     }
-    _repeatInterval = 'none';
   }
 
   /// Debug print notification settings
@@ -333,7 +331,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     debugPrint('Selected Time: $_selectedTime');
     debugPrint('Has Notification: $_hasNotification');
     debugPrint('Minutes Before: ${_notificationMinutesBefore ?? 0}');
-    debugPrint('Repeat: $_repeatInterval');
   }
 
   /// Parse tags from text input
@@ -346,8 +343,22 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   /// Create due datetime if time is set
-  DateTime? _createDueDateTime() {
-    if (!_hasTime || _selectedTime == null) return null;
+  DateTime _createDueDateTime() {
+    final now = DateTime.now();
+
+    if (!_hasTime || _selectedTime == null) {
+      if (_isSameDay(_selectedDate, now)) {
+        return now;
+      }
+
+      return DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        now.hour,
+        now.minute,
+      );
+    }
 
     final dueDateTime = DateTime(
       _selectedDate.year,
@@ -359,6 +370,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     debugPrint('Final Due DateTime: $dueDateTime');
     return dueDateTime;
+  }
+
+  /// Helper method to check if same day
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   /// Update an existing task
