@@ -1,5 +1,4 @@
-import 'package:dayflow/data/models/task_model.dart';
-import 'package:equatable/equatable.dart';
+part of 'task_bloc.dart';
 
 /// Base class for all task states
 abstract class TaskState extends Equatable {
@@ -43,9 +42,9 @@ class TaskLoaded extends TaskState {
 /// Error state when something goes wrong
 class TaskError extends TaskState {
   final String message;
-  
+
   const TaskError(this.message);
-  
+
   @override
   List<Object?> get props => [message];
 }
@@ -53,9 +52,9 @@ class TaskError extends TaskState {
 /// State for specific operations
 class TaskOperationSuccess extends TaskState {
   final String message;
-  
+
   const TaskOperationSuccess(this.message);
-  
+
   @override
   List<Object?> get props => [message];
 }

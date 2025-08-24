@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
-import 'package:dayflow/presentation/blocs/tasks/task_event.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'widgets/create_task_header.dart';

@@ -1,7 +1,10 @@
+import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
-import 'package:dayflow/presentation/blocs/tasks/task_event.dart';
-import 'package:dayflow/presentation/blocs/tasks/task_state.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+part 'task_event.dart';
+part 'task_state.dart';
 
 // This is our TaskBloc, which handles all the logic and state management for tasks.
 // It extends Bloc, taking TaskEvent (what happens) and TaskState (what the UI sees).

@@ -1,7 +1,5 @@
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
-import 'package:dayflow/presentation/blocs/tasks/task_event.dart';
-import 'package:dayflow/presentation/blocs/tasks/task_state.dart';
 import 'package:dayflow/presentation/screens/search/task_search_delegate.dart';
 import 'package:dayflow/presentation/widgets/speed_dial_fab.dart';
 import 'package:dayflow/presentation/widgets/task_filter_modal.dart';

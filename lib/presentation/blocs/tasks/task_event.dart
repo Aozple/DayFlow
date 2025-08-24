@@ -1,5 +1,4 @@
-import 'package:dayflow/data/models/task_model.dart';
-import 'package:equatable/equatable.dart';
+part of 'task_bloc.dart';
 
 /// Base class for all task-related events
 /// Equatable helps BLoC to compare events and avoid unnecessary rebuilds
