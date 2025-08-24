@@ -2,9 +2,12 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dayflow/data/models/app_settings.dart';
 import 'package:dayflow/data/models/task_model.dart';
+import 'package:dayflow/data/repositories/settings_repository.dart';
+import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -76,40 +79,57 @@ class NotificationService {
     }
   }
 
-  /// Initialize timezone settings
   Future<void> _initializeTimezone() async {
     try {
+      // Load timezone data with explicit path
       tz.initializeTimeZones();
 
-      // Get device timezone or fallback to UTC
-      final timeZoneName = await _getDeviceTimezone() ?? 'UTC';
-
-      // Validate and set timezone
       try {
-        final location = tz.getLocation(timeZoneName);
-        tz.setLocalLocation(location);
-        debugPrint('✅ Timezone set to: $timeZoneName');
-        debugPrint('🕐 Current time: ${tz.TZDateTime.now(tz.local)}');
+        String timeZoneName;
+
+        // Try multiple approaches to get timezone
+        try {
+          timeZoneName = await FlutterTimezone.getLocalTimezone();
+        } catch (_) {
+          // Fallback to DateTime's timezone
+          timeZoneName = DateTime.now().timeZoneName;
+        }
+
+        // Validate timezone
+        try {
+          final location = tz.getLocation(timeZoneName);
+          tz.setLocalLocation(location);
+          debugPrint('✅ Timezone set to: $timeZoneName');
+        } catch (_) {
+          // If invalid, try common formats
+          final fixedName = _fixTimezoneName(timeZoneName);
+          try {
+            final location = tz.getLocation(fixedName);
+            tz.setLocalLocation(location);
+            debugPrint('✅ Timezone set to: $fixedName (corrected)');
+          } catch (_) {
+            // Ultimate fallback
+            tz.setLocalLocation(tz.UTC);
+            debugPrint('⚠️ Using UTC as timezone');
+          }
+        }
       } catch (e) {
-        debugPrint('❌ Invalid timezone: $timeZoneName, using UTC');
         tz.setLocalLocation(tz.UTC);
+        debugPrint('⚠️ Timezone error, using UTC: $e');
       }
     } catch (e) {
-      debugPrint('❌ Timezone initialization failed: $e');
       tz.setLocalLocation(tz.UTC);
+      debugPrint('❌ Timezone initialization failed, using UTC: $e');
     }
   }
 
-  /// Get device timezone with fallback
-  Future<String?> _getDeviceTimezone() async {
-    try {
-      final timeZoneName = await FlutterTimezone.getLocalTimezone();
-      debugPrint('🌍 Device timezone: $timeZoneName');
-      return timeZoneName;
-    } catch (e) {
-      debugPrint('⚠️ Failed to get device timezone: $e');
-      return null;
+  // Helper to fix common timezone name issues
+  String _fixTimezoneName(String original) {
+    // Handle Android timezone names that need conversion
+    if (original.startsWith('GMT')) {
+      return original.replaceFirst('GMT', 'Etc/GMT');
     }
+    return original;
   }
 
   /// Check and request permissions
@@ -193,6 +213,7 @@ class NotificationService {
       '@mipmap/ic_launcher',
     );
 
+    // iOS settings with action categories
     final iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -203,16 +224,25 @@ class NotificationService {
           actions: [
             DarwinNotificationAction.plain(
               'complete',
-              'Mark as Complete',
-              options: {DarwinNotificationActionOption.foreground},
+              'Complete',
+              options: {
+                DarwinNotificationActionOption.destructive, // Red color
+              },
             ),
-            DarwinNotificationAction.plain('snooze', 'Snooze'),
+            DarwinNotificationAction.plain(
+              'snooze',
+              'Snooze 5min',
+              options: {
+                DarwinNotificationActionOption.foreground, // Blue color
+              },
+            ),
           ],
+          options: {DarwinNotificationCategoryOption.hiddenPreviewShowTitle},
         ),
       ],
     );
 
-    final initSettings = InitializationSettings(
+    var initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
@@ -305,16 +335,166 @@ class NotificationService {
     debugPrint('  - Action: ${response.actionId}');
     debugPrint('  - Payload: ${response.payload}');
     debugPrint('  - Input: ${response.input}');
-    // TODO: Navigate to task details using payload (task ID)
+
+    // Handle different actions
+    if (response.actionId == 'complete') {
+      _handleCompleteAction(response.payload);
+    } else if (response.actionId == 'snooze') {
+      _handleSnoozeAction(response.payload);
+    } else {
+      // Regular tap - open app or navigate to task
+      _handleDefaultTap(response.payload);
+    }
+  }
+
+  /// Handle complete action
+  Future<void> _handleCompleteAction(String? taskId) async {
+    if (taskId == null || taskId.isEmpty) return;
+
+    debugPrint('✅ Marking task as complete: $taskId');
+
+    try {
+      // Import TaskRepository
+      final taskRepo = TaskRepository();
+
+      // Toggle task completion
+      await taskRepo.toggleTaskComplete(taskId);
+
+      // Cancel future notifications for this task
+      await cancelTaskNotifications(taskId);
+
+      // Show success notification
+      await showNotification(
+        title: '✅ Task Completed!',
+        body: 'Great job! Task has been marked as complete.',
+        channelId: _defaultChannel,
+      );
+
+      debugPrint('✅ Task marked as complete successfully');
+    } catch (e) {
+      debugPrint('❌ Failed to complete task: $e');
+    }
+  }
+
+  /// Handle snooze action
+  Future<void> _handleSnoozeAction(String? taskId) async {
+    if (taskId == null || taskId.isEmpty) return;
+
+    debugPrint('⏰ Snoozing task: $taskId');
+
+    try {
+      // Get task from repository
+      final taskRepo = TaskRepository();
+      final task = taskRepo.getTask(taskId);
+
+      if (task == null) {
+        debugPrint('❌ Task not found');
+        return;
+      }
+
+      // Cancel current notification
+      await cancelTaskNotifications(taskId);
+
+      // Snooze duration (5 minutes default, can be customizable)
+      const snoozeMinutes = 5;
+      final snoozeTime = DateTime.now().add(
+        const Duration(minutes: snoozeMinutes),
+      );
+
+      // Create snoozed task with new time
+      final snoozedTask = task.copyWith(
+        dueDate: snoozeTime,
+        hasNotification: true,
+        notificationMinutesBefore: 0, // At exact time
+      );
+
+      // Get settings
+      final settingsRepo = SettingsRepository();
+      await settingsRepo.init();
+      final settings = settingsRepo.getSettings();
+
+      // Schedule new notification
+      await scheduleTaskNotification(task: snoozedTask, settings: settings);
+
+      // Show confirmation
+      await showNotification(
+        title: '⏰ Reminder Snoozed',
+        body: 'I\'ll remind you again in $snoozeMinutes minutes',
+        channelId: _defaultChannel,
+      );
+
+      debugPrint('✅ Task snoozed for $snoozeMinutes minutes');
+    } catch (e) {
+      debugPrint('❌ Failed to snooze task: $e');
+    }
+  }
+
+  /// Handle default tap (open app)
+  void _handleDefaultTap(String? taskId) {
+    debugPrint('📱 Opening task: $taskId');
+    // TODO: Navigate to task details
+    // This needs to be connected with your navigation system
   }
 
   /// Handle background notification tap
   @pragma('vm:entry-point')
-  static void _onBackgroundNotificationTapped(NotificationResponse response) {
-    debugPrint('👆 Background notification tapped: ${response.payload}');
+  static void _onBackgroundNotificationTapped(
+    NotificationResponse response,
+  ) async {
+    try {
+      // Remove debug prints in release for background handlers
+      if (response.actionId == 'complete') {
+        // Use a simpler approach without full app initialization
+        await _handleBackgroundCompleteAction(response.payload);
+      } else if (response.actionId == 'snooze') {
+        await _handleBackgroundSnoozeAction(response.payload);
+      }
+    } catch (e, stackTrace) {
+      // Log errors without crashing
+      debugPrint('❌ Background notification error: $e');
+      debugPrint(stackTrace.toString());
+    }
   }
 
-  /// Show immediate notification
+  // Simplified background handlers that don't require full initialization
+  static Future<void> _handleBackgroundCompleteAction(String? taskId) async {
+    if (taskId == null || taskId.isEmpty) return;
+
+    try {
+      // Minimal initialization
+      await Hive.initFlutter();
+      await Hive.openBox('tasks');
+
+      final taskRepo = TaskRepository();
+      await taskRepo.toggleTaskComplete(taskId);
+    } catch (e) {
+      debugPrint('❌ Background complete action failed: $e');
+    }
+  }
+
+  static Future<void> _handleBackgroundSnoozeAction(String? taskId) async {
+    if (taskId == null || taskId.isEmpty) return;
+
+    try {
+      // Minimal initialization
+      await Hive.initFlutter();
+      await Hive.openBox('tasks');
+      await Hive.openBox('settings');
+
+      final taskRepo = TaskRepository();
+      final task = taskRepo.getTask(taskId);
+      if (task == null) return;
+
+      // Simple snooze logic without full notification rescheduling
+      final snoozeTime = DateTime.now().add(const Duration(minutes: 5));
+      final snoozedTask = task.copyWith(dueDate: snoozeTime);
+      await taskRepo.updateTask(snoozedTask);
+    } catch (e) {
+      debugPrint('❌ Background snooze action failed: $e');
+    }
+  }
+
+  /// Show immediate notification with improved UI
   Future<bool> showNotification({
     required String title,
     required String body,
@@ -327,7 +507,7 @@ class NotificationService {
     }
 
     try {
-      // Enhanced Android notification details with better styling
+      // Enhanced Android notification with system defaults
       final androidDetails = AndroidNotificationDetails(
         channelId,
         _getChannelName(channelId),
@@ -335,8 +515,7 @@ class NotificationService {
         importance: Importance.high,
         priority: Priority.high,
         showWhen: true,
-        icon: '@mipmap/ic_launcher',
-        // Enhanced UI with big text style
+        // Enhanced UI with expandable content
         styleInformation: BigTextStyleInformation(
           body,
           contentTitle: title,
@@ -345,43 +524,31 @@ class NotificationService {
           htmlFormatContentTitle: true,
           htmlFormatSummaryText: true,
         ),
-        // Enhanced visual elements
-        color: Colors.blue.shade500,
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-        subText: 'Task Reminder',
+        // Visual enhancements using system colors
+        color: const Color(0xFF2196F3),
         category: AndroidNotificationCategory.reminder,
         visibility: NotificationVisibility.public,
-        // Better sound and vibration patterns
-        sound: const RawResourceAndroidNotificationSound('notification_sound'),
-        vibrationPattern: Int64List.fromList([
-          0,
-          500,
-          200,
-          500,
-        ]), // Fixed: converted to Int64List
+        // Use system default sound and vibration
+        playSound: true,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
         enableLights: true,
-        ledColor: Colors.blue,
+        ledColor: const Color(0xFF2196F3),
         ledOnMs: 1000,
         ledOffMs: 500,
+        autoCancel: true,
+        groupKey: 'dayflow_tasks',
+        setAsGroupSummary: false,
       );
 
-      // Enhanced iOS notification details
+      // iOS notification details
       const iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        categoryIdentifier: 'task_reminder',
-        // Attachments for better UI
-        attachments: <DarwinNotificationAttachment>[
-          DarwinNotificationAttachment(
-            'notification_icon',
-            identifier: 'icon',
-            hideThumbnail: false,
-          ),
-        ],
-        // Better sound
-        sound: 'notification_sound.wav',
+        badgeNumber: 1,
         threadIdentifier: 'dayflow_notifications',
+        interruptionLevel: InterruptionLevel.active,
       );
 
       final details = NotificationDetails(
@@ -452,7 +619,10 @@ class NotificationService {
 
       // Generate unique ID and create notification details
       final id = task.id.hashCode.abs();
-      final notificationDetails = _createTaskNotificationDetails(task);
+      final notificationDetails = _createTaskNotificationDetails(
+        task,
+        settings,
+      );
 
       // Schedule notification with fallback mechanisms
       final (scheduled, mode) = await _scheduleWithFallback(
@@ -478,106 +648,148 @@ class NotificationService {
     }
   }
 
-  /// Create notification details for task
-  NotificationDetails _createTaskNotificationDetails(TaskModel task) {
-    // Create priority-based color
-    Color priorityColor = Colors.blue;
-    if (task.priority >= 4) {
-      priorityColor = Colors.red;
-    } else if (task.priority == 3) {
-      priorityColor = Colors.orange;
-    } else if (task.priority <= 2) {
-      priorityColor = Colors.green;
-    }
+  /// Create enhanced notification details for tasks with better UX
+  NotificationDetails _createTaskNotificationDetails(
+    TaskModel task,
+    AppSettings settings,
+  ) {
+    // Priority-based styling
+    final (color, vibrationPattern) = _getPriorityStyle(task.priority);
 
-    // Create priority-based sound
-    String sound = 'notification_sound';
-    if (task.priority >= 4) {
-      sound = 'urgent_notification';
-    }
+    // Build notification content
+    final String expandedBody = _buildExpandedBody(task);
+    final String summaryText = _getPriorityBadge(task.priority);
 
     return NotificationDetails(
       android: AndroidNotificationDetails(
         _reminderChannel,
         'Task Reminders',
         channelDescription: 'Scheduled reminders for tasks',
-        importance: Importance.max,
-        priority: Priority.max,
+        importance: task.priority >= 4 ? Importance.max : Importance.high,
+        priority: task.priority >= 4 ? Priority.max : Priority.high,
         visibility: NotificationVisibility.public,
         category: AndroidNotificationCategory.reminder,
-        enableLights: true,
-        enableVibration: true,
-        playSound: true,
+        // Visual enhancements
         showWhen: true,
+        when: task.dueDate?.millisecondsSinceEpoch,
+        usesChronometer: false,
         autoCancel: true,
-        fullScreenIntent: task.priority >= 4, // Full screen for high priority
-        // Enhanced UI with big text style
+        ongoing: false,
+        // Styling with expandable content
         styleInformation: BigTextStyleInformation(
-          task.description ?? 'Task reminder',
-          contentTitle: '📋 ${task.title}',
-          summaryText: 'Priority: ${_getPriorityText(task.priority)}',
+          expandedBody,
+          contentTitle: task.title,
+          summaryText: summaryText,
           htmlFormatBigText: true,
           htmlFormatContentTitle: true,
           htmlFormatSummaryText: true,
         ),
-        // Visual enhancements
-        color: priorityColor,
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-        subText:
-            'Due: ${task.dueDate != null ? _formatDate(task.dueDate!) : 'No due date'}',
-        // Sound and vibration based on priority
-        sound: RawResourceAndroidNotificationSound(sound),
+        // Priority-based appearance
+        color: color,
+        colorized: false,
+        // Full screen intent for urgent tasks
+        fullScreenIntent: task.priority >= 5,
+        // Sound and vibration based on settings
+        playSound: settings.notificationSound,
+        enableVibration: settings.notificationVibration,
         vibrationPattern:
-            task.priority >= 4
-                ? Int64List.fromList([
-                  0,
-                  1000,
-                  500,
-                  1000,
-                ]) // Fixed: converted to Int64List
-                : Int64List.fromList([
-                  0,
-                  500,
-                  200,
-                  500,
-                ]), // Fixed: converted to Int64List
-        ledColor: priorityColor,
+            settings.notificationVibration ? vibrationPattern : null,
+        enableLights: true,
+        ledColor: color,
         ledOnMs: 1000,
         ledOffMs: 500,
-        // Add actions for task notifications
-        actions: [
+        // Group notifications
+        groupKey: 'dayflow_tasks',
+        setAsGroupSummary: false,
+        // Add ticker for accessibility
+        ticker: 'Task reminder: ${task.title}',
+        // Channel lock
+        channelAction: AndroidNotificationChannelAction.createIfNotExists,
+        actions: <AndroidNotificationAction>[
           const AndroidNotificationAction(
             'complete',
-            'Mark Complete',
-            icon: DrawableResourceAndroidBitmap('ic_complete'),
-            showsUserInterface: true,
+            '✅ Complete',
+            showsUserInterface: false, // Don't open app
+            cancelNotification: true, // Dismiss notification after action
           ),
           const AndroidNotificationAction(
             'snooze',
-            'Snooze',
-            icon: DrawableResourceAndroidBitmap('ic_snooze'),
-            showsUserInterface: true,
+            '⏰ Snooze 5min',
+            showsUserInterface: false,
+            cancelNotification: true,
           ),
         ],
       ),
       iOS: DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
-        presentSound: true,
-        categoryIdentifier: 'task_reminder',
-        // Attachments for better UI
-        attachments: <DarwinNotificationAttachment>[
-          const DarwinNotificationAttachment(
-            'notification_icon',
-            identifier: 'icon',
-            hideThumbnail: false,
-          ),
-        ],
-        // Sound based on priority
-        sound: '$sound.wav',
+        presentSound: settings.notificationSound,
+        badgeNumber: 1,
         threadIdentifier: 'dayflow_task_${task.id}',
+        categoryIdentifier: 'task_reminder',
+        subtitle: task.description,
+        // Set interruption level based on priority
+        interruptionLevel:
+            task.priority >= 4
+                ? InterruptionLevel.timeSensitive
+                : InterruptionLevel.active,
       ),
     );
+  }
+
+  /// Get priority-based color and vibration pattern
+  (Color, Int64List) _getPriorityStyle(int priority) {
+    switch (priority) {
+      case 5:
+        return (Colors.red, Int64List.fromList([0, 500, 250, 500, 250, 500]));
+      case 4:
+        return (Colors.orange, Int64List.fromList([0, 400, 200, 400]));
+      case 3:
+        return (Colors.amber, Int64List.fromList([0, 300, 200, 300]));
+      case 2:
+        return (Colors.green, Int64List.fromList([0, 250, 250, 250]));
+      default:
+        return (Colors.blue, Int64List.fromList([0, 200, 200]));
+    }
+  }
+
+  /// Build expanded notification body
+  String _buildExpandedBody(TaskModel task) {
+    final List<String> parts = [];
+
+    if (task.description != null && task.description!.isNotEmpty) {
+      parts.add(task.description!);
+    }
+
+    if (task.dueDate != null) {
+      parts.add('⏰ Due: ${_formatDate(task.dueDate!)}');
+    }
+
+    if (task.tags.isNotEmpty) {
+      parts.add('🏷️ ${task.tags.join(', ')}');
+    }
+
+    if (parts.isEmpty) {
+      parts.add('You have a task to complete');
+    }
+
+    return parts.join('\n');
+  }
+
+  /// Get priority badge text
+  String _getPriorityBadge(int priority) {
+    switch (priority) {
+      case 5:
+        return '🔴 URGENT';
+      case 4:
+        return '🟠 High Priority';
+      case 3:
+        return '🟡 Medium Priority';
+      case 2:
+        return '🟢 Low Priority';
+      default:
+        return '⚪ Task Reminder';
+    }
   }
 
   /// Schedule notification with fallback mechanisms
@@ -656,17 +868,15 @@ class NotificationService {
   /// Cancel task notifications
   Future<void> cancelTaskNotifications(String taskId) async {
     try {
-      final baseId = taskId.hashCode;
+      final baseId = taskId.hashCode.abs();
 
       // Cancel main notification
       await _notifications.cancel(baseId);
 
-      // Cancel repeating notifications
-      await Future.wait([
-        for (int i = 1; i <= 100; i++) _notifications.cancel(baseId + i),
-        for (int i = 1; i <= 100; i++)
-          _notifications.cancel(baseId + (i * 100)), // For monthly
-      ]);
+      // Cancel potential repeating notifications
+      for (int i = 1; i <= 30; i++) {
+        await _notifications.cancel(baseId + i);
+      }
 
       debugPrint('🗑️ Cancelled all notifications for task: $taskId');
     } catch (e) {
@@ -714,15 +924,18 @@ class NotificationService {
       final scheduledDate = tz.TZDateTime.now(
         tz.local,
       ).add(Duration(seconds: seconds));
-      final details = NotificationDetails(
+
+      var details = NotificationDetails(
         android: AndroidNotificationDetails(
-          _highPriorityChannel,
+          'dayflow_high_priority',
           'High Priority',
           channelDescription: 'Test delayed notification',
           importance: Importance.max,
           priority: Priority.max,
           showWhen: true,
-          when: scheduledDate.millisecondsSinceEpoch,
+          playSound: true,
+          enableVibration: true,
+          vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -784,37 +997,27 @@ class NotificationService {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final difference = date.difference(now);
+    final today = DateTime(now.year, now.month, now.day);
+    final taskDate = DateTime(date.year, date.month, date.day);
+    final difference = taskDate.difference(today).inDays;
 
-    if (difference.inDays == 0) {
+    if (difference == 0) {
       return 'Today at ${_formatTime(date)}';
-    } else if (difference.inDays == 1) {
+    } else if (difference == 1) {
       return 'Tomorrow at ${_formatTime(date)}';
-    } else if (difference.inDays == -1) {
+    } else if (difference == -1) {
       return 'Yesterday at ${_formatTime(date)}';
+    } else if (difference > 1 && difference <= 7) {
+      return 'In $difference days at ${_formatTime(date)}';
     } else {
       return '${date.day}/${date.month}/${date.year} at ${_formatTime(date)}';
     }
   }
 
   String _formatTime(DateTime date) {
-    final hour = date.hour > 12 ? date.hour - 12 : date.hour;
+    final hour =
+        date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
     final period = date.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${date.minute.toString().padLeft(2, '0')} $period';
-  }
-
-  String _getPriorityText(int priority) {
-    switch (priority) {
-      case 5:
-        return '🔴 Very High Priority';
-      case 4:
-        return '🟠 High Priority';
-      case 3:
-        return '🟡 Medium Priority';
-      case 2:
-        return '🟢 Low Priority';
-      default:
-        return '⚪ Very Low Priority';
-    }
   }
 }
