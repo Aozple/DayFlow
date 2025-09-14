@@ -1,6 +1,3 @@
-// lib/presentation/routes/app_router.dart
-// Fixed navigation configuration
-
 import 'package:dayflow/presentation/screens/note/create_note_screen.dart';
 import 'package:dayflow/presentation/screens/settings/settings_screen.dart';
 import 'package:go_router/go_router.dart';

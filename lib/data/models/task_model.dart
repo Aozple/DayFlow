@@ -1,3 +1,4 @@
+import 'package:dayflow/data/models/note_block.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskModel {
@@ -28,6 +29,8 @@ class TaskModel {
   final bool hasNotification;
   final int? notificationMinutesBefore;
 
+  final List<NoteBlock>? blocks;
+
   TaskModel({
     String? id,
     required this.title,
@@ -47,6 +50,7 @@ class TaskModel {
     this.markdownContent,
     this.hasNotification = false,
     this.notificationMinutesBefore,
+    this.blocks,
   }) : id = id ?? const Uuid().v4(),
        createdAt = createdAt ?? DateTime.now(),
        tags = tags ?? [];
@@ -71,10 +75,20 @@ class TaskModel {
       'markdownContent': markdownContent,
       'hasNotification': hasNotification,
       'notificationMinutesBefore': notificationMinutesBefore,
+      'blocks': blocks?.map((block) => block.toJson()).toList(),
     };
   }
 
   factory TaskModel.fromMap(Map<String, dynamic> map) {
+    // Parse blocks if available
+    List<NoteBlock>? blocks;
+    if (map['blocks'] != null) {
+      blocks =
+          (map['blocks'] as List)
+              .map((blockJson) => blockFromJson(blockJson))
+              .toList();
+    }
+
     return TaskModel(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -100,6 +114,7 @@ class TaskModel {
       markdownContent: map['markdownContent'] as String?,
       hasNotification: map['hasNotification'] as bool? ?? false,
       notificationMinutesBefore: map['notificationMinutesBefore'] as int?,
+      blocks: blocks,
     );
   }
 
@@ -122,6 +137,7 @@ class TaskModel {
     String? markdownContent,
     bool? hasNotification,
     int? notificationMinutesBefore,
+    List<NoteBlock>? blocks,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -143,6 +159,15 @@ class TaskModel {
       hasNotification: hasNotification ?? this.hasNotification,
       notificationMinutesBefore:
           notificationMinutesBefore ?? this.notificationMinutesBefore,
+      blocks: blocks ?? this.blocks,
     );
+  }
+
+  // Helper method to convert legacy markdown content to blocks
+  List<NoteBlock> getLegacyBlocks() {
+    if (markdownContent != null && markdownContent!.isNotEmpty) {
+      return [TextBlock(id: const Uuid().v4(), text: markdownContent!)];
+    }
+    return [];
   }
 }
