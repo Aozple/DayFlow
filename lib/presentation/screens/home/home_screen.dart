@@ -400,6 +400,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTaskToggled: _toggleTaskCompletion,
                       onTaskOptions: _showTaskOptionsMenu,
                       onNoteOptions: _showNoteOptionsMenu,
+                      onDateChanged: (newDate) {
+                        setState(() {
+                          _selectedDate = newDate;
+                        });
+                      },
                     );
                   },
                 ),
