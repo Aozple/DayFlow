@@ -1,7 +1,6 @@
 part of 'task_bloc.dart';
 
 /// Base class for all task-related events
-/// Equatable helps BLoC to compare events and avoid unnecessary rebuilds
 abstract class TaskEvent extends Equatable {
   const TaskEvent();
 
@@ -21,7 +20,7 @@ class LoadTasksByDate extends TaskEvent {
   const LoadTasksByDate(this.date);
 
   @override
-  List<Object?> get props => [date]; // Include date in props for comparison
+  List<Object?> get props => [date];
 }
 
 /// Event to add a new task
@@ -41,7 +40,7 @@ class UpdateTask extends TaskEvent {
   const UpdateTask(this.task);
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [task]; // Should include task for proper comparison
 }
 
 /// Event to toggle task completion

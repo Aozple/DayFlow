@@ -1,22 +1,21 @@
 part of 'settings_bloc.dart';
 
-// This is the base class for all events related to app settings.
-// Events are like actions that the UI dispatches to the SettingsBloc.
+// Base class for all settings events
 abstract class SettingsEvent extends Equatable {
   const SettingsEvent();
 
   @override
-  List<Object?> get props => []; // All events should be equatable for proper comparison.
+  List<Object?> get props => [];
 }
 
-// This event tells the SettingsBloc to load the app settings.
+// Load settings from storage
 class LoadSettings extends SettingsEvent {
   const LoadSettings();
 }
 
-// This event is dispatched when the user wants to change the app's accent color.
+// Update app accent color
 class UpdateAccentColor extends SettingsEvent {
-  final String colorHex; // The new accent color, in hex format.
+  final String colorHex;
 
   const UpdateAccentColor(this.colorHex);
 
@@ -24,9 +23,9 @@ class UpdateAccentColor extends SettingsEvent {
   List<Object?> get props => [colorHex];
 }
 
-// This event is dispatched when the user wants to change which day the week starts on.
+// Change first day of week
 class UpdateFirstDayOfWeek extends SettingsEvent {
-  final String day; // Can be 'saturday' or 'monday'.
+  final String day; // 'saturday' or 'monday'
 
   const UpdateFirstDayOfWeek(this.day);
 
@@ -34,9 +33,9 @@ class UpdateFirstDayOfWeek extends SettingsEvent {
   List<Object?> get props => [day];
 }
 
-// This event is dispatched when the user wants to set a new default priority for tasks.
+// Set default task priority
 class UpdateDefaultPriority extends SettingsEvent {
-  final int priority; // The new default priority level.
+  final int priority;
 
   const UpdateDefaultPriority(this.priority);
 
@@ -44,7 +43,7 @@ class UpdateDefaultPriority extends SettingsEvent {
   List<Object?> get props => [priority];
 }
 
-// Event to update default notification enabled
+// Toggle default notification setting
 class UpdateNotificationEnabled extends SettingsEvent {
   final bool enabled;
 
@@ -54,7 +53,7 @@ class UpdateNotificationEnabled extends SettingsEvent {
   List<Object?> get props => [enabled];
 }
 
-// Event to update default notification time
+// Change default notification time
 class UpdateDefaultNotificationTime extends SettingsEvent {
   final int minutesBefore;
 
@@ -64,7 +63,7 @@ class UpdateDefaultNotificationTime extends SettingsEvent {
   List<Object?> get props => [minutesBefore];
 }
 
-// Event to update notification sound
+// Toggle notification sound
 class UpdateNotificationSound extends SettingsEvent {
   final bool enabled;
 
@@ -74,7 +73,7 @@ class UpdateNotificationSound extends SettingsEvent {
   List<Object?> get props => [enabled];
 }
 
-// Event to update notification vibration
+// Toggle notification vibration
 class UpdateNotificationVibration extends SettingsEvent {
   final bool enabled;
 
@@ -84,12 +83,12 @@ class UpdateNotificationVibration extends SettingsEvent {
   List<Object?> get props => [enabled];
 }
 
-// Event to reset all settings to defaults
+// Reset all settings to defaults
 class ResetSettings extends SettingsEvent {
   const ResetSettings();
 }
 
-// Event to export settings data
+// Export settings to file
 class ExportSettings extends SettingsEvent {
   final String format; // 'json' or 'csv'
 
@@ -99,7 +98,7 @@ class ExportSettings extends SettingsEvent {
   List<Object?> get props => [format];
 }
 
-// Event to import settings data
+// Import settings from file
 class ImportSettings extends SettingsEvent {
   final String data;
   final String format; // 'json' or 'csv'

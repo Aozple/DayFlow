@@ -9,65 +9,49 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 part 'task_event.dart';
 part 'task_state.dart';
 
-// This is our TaskBloc, which handles all the logic and state management for tasks.
-// It extends Bloc, taking TaskEvent (what happens) and TaskState (what the UI sees).
+// Main BLoC for task management
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
-  // We need a TaskRepository to interact with our task data (like saving or loading).
+  // Repository for data operations
   final TaskRepository _repository;
 
-  // The constructor sets up the repository and registers all our event handlers.
+  // Initialize and register event handlers
   TaskBloc({required TaskRepository repository})
     : _repository = repository,
       super(const TaskInitial()) {
-    // When a LoadTasks event comes in, call _onLoadTasks.
     on<LoadTasks>(_onLoadTasks);
-    // When a LoadTasksByDate event comes in, call _onLoadTasksByDate.
     on<LoadTasksByDate>(_onLoadTasksByDate);
-    // When an AddTask event comes in, call _onAddTask.
     on<AddTask>(_onAddTask);
-    // When an UpdateTask event comes in, call _onUpdateTask.
     on<UpdateTask>(_onUpdateTask);
-    // When a ToggleTaskComplete event comes in, call _onToggleTaskComplete.
     on<ToggleTaskComplete>(_onToggleTaskComplete);
-    // When a DeleteTask event comes in, call _onDeleteTask.
     on<DeleteTask>(_onDeleteTask);
   }
 
-  // This method handles the `LoadTasks` event.
-  // It fetches all tasks and emits a `TaskLoaded` state.
+  // Load all tasks
   Future<void> _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) async {
     try {
-      // Grab all tasks from our repository.
       final tasks = _repository.getAllTasks();
-
-      // Tell the UI that tasks are loaded and provide the list.
       emit(TaskLoaded(tasks: tasks));
     } catch (e) {
-      // If something breaks, emit an error state.
       emit(TaskError(e.toString()));
     }
   }
 
-  // This method handles the `LoadTasksByDate` event.
-  // It loads tasks specifically for a given date.
+  // Load tasks for a specific date
   Future<void> _onLoadTasksByDate(
     LoadTasksByDate event,
     Emitter<TaskState> emit,
   ) async {
-    emit(const TaskLoading()); // First, emit a loading state.
+    emit(const TaskLoading());
 
     try {
-      // Get tasks filtered by the specified date.
       final tasks = _repository.getTasksByDate(event.date);
-      // Emit the loaded tasks, also keeping track of the selected date.
       emit(TaskLoaded(tasks: tasks, selectedDate: event.date));
     } catch (e) {
-      emit(TaskError(e.toString())); // Handle any errors.
+      emit(TaskError(e.toString()));
     }
   }
 
-  // This method handles the `AddTask` event.
-  // It adds a new task to the repository and then reloads all tasks.
+  // Add a new task with optional notification
   Future<void> _onAddTask(AddTask event, Emitter<TaskState> emit) async {
     try {
       debugPrint('\n➕ === ADDING NEW TASK ===');
@@ -76,14 +60,14 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       debugPrint('Due date: ${event.task.dueDate}');
       debugPrint('Minutes before: ${event.task.notificationMinutesBefore}');
 
-      // First add the task to the repository
+      // Save task to repository
       await _repository.addTask(event.task);
 
-      // Then schedule notification if enabled and due date is set
+      // Handle notification scheduling
       if (event.task.hasNotification && event.task.dueDate != null) {
         debugPrint('🔔 Scheduling notification for task...');
 
-        // Get the app settings
+        // Get app settings
         final settingsRepo = SettingsRepository();
         await settingsRepo.init();
         final settings = settingsRepo.getSettings();
@@ -91,7 +75,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
           'Settings loaded - default minutes: ${settings.defaultNotificationMinutesBefore}',
         );
 
-        // Make sure the notification service is initialized
+        // Initialize notification service if needed
         final notificationService = NotificationService();
         if (!notificationService.isInitialized) {
           await notificationService.initialize();
@@ -112,7 +96,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         debugPrint('🔕 No notification needed for this task');
       }
 
-      // Reload tasks to update UI
+      // Refresh task list
       add(const LoadTasks());
     } catch (e) {
       debugPrint('❌ Error in _onAddTask: $e');
@@ -120,27 +104,26 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
-  // This method handles the `UpdateTask` event.
-  // It updates an existing task in the repository and then reloads all tasks.
+  // Update an existing task
   Future<void> _onUpdateTask(UpdateTask event, Emitter<TaskState> emit) async {
     try {
       debugPrint('✏️ Updating task: ${event.task.title}');
 
-      // First update the task in the repository
+      // Update task in repository
       await _repository.updateTask(event.task);
 
-      // Get the app settings
+      // Get app settings
       final settingsRepo = SettingsRepository();
       await settingsRepo.init();
       final settings = settingsRepo.getSettings();
 
-      // Make sure the notification service is initialized
+      // Initialize notification service if needed
       final notificationService = NotificationService();
       if (!notificationService.isInitialized) {
         await notificationService.initialize();
       }
 
-      // Update notification if needed
+      // Update or cancel notification based on task settings
       if (event.task.hasNotification && event.task.dueDate != null) {
         debugPrint('🔔 Updating notification for task');
         final success = await notificationService.scheduleTaskNotification(
@@ -156,7 +139,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         await notificationService.cancelTaskNotifications(event.task.id);
       }
 
-      // Reload tasks to update UI
+      // Refresh task list
       add(const LoadTasks());
     } catch (e) {
       debugPrint('❌ Error in _onUpdateTask: $e');
@@ -164,53 +147,42 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
-  // This method handles the `ToggleTaskComplete` event.
-  // It flips the completion status of a task.
+  // Toggle task completion status
   Future<void> _onToggleTaskComplete(
     ToggleTaskComplete event,
     Emitter<TaskState> emit,
   ) async {
     try {
-      await _repository.toggleTaskComplete(
-        event.taskId,
-      ); // Toggle completion status in the repository.
+      await _repository.toggleTaskComplete(event.taskId);
 
-      // If we're already in a `TaskLoaded` state, we can update it directly
-      // without a full reload, which is a bit smoother.
+      // Update state efficiently if already loaded
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
-        final tasks =
-            _repository.getAllTasks(); // Get the updated list of tasks.
-        emit(
-          TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate),
-        ); // Emit the new state.
+        final tasks = _repository.getAllTasks();
+        emit(TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate));
       } else {
-        add(const LoadTasks()); // Otherwise, just trigger a full reload.
+        add(const LoadTasks());
       }
     } catch (e) {
-      emit(TaskError(e.toString())); // Handle errors during status toggle.
+      emit(TaskError(e.toString()));
     }
   }
 
-  // This method handles the `DeleteTask` event.
-  // It marks a task as deleted in the repository.
+  // Delete a task
   Future<void> _onDeleteTask(DeleteTask event, Emitter<TaskState> emit) async {
     try {
-      await _repository.deleteTask(event.taskId); // Mark the task as deleted.
+      await _repository.deleteTask(event.taskId);
 
-      // Similar to toggling completion, update the state if already loaded,
-      // otherwise trigger a full reload.
+      // Update state efficiently if already loaded
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
-        final tasks = _repository.getAllTasks(); // Get the updated list.
-        emit(
-          TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate),
-        ); // Emit the new state.
+        final tasks = _repository.getAllTasks();
+        emit(TaskLoaded(tasks: tasks, selectedDate: currentState.selectedDate));
       } else {
-        add(const LoadTasks()); // Fallback to full reload.
+        add(const LoadTasks());
       }
     } catch (e) {
-      emit(TaskError(e.toString())); // Handle errors during task deletion.
+      emit(TaskError(e.toString()));
     }
   }
 }

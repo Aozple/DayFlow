@@ -8,17 +8,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import 'core/themes/app_theme.dart';
 
-// This is the main entry point of our app.
-// It's an async function because we need to do some setup before running the app.
+// App entry point with initialization
 void main() async {
-  // Make sure Flutter's widgets are initialized before anything else.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set the style for the system UI (like the status bar and navigation bar).
-  // We want them to be transparent and have light icons so they're visible.
+  // Set transparent system bars with light icons
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -28,55 +24,49 @@ void main() async {
     ),
   );
 
-  // Enable edge-to-edge display, so our app content can go behind the system bars.
+  // Enable edge-to-edge display
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Initialize Hive
+  // Initialize local storage
   await Hive.initFlutter();
   await Hive.openBox('tasks');
   await Hive.openBox('settings');
 
-  // Initialize notification service
+  // Setup notifications
   final notificationService = NotificationService();
   await notificationService.initialize();
 
-  // Set up the Settings Repository and initialize it.
+  // Initialize settings
   final settingsRepository = SettingsRepository();
   await settingsRepository.init();
 
-  // Lock the app to portrait mode for a consistent mobile experience.
+  // Lock to portrait orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Run the main DayFlow application.
   runApp(DayFlowApp(settingsRepository: settingsRepository));
 }
 
-// This is the main widget for our DayFlow application.
-// It's a StatelessWidget because its properties don't change after creation.
+// Main app widget
 class DayFlowApp extends StatelessWidget {
-  // We're passing in the settings repository to manage app settings.
   final SettingsRepository settingsRepository;
   const DayFlowApp({super.key, required this.settingsRepository});
 
   @override
   Widget build(BuildContext context) {
-    // We're using MultiBlocProvider to provide multiple BLoCs (Business Logic Components)
-    // to our widget tree, making them accessible to child widgets.
+    // Setup BLoCs for state management
     return MultiBlocProvider(
       providers: [
-        // Provide the TaskBloc, which handles all task-related logic.
-        // We also immediately tell it to load tasks when it's created.
+        // Task management
         BlocProvider(
           create:
               (context) =>
                   TaskBloc(repository: TaskRepository())
                     ..add(const LoadTasks()),
         ),
-        // Provide the SettingsBloc, which manages app settings.
-        // It also loads settings right after creation.
+        // Settings management
         BlocProvider(
           create:
               (context) =>
@@ -84,19 +74,17 @@ class DayFlowApp extends StatelessWidget {
                     ..add(const LoadSettings()),
         ),
       ],
-      // BlocBuilder listens to changes in the SettingsBloc state.
-      // This helps us dynamically set the app's theme based on user settings.
+      // Update UI based on settings changes
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
-          // MaterialApp.router is used for declarative routing with GoRouter.
+          // todo: Use settingsState.themeMode instead of hardcoded dark mode
           return MaterialApp.router(
-            title: 'DayFlow', // The title of our app.
-            debugShowCheckedModeBanner: false, // Hide the debug banner.
-            theme: AppTheme.lightTheme, // Define our light theme.
-            darkTheme: AppTheme.darkTheme, // Define our dark theme.
-            themeMode:
-                ThemeMode.dark, // For now, we're defaulting to dark mode.
-            routerConfig: AppRouter.router, // Our routing configuration.
+            title: 'DayFlow',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.dark,
+            routerConfig: AppRouter.router,
           );
         },
       ),

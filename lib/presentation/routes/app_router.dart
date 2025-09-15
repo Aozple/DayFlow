@@ -7,6 +7,7 @@ import '../screens/task/task_details_screen.dart';
 import '../../data/models/task_model.dart';
 
 class AppRouter {
+  // Main router configuration
   static final GoRouter router = GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: true,
@@ -16,12 +17,12 @@ class AppRouter {
         name: 'home',
         builder: (context, state) => const HomeScreen(),
         routes: [
-          // Create task route
+          // Create task screen with optional prefilled data
           GoRoute(
             path: 'create-task',
             name: 'createTask',
             builder: (context, state) {
-              // Get parameters from query
+              // Extract hour and date from query parameters
               final hourString = state.uri.queryParameters['hour'];
               final dateString = state.uri.queryParameters['date'];
 
@@ -33,11 +34,12 @@ class AppRouter {
             },
           ),
 
+          // Create note screen with optional prefilled data
           GoRoute(
             path: 'create-note',
             name: 'createNote',
             builder: (context, state) {
-              // Get parameters from query
+              // Extract hour and date from query parameters
               final hourString = state.uri.queryParameters['hour'];
               final dateString = state.uri.queryParameters['date'];
 
@@ -49,13 +51,14 @@ class AppRouter {
             },
           ),
 
+          // Settings screen
           GoRoute(
             path: 'settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
           ),
 
-          // Edit task route - با extra برای pass کردن task
+          // Edit existing task
           GoRoute(
             path: 'edit-task',
             name: 'editTask',
@@ -65,7 +68,7 @@ class AppRouter {
             },
           ),
 
-          // Task details route - با extra برای pass کردن task
+          // Task details view
           GoRoute(
             path: 'task-details',
             name: 'taskDetails',
@@ -75,6 +78,7 @@ class AppRouter {
             },
           ),
 
+          // Edit existing note
           GoRoute(
             path: 'edit-note',
             name: 'editNote',

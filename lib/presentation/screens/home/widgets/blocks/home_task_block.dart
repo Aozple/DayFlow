@@ -5,19 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// A compact display block for a task in the timeline.
-/// 
-/// This widget displays a task in a compact format suitable for the timeline view,
-/// showing the task title, time, tags, and completion status. It provides
-/// interactions for viewing details, toggling completion, and accessing options.
+/// Compact task display for timeline view
 class HomeTaskBlock extends StatelessWidget {
-  /// The task to display.
   final TaskModel task;
-  
-  /// Callback function when the task completion is toggled.
   final Function(TaskModel) onToggleComplete;
-  
-  /// Callback function to show task options.
   final Function(TaskModel) onOptions;
 
   const HomeTaskBlock({
@@ -29,106 +20,85 @@ class HomeTaskBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine if the task uses a default color or a custom one.
+    // Determine color scheme based on task color
     final isDefaultColor = task.color == '#2C2C2E' || task.color == '#8E8E93';
     final taskColor =
         isDefaultColor
-            ? AppColors
-                .textSecondary // Use secondary text color for default.
-            : AppColors.fromHex(task.color); // Convert hex to Color object.
-    
-    // If the task is actually a note, delegate to the note block builder.
+            ? AppColors.textSecondary
+            : AppColors.fromHex(task.color);
+
+    // Safety check for note type
     if (task.isNote) {
-      // This shouldn't happen as the caller should check, but just in case
       return const SizedBox.shrink();
     }
-    
+
     return GestureDetector(
-      onLongPress:
-          () => onOptions(task), // Show options menu on long press.
+      onLongPress: () => onOptions(task),
       onTap: () {
-        context.push(
-          '/task-details',
-          extra: task,
-        ); // Navigate to task details on tap.
+        context.push('/task-details', extra: task);
       },
       child: AnimatedContainer(
-        duration: const Duration(
-          milliseconds: 200,
-        ), // Smooth animation for state changes.
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color:
               task.isCompleted
-                  ? AppColors.surface.withAlpha(
-                    150,
-                  ) // Faded background if completed.
+                  ? AppColors.surface.withAlpha(150)
                   : isDefaultColor
-                  ? AppColors
-                      .surfaceLight // Light surface for default color.
-                  : taskColor.withAlpha(40), // Semi-transparent custom color.
+                  ? AppColors.surfaceLight
+                  : taskColor.withAlpha(40),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
                 task.isCompleted
-                    ? AppColors
-                        .divider // Divider color if completed.
+                    ? AppColors.divider
                     : isDefaultColor
-                    ? AppColors
-                        .divider // Divider color for default.
-                    : taskColor.withAlpha(
-                      150,
-                    ), // More opaque custom color for border.
+                    ? AppColors.divider
+                    : taskColor.withAlpha(150),
             width: 1,
           ),
         ),
         child: Row(
           children: [
-            // Vertical bar indicating task priority.
+            // Priority indicator bar
             Container(
               width: 4,
               height: 28,
               decoration: BoxDecoration(
-                color: AppColors.getPriorityColor(
-                  task.priority,
-                ), // Color based on priority.
+                color: AppColors.getPriorityColor(task.priority),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(width: 12),
-            // Task title and metadata.
+            // Task content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Task title.
+                  // Task title
                   Text(
                     task.title,
                     style: TextStyle(
                       color:
                           task.isCompleted
-                              ? AppColors
-                                  .textSecondary // Faded text if completed.
-                              : AppColors
-                                  .textPrimary, // Primary text otherwise.
+                              ? AppColors.textSecondary
+                              : AppColors.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       decoration:
-                          task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null, // Strikethrough if completed.
+                          task.isCompleted ? TextDecoration.lineThrough : null,
                       decorationColor: AppColors.textTertiary,
                     ),
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis, // Truncate long titles.
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  // Row for time and tags, only shown if they exist.
+                  // Time and tags row
                   if (task.dueDate != null || task.tags.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        // Display task time if due date is set.
+                        // Time display with notification indicator
                         if (task.dueDate != null) ...[
                           const Icon(
                             CupertinoIcons.clock,
@@ -137,16 +107,24 @@ class HomeTaskBlock extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            DateFormat('HH:mm').format(
-                              task.dueDate!,
-                            ), // Format time (e.g., "14:30").
+                            DateFormat('HH:mm').format(task.dueDate!),
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
                             ),
                           ),
+
+                          // Show bell icon for tasks with notifications
+                          if (task.hasNotification) ...[
+                            const SizedBox(width: 4),
+                            Icon(
+                              CupertinoIcons.bell_fill,
+                              size: 12,
+                              color: AppColors.accent.withAlpha(180),
+                            ),
+                          ],
                         ],
-                        // Display the first tag if tags exist.
+                        // Show first tag with count indicator for additional tags
                         if (task.tags.isNotEmpty) ...[
                           const SizedBox(width: 12),
                           Container(
@@ -155,17 +133,41 @@ class HomeTaskBlock extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.divider.withAlpha(
-                                50,
-                              ), // Subtle background for tag.
+                              color: AppColors.divider.withAlpha(50),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Text(
-                              task.tags.first, // Display only the first tag.
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  task.tags.first,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                if (task.tags.length > 1) ...[
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accent.withAlpha(50),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '+${task.tags.length - 1}',
+                                      style: TextStyle(
+                                        color: AppColors.accent,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ],
@@ -175,48 +177,36 @@ class HomeTaskBlock extends StatelessWidget {
                 ],
               ),
             ),
-            // Checkbox for marking task as complete/incomplete.
+            // Completion checkbox
             const SizedBox(width: 12),
             CupertinoButton(
-              padding: const EdgeInsets.all(
-                4,
-              ), // Padding for better touch area.
-              minSize: 32, // Larger touch area.
+              padding: const EdgeInsets.all(4),
+              minSize: 32,
               onPressed: () {
-                onToggleComplete(task); // Dispatch event to toggle completion.
+                onToggleComplete(task);
               },
               child: AnimatedContainer(
-                duration: const Duration(
-                  milliseconds: 200,
-                ), // Smooth animation.
+                duration: const Duration(milliseconds: 200),
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
                   color:
-                      task.isCompleted
-                          ? AppColors.accent
-                          : Colors.transparent, // Accent color if completed.
+                      task.isCompleted ? AppColors.accent : Colors.transparent,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color:
-                        task.isCompleted
-                            ? AppColors.accent
-                            : AppColors.divider, // Accent border if completed.
-                    width:
-                        task.isCompleted
-                            ? 0
-                            : 2, // Thicker border if not completed.
+                        task.isCompleted ? AppColors.accent : AppColors.divider,
+                    width: task.isCompleted ? 0 : 2,
                   ),
                 ),
                 child:
                     task.isCompleted
                         ? const Icon(
-                          CupertinoIcons
-                              .checkmark, // Checkmark icon if completed.
+                          CupertinoIcons.checkmark,
                           size: 16,
                           color: Colors.white,
                         )
-                        : null, // No child if not completed.
+                        : null,
               ),
             ),
           ],

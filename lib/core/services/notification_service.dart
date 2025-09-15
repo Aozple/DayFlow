@@ -15,29 +15,29 @@ import 'package:permission_handler/permission_handler.dart';
 
 /// Notification Service for managing all notification operations
 class NotificationService {
-  // Singleton pattern
+  // Singleton pattern implementation
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  // Plugin instance
+  // Plugin instance for notifications
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  // State flags
+  // Service state tracking
   bool _isInitialized = false;
   bool _notificationsEnabled = true;
 
-  // Channel IDs
+  // Channel identifiers
   static const String _highPriorityChannel = 'dayflow_high_priority';
   static const String _defaultChannel = 'dayflow_default';
   static const String _reminderChannel = 'dayflow_reminders';
 
-  // Getters
+  // Public getters
   bool get isInitialized => _isInitialized;
   bool get notificationsEnabled => _notificationsEnabled;
 
-  /// Initialize notification service
+  /// Initialize the notification service
   Future<bool> initialize() async {
     if (_isInitialized) {
       debugPrint('⚠️ NotificationService already initialized');
@@ -47,19 +47,19 @@ class NotificationService {
     try {
       debugPrint('🔧 Initializing NotificationService...');
 
-      // Initialize timezone
+      // Set up timezone data
       await _initializeTimezone();
 
-      // Check permissions
+      // Check and request permissions
       _notificationsEnabled = await _checkAndRequestPermissions();
       if (!_notificationsEnabled) {
         debugPrint('❌ Notification permissions not granted');
       }
 
-      // Initialize plugin
+      // Set up notification plugin
       await _initializePlugin();
 
-      // Create notification channels for Android
+      // Create Android notification channels
       if (Platform.isAndroid) {
         await _createNotificationChannels();
       }
@@ -67,7 +67,7 @@ class NotificationService {
       _isInitialized = true;
       debugPrint('✅ NotificationService initialized successfully');
 
-      // Test notification channels
+      // Verify channels are working
       await _verifyChannels();
 
       return true;
@@ -79,15 +79,16 @@ class NotificationService {
     }
   }
 
+  /// Initialize timezone data for accurate scheduling
   Future<void> _initializeTimezone() async {
     try {
-      // Load timezone data with explicit path
+      // Load timezone database
       tz.initializeTimeZones();
 
       try {
         String timeZoneName;
 
-        // Try multiple approaches to get timezone
+        // Try multiple methods to get the device timezone
         try {
           timeZoneName = await FlutterTimezone.getLocalTimezone();
         } catch (_) {
@@ -95,20 +96,20 @@ class NotificationService {
           timeZoneName = DateTime.now().timeZoneName;
         }
 
-        // Validate timezone
+        // Validate and set the timezone
         try {
           final location = tz.getLocation(timeZoneName);
           tz.setLocalLocation(location);
           debugPrint('✅ Timezone set to: $timeZoneName');
         } catch (_) {
-          // If invalid, try common formats
+          // Try to fix common timezone naming issues
           final fixedName = _fixTimezoneName(timeZoneName);
           try {
             final location = tz.getLocation(fixedName);
             tz.setLocalLocation(location);
             debugPrint('✅ Timezone set to: $fixedName (corrected)');
           } catch (_) {
-            // Ultimate fallback
+            // Ultimate fallback to UTC
             tz.setLocalLocation(tz.UTC);
             debugPrint('⚠️ Using UTC as timezone');
           }
@@ -123,7 +124,7 @@ class NotificationService {
     }
   }
 
-  // Helper to fix common timezone name issues
+  /// Fix common timezone name format issues
   String _fixTimezoneName(String original) {
     // Handle Android timezone names that need conversion
     if (original.startsWith('GMT')) {
@@ -132,7 +133,7 @@ class NotificationService {
     return original;
   }
 
-  /// Check and request permissions
+  /// Check and request necessary permissions
   Future<bool> _checkAndRequestPermissions() async {
     try {
       if (Platform.isAndroid) {
@@ -207,7 +208,7 @@ class NotificationService {
     }
   }
 
-  /// Initialize plugin
+  /// Initialize notification plugin with platform-specific settings
   Future<void> _initializePlugin() async {
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
@@ -310,7 +311,7 @@ class NotificationService {
     }
   }
 
-  /// Verify channels
+  /// Verify channels are properly set up
   Future<void> _verifyChannels() async {
     if (!Platform.isAndroid) return;
 
@@ -354,7 +355,7 @@ class NotificationService {
     debugPrint('✅ Marking task as complete: $taskId');
 
     try {
-      // Import TaskRepository
+      // Get task repository
       final taskRepo = TaskRepository();
 
       // Toggle task completion
@@ -395,7 +396,7 @@ class NotificationService {
       // Cancel current notification
       await cancelTaskNotifications(taskId);
 
-      // Snooze duration (5 minutes default, can be customizable)
+      // Snooze duration (5 minutes default)
       const snoozeMinutes = 5;
       final snoozeTime = DateTime.now().add(
         const Duration(minutes: snoozeMinutes),

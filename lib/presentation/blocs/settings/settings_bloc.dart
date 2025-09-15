@@ -3,14 +3,15 @@ import 'package:dayflow/data/models/app_settings.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/repositories/settings_repository.dart';
-import 'package:flutter/foundation.dart'; // For debug logging
+import 'package:flutter/foundation.dart';
 
 part 'settings_event.dart';
 part 'settings_state.dart';
 
+// BLoC for managing application settings
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final SettingsRepository _repository;
-  AppSettings? _cachedSettings; // Cache for settings to reduce repository calls
+  AppSettings? _cachedSettings; // Cache to reduce repository calls
 
   SettingsBloc({required SettingsRepository repository})
     : _repository = repository,
@@ -26,22 +27,23 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<ResetSettings>(_onResetSettings);
   }
 
+  // Load settings from repository
   Future<void> _onLoadSettings(
     LoadSettings event,
     Emitter<SettingsState> emit,
   ) async {
     try {
       emit(const SettingsLoading());
-      
-      // Initialize repository if not already initialized
+
+      // Initialize repository if needed
       if (!_repository.isInitialized) {
         await _repository.init();
       }
-      
+
       final settings = _repository.getSettings();
-      _cachedSettings = settings; // Cache the settings
-      
-      // Apply the loaded accent color
+      _cachedSettings = settings;
+
+      // Apply accent color
       AppColors.setAccentColor(settings.accentColor);
       emit(SettingsLoaded(settings));
     } catch (e) {
@@ -50,26 +52,31 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update accent color
   Future<void> _onUpdateAccentColor(
     UpdateAccentColor event,
     Emitter<SettingsState> emit,
   ) async {
     try {
       final currentSettings = _getCurrentSettings();
-      final updatedSettings = currentSettings.copyWith(accentColor: event.colorHex);
-      
+      final updatedSettings = currentSettings.copyWith(
+        accentColor: event.colorHex,
+      );
+
       // Apply color immediately for instant feedback
       AppColors.setAccentColor(event.colorHex);
       emit(SettingsLoaded(updatedSettings));
-      
+
       // Save to persistent storage
       final success = await _repository.saveSettings(updatedSettings);
       if (success) {
-        _cachedSettings = updatedSettings; // Update cache
-        emit(SettingsOperationSuccess(
-          message: 'Accent color updated',
-          settings: updatedSettings,
-        ));
+        _cachedSettings = updatedSettings;
+        emit(
+          SettingsOperationSuccess(
+            message: 'Accent color updated',
+            settings: updatedSettings,
+          ),
+        );
       } else {
         // Revert on failure
         AppColors.setAccentColor(currentSettings.accentColor);
@@ -82,6 +89,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update first day of week
   Future<void> _onUpdateFirstDayOfWeek(
     UpdateFirstDayOfWeek event,
     Emitter<SettingsState> emit,
@@ -90,14 +98,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final success = await _updateSetting(
         (settings) => settings.copyWith(firstDayOfWeek: event.day),
       );
-      
+
       if (success) {
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        emit(SettingsOperationSuccess(
-          message: 'First day of week updated to ${event.day == 'saturday' ? 'Saturday' : 'Monday'}',
-          settings: settings,
-        ));
+        emit(
+          SettingsOperationSuccess(
+            message:
+                'First day of week updated to ${event.day == 'saturday' ? 'Saturday' : 'Monday'}',
+            settings: settings,
+          ),
+        );
         emit(SettingsLoaded(settings));
       } else {
         emit(const SettingsError('Failed to update first day of week'));
@@ -108,6 +119,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update default task priority
   Future<void> _onUpdateDefaultPriority(
     UpdateDefaultPriority event,
     Emitter<SettingsState> emit,
@@ -116,14 +128,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final success = await _updateSetting(
         (settings) => settings.copyWith(defaultTaskPriority: event.priority),
       );
-      
+
       if (success) {
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        emit(SettingsOperationSuccess(
-          message: 'Default priority updated to P${event.priority}',
-          settings: settings,
-        ));
+        emit(
+          SettingsOperationSuccess(
+            message: 'Default priority updated to P${event.priority}',
+            settings: settings,
+          ),
+        );
         emit(SettingsLoaded(settings));
       } else {
         emit(const SettingsError('Failed to update default priority'));
@@ -134,22 +148,27 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update default notification enabled setting
   Future<void> _onUpdateNotificationEnabled(
     UpdateNotificationEnabled event,
     Emitter<SettingsState> emit,
   ) async {
     try {
       final success = await _updateSetting(
-        (settings) => settings.copyWith(defaultNotificationEnabled: event.enabled),
+        (settings) =>
+            settings.copyWith(defaultNotificationEnabled: event.enabled),
       );
-      
+
       if (success) {
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        emit(SettingsOperationSuccess(
-          message: 'Default reminder ${event.enabled ? 'enabled' : 'disabled'}',
-          settings: settings,
-        ));
+        emit(
+          SettingsOperationSuccess(
+            message:
+                'Default reminder ${event.enabled ? 'enabled' : 'disabled'}',
+            settings: settings,
+          ),
+        );
         emit(SettingsLoaded(settings));
       } else {
         emit(const SettingsError('Failed to update notification setting'));
@@ -160,6 +179,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update default notification time
   Future<void> _onUpdateDefaultNotificationTime(
     UpdateDefaultNotificationTime event,
     Emitter<SettingsState> emit,
@@ -170,14 +190,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           defaultNotificationMinutesBefore: event.minutesBefore,
         ),
       );
-      
+
       if (success) {
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        emit(SettingsOperationSuccess(
-          message: 'Default reminder time updated',
-          settings: settings,
-        ));
+        emit(
+          SettingsOperationSuccess(
+            message: 'Default reminder time updated',
+            settings: settings,
+          ),
+        );
         emit(SettingsLoaded(settings));
       } else {
         emit(const SettingsError('Failed to update reminder time'));
@@ -188,6 +210,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update notification sound setting
   Future<void> _onUpdateNotificationSound(
     UpdateNotificationSound event,
     Emitter<SettingsState> emit,
@@ -196,14 +219,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final success = await _updateSetting(
         (settings) => settings.copyWith(notificationSound: event.enabled),
       );
-      
+
       if (success) {
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        emit(SettingsOperationSuccess(
-          message: 'Notification sound ${event.enabled ? 'enabled' : 'disabled'}',
-          settings: settings,
-        ));
+        emit(
+          SettingsOperationSuccess(
+            message:
+                'Notification sound ${event.enabled ? 'enabled' : 'disabled'}',
+            settings: settings,
+          ),
+        );
         emit(SettingsLoaded(settings));
       } else {
         emit(const SettingsError('Failed to update sound setting'));
@@ -214,6 +240,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
+  // Update notification vibration setting
   Future<void> _onUpdateNotificationVibration(
     UpdateNotificationVibration event,
     Emitter<SettingsState> emit,
@@ -222,14 +249,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final success = await _updateSetting(
         (settings) => settings.copyWith(notificationVibration: event.enabled),
       );
-      
+
       if (success) {
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        emit(SettingsOperationSuccess(
-          message: 'Vibration ${event.enabled ? 'enabled' : 'disabled'}',
-          settings: settings,
-        ));
+        emit(
+          SettingsOperationSuccess(
+            message: 'Vibration ${event.enabled ? 'enabled' : 'disabled'}',
+            settings: settings,
+          ),
+        );
         emit(SettingsLoaded(settings));
       } else {
         emit(const SettingsError('Failed to update vibration setting'));
@@ -240,24 +269,26 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
-  // New event handler for resetting settings
+  // Reset all settings to defaults
   Future<void> _onResetSettings(
     ResetSettings event,
     Emitter<SettingsState> emit,
   ) async {
     try {
       emit(const SettingsLoading());
-      
+
       const defaultSettings = AppSettings();
       final success = await _repository.saveSettings(defaultSettings);
-      
+
       if (success) {
         _cachedSettings = defaultSettings;
         AppColors.setAccentColor(defaultSettings.accentColor);
-        emit(const SettingsOperationSuccess(
-          message: 'Settings reset to defaults',
-          settings: defaultSettings,
-        ));
+        emit(
+          const SettingsOperationSuccess(
+            message: 'Settings reset to defaults',
+            settings: defaultSettings,
+          ),
+        );
         emit(const SettingsLoaded(defaultSettings));
       } else {
         emit(const SettingsError('Failed to reset settings'));
@@ -268,22 +299,23 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     }
   }
 
-  // Enhanced helper methods
+  // Helper method to get current settings from cache or repository
   AppSettings _getCurrentSettings() {
     if (_cachedSettings != null) {
       return _cachedSettings!;
     }
-    
+
     if (state is SettingsLoaded) {
       _cachedSettings = (state as SettingsLoaded).settings;
       return _cachedSettings!;
     }
-    
+
     final settings = _repository.getSettings();
     _cachedSettings = settings;
     return settings;
   }
 
+  // Helper method to update a setting with error handling
   Future<bool> _updateSetting(AppSettings Function(AppSettings) updater) async {
     try {
       final currentSettings = _getCurrentSettings();

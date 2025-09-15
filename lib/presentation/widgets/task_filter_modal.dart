@@ -2,45 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_colors.dart';
 
-// This class holds the selected filter options for tasks.
+// Task filter options data model
 class TaskFilterOptions {
-  // Optional filter for the task's due date (today, this week, this month, or custom).
   final DateFilter? dateFilter;
-  // Optional filter for the task's priority (1 to 5).
   final int? priorityFilter;
-  // Optional filter for the task's completion status (true for completed, false for active).
   final bool? completedFilter;
-  // A list of tags to filter tasks by.
   final List<String> tagFilters;
-  // The sorting option to apply to the filtered tasks.
   final SortOption sortBy;
 
   TaskFilterOptions({
     this.dateFilter,
     this.priorityFilter,
     this.completedFilter,
-    this.tagFilters = const [], // Default to an empty list.
-    this.sortBy = SortOption.dateDesc, // Default to sorting by date descending.
+    this.tagFilters = const [],
+    this.sortBy = SortOption.dateDesc,
   });
 }
 
-// Enum defining the possible date filter options.
+// Date filter options
 enum DateFilter { today, thisWeek, thisMonth, custom }
 
-// Enum defining the possible sorting options.
-enum SortOption {
-  dateDesc, // Newest first.
-  dateAsc, // Oldest first.
-  priorityDesc, // High priority first.
-  priorityAsc, // Low priority first.
-  alphabetical, // A-Z.
-}
+// Sort options
+enum SortOption { dateDesc, dateAsc, priorityDesc, priorityAsc, alphabetical }
 
-// This widget creates a modal bottom sheet for filtering tasks.
+// Modal for filtering and sorting tasks
 class TaskFilterModal extends StatefulWidget {
-  // The initial filter options to pre-select in the modal.
   final TaskFilterOptions initialFilters;
-  // A list of all available tags to display as filter options.
   final List<String> availableTags;
 
   const TaskFilterModal({
@@ -53,35 +40,33 @@ class TaskFilterModal extends StatefulWidget {
   State<TaskFilterModal> createState() => _TaskFilterModalState();
 }
 
-// The state class for our TaskFilterModal, managing the selected filters.
 class _TaskFilterModalState extends State<TaskFilterModal> {
-  late TaskFilterOptions _filters; // The currently selected filter options.
+  late TaskFilterOptions _filters;
 
   @override
   void initState() {
     super.initState();
-    _filters = widget.initialFilters; // Initialize with the provided initial filters.
+    _filters = widget.initialFilters;
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75, // Take up 75% of the screen height.
+      height: MediaQuery.of(context).size.height * 0.75,
       decoration: const BoxDecoration(
-        color: AppColors.surface, // Background color.
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)), // Rounded top corners.
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          // Header with "Cancel" and "Apply" buttons.
+          // Header with actions
           _buildHeader(),
 
-          // The main filter options area.
+          // Filter options
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Sections for different filter types.
                 _buildDateFilter(),
                 const SizedBox(height: 20),
                 _buildStatusFilter(),
@@ -99,13 +84,13 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // Builds the header section of the modal with "Cancel" and "Apply" buttons.
+  // Header with Cancel and Apply buttons
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: AppColors.divider, width: 0.5), // Bottom border.
+          bottom: BorderSide(color: AppColors.divider, width: 0.5),
         ),
       ),
       child: Row(
@@ -113,20 +98,19 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
         children: [
           CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () => Navigator.pop(context), // Close the modal.
+            onPressed: () => Navigator.pop(context),
             child: const Text(
               'Cancel',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
             ),
           ),
           const Text(
-            'Filter Tasks', // Title of the modal.
+            'Filter Tasks',
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () {
-              // Return the selected filters to the caller.
               Navigator.pop(context, _filters);
             },
             child: Text(
@@ -143,27 +127,26 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // Builds the date filter section with options like "Today", "This Week", "This Month".
+  // Date filter options
   Widget _buildDateFilter() {
     return _buildSection(
       title: 'Date',
-      icon: CupertinoIcons.calendar, // Calendar icon.
+      icon: CupertinoIcons.calendar,
       child: Wrap(
-        spacing: 8, // Horizontal spacing between chips.
-        runSpacing: 8, // Vertical spacing between rows of chips.
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          // Filter chip for "Today".
+          // Today filter
           _buildFilterChip(
             label: 'Today',
-            isSelected: _filters.dateFilter == DateFilter.today, // Check if this filter is selected.
+            isSelected: _filters.dateFilter == DateFilter.today,
             onTap: () {
               setState(() {
-                // Toggle the "Today" filter.
                 _filters = TaskFilterOptions(
                   dateFilter:
                       _filters.dateFilter == DateFilter.today
-                          ? null // Deselect if already selected.
-                          : DateFilter.today, // Select if not selected.
+                          ? null
+                          : DateFilter.today,
                   priorityFilter: _filters.priorityFilter,
                   completedFilter: _filters.completedFilter,
                   tagFilters: _filters.tagFilters,
@@ -172,13 +155,12 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
               });
             },
           ),
-          // Filter chip for "This Week".
+          // This Week filter
           _buildFilterChip(
             label: 'This Week',
             isSelected: _filters.dateFilter == DateFilter.thisWeek,
             onTap: () {
               setState(() {
-                // Toggle the "This Week" filter.
                 _filters = TaskFilterOptions(
                   dateFilter:
                       _filters.dateFilter == DateFilter.thisWeek
@@ -192,13 +174,12 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
               });
             },
           ),
-          // Filter chip for "This Month".
+          // This Month filter
           _buildFilterChip(
             label: 'This Month',
             isSelected: _filters.dateFilter == DateFilter.thisMonth,
             onTap: () {
               setState(() {
-                // Toggle the "This Month" filter.
                 _filters = TaskFilterOptions(
                   dateFilter:
                       _filters.dateFilter == DateFilter.thisMonth
@@ -217,7 +198,7 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // A reusable widget to build a section container with a title and icon.
+  // Section container with title and icon
   Widget _buildSection({
     required String title,
     required IconData icon,
@@ -226,7 +207,7 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.background, // Background color for the section.
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -234,10 +215,10 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: AppColors.textSecondary), // Section icon.
+              Icon(icon, size: 20, color: AppColors.textSecondary),
               const SizedBox(width: 8),
               Text(
-                title, // Section title.
+                title,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -247,62 +228,61 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
             ],
           ),
           const SizedBox(height: 12),
-          child, // The content of the section.
+          child,
         ],
       ),
     );
   }
 
-  // A reusable widget to build a filter chip (selectable button).
+  // Selectable filter chip
   Widget _buildFilterChip({
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap, // Call the provided function when tapped.
+      onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200), // Smooth animation.
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.surfaceLight, // Accent color if selected.
+          color: isSelected ? AppColors.accent : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.accent : AppColors.divider,
           ),
         ),
         child: Text(
-          label, // The chip's label.
+          label,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textPrimary, // White text if selected.
+            color: isSelected ? Colors.white : AppColors.textPrimary,
           ),
         ),
       ),
     );
   }
 
-  // Builds the status filter section with options for "Active" and "Completed".
+  // Status filter (Active/Completed)
   Widget _buildStatusFilter() {
     return _buildSection(
       title: 'Status',
-      icon: CupertinoIcons.check_mark_circled, // Checkmark icon.
+      icon: CupertinoIcons.check_mark_circled,
       child: Row(
         children: [
-          // Filter chip for "Active" tasks.
+          // Active filter
           Expanded(
             child: _buildFilterChip(
               label: 'Active',
-              isSelected: _filters.completedFilter == false, // Check if "Active" is selected.
+              isSelected: _filters.completedFilter == false,
               onTap: () {
                 setState(() {
-                  // Toggle the "Active" filter.
                   _filters = TaskFilterOptions(
                     dateFilter: _filters.dateFilter,
                     priorityFilter: _filters.priorityFilter,
                     completedFilter:
-                        _filters.completedFilter == false ? null : false, // Deselect if already selected.
+                        _filters.completedFilter == false ? null : false,
                     tagFilters: _filters.tagFilters,
                     sortBy: _filters.sortBy,
                   );
@@ -311,19 +291,18 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
             ),
           ),
           const SizedBox(width: 8),
-          // Filter chip for "Completed" tasks.
+          // Completed filter
           Expanded(
             child: _buildFilterChip(
               label: 'Completed',
-              isSelected: _filters.completedFilter == true, // Check if "Completed" is selected.
+              isSelected: _filters.completedFilter == true,
               onTap: () {
                 setState(() {
-                  // Toggle the "Completed" filter.
                   _filters = TaskFilterOptions(
                     dateFilter: _filters.dateFilter,
                     priorityFilter: _filters.priorityFilter,
                     completedFilter:
-                        _filters.completedFilter == true ? null : true, // Deselect if already selected.
+                        _filters.completedFilter == true ? null : true,
                     tagFilters: _filters.tagFilters,
                     sortBy: _filters.sortBy,
                   );
@@ -336,26 +315,25 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // Builds the priority filter section with options for priority levels 1 to 5.
+  // Priority filter (P1-P5)
   Widget _buildPriorityFilter() {
     return _buildSection(
       title: 'Priority',
-      icon: CupertinoIcons.flag, // Flag icon.
+      icon: CupertinoIcons.flag,
       child: Wrap(
-        spacing: 8, // Horizontal spacing between chips.
-        runSpacing: 8, // Vertical spacing between rows of chips.
+        spacing: 8,
+        runSpacing: 8,
         children: List.generate(5, (index) {
-          final priority = index + 1; // Priority levels 1 to 5.
+          final priority = index + 1;
           return _buildFilterChip(
-            label: 'P$priority', // "P1", "P2", etc.
-            isSelected: _filters.priorityFilter == priority, // Check if this priority is selected.
+            label: 'P$priority',
+            isSelected: _filters.priorityFilter == priority,
             onTap: () {
               setState(() {
-                // Toggle the selected priority filter.
                 _filters = TaskFilterOptions(
                   dateFilter: _filters.dateFilter,
                   priorityFilter:
-                      _filters.priorityFilter == priority ? null : priority, // Deselect if already selected.
+                      _filters.priorityFilter == priority ? null : priority,
                   completedFilter: _filters.completedFilter,
                   tagFilters: _filters.tagFilters,
                   sortBy: _filters.sortBy,
@@ -368,35 +346,33 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // Builds the tag filter section, allowing users to filter by available tags.
+  // Tag filter
   Widget _buildTagFilter() {
-    // If there are no tags available, don't show this section.
     if (widget.availableTags.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return _buildSection(
       title: 'Tags',
-      icon: CupertinoIcons.tag, // Tag icon.
+      icon: CupertinoIcons.tag,
       child: Wrap(
-        spacing: 8, // Horizontal spacing between chips.
-        runSpacing: 8, // Vertical spacing between rows of chips.
+        spacing: 8,
+        runSpacing: 8,
         children:
             widget.availableTags.map((tag) {
-              final isSelected = _filters.tagFilters.contains(tag); // Check if this tag is selected.
+              final isSelected = _filters.tagFilters.contains(tag);
               return _buildFilterChip(
                 label: tag,
                 isSelected: isSelected,
                 onTap: () {
                   setState(() {
-                    final newTags = List<String>.from(_filters.tagFilters); // Copy existing tags.
+                    final newTags = List<String>.from(_filters.tagFilters);
                     if (isSelected) {
-                      newTags.remove(tag); // Remove tag if already selected.
+                      newTags.remove(tag);
                     } else {
-                      newTags.add(tag); // Add tag if not selected.
+                      newTags.add(tag);
                     }
 
-                    // Update the filter options with the new tag list.
                     _filters = TaskFilterOptions(
                       dateFilter: _filters.dateFilter,
                       priorityFilter: _filters.priorityFilter,
@@ -412,38 +388,33 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // Builds the sort options section, allowing users to sort tasks by date, priority, or alphabetically.
+  // Sort options
   Widget _buildSortOptions() {
     return _buildSection(
       title: 'Sort By',
-      icon: CupertinoIcons.sort_down, // Sort icon.
+      icon: CupertinoIcons.sort_down,
       child: Column(
         children: [
-          // Sort by "Newest First".
           _buildSortOption(
             'Newest First',
             SortOption.dateDesc,
             CupertinoIcons.clock_fill,
           ),
-          // Sort by "Oldest First".
           _buildSortOption(
             'Oldest First',
             SortOption.dateAsc,
             CupertinoIcons.clock,
           ),
-          // Sort by "High Priority First".
           _buildSortOption(
             'High Priority First',
             SortOption.priorityDesc,
             CupertinoIcons.flag_fill,
           ),
-          // Sort by "Low Priority First".
           _buildSortOption(
             'Low Priority First',
             SortOption.priorityAsc,
             CupertinoIcons.flag,
           ),
-          // Sort Alphabetically.
           _buildSortOption(
             'Alphabetical',
             SortOption.alphabetical,
@@ -454,14 +425,13 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
     );
   }
 
-  // Helper widget to build a single sort option (radio button-like).
+  // Single sort option
   Widget _buildSortOption(String label, SortOption option, IconData icon) {
-    final isSelected = _filters.sortBy == option; // Check if this option is selected.
+    final isSelected = _filters.sortBy == option;
 
     return ListTile(
       onTap: () {
         setState(() {
-          // Update the selected sort option.
           _filters = TaskFilterOptions(
             dateFilter: _filters.dateFilter,
             priorityFilter: _filters.priorityFilter,
@@ -474,24 +444,24 @@ class _TaskFilterModalState extends State<TaskFilterModal> {
       leading: Icon(
         icon,
         size: 20,
-        color: isSelected ? AppColors.accent : AppColors.textSecondary, // Accent color if selected.
+        color: isSelected ? AppColors.accent : AppColors.textSecondary,
       ),
       title: Text(
-        label, // The sort option label.
+        label,
         style: TextStyle(
           fontSize: 14,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, // Bold if selected.
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           color: isSelected ? AppColors.accent : AppColors.textPrimary,
         ),
       ),
       trailing:
           isSelected
               ? Icon(
-                CupertinoIcons.checkmark, // Checkmark if selected.
+                CupertinoIcons.checkmark,
                 size: 18,
                 color: AppColors.accent,
               )
-              : null, // No checkmark if not selected.
+              : null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
     );
   }

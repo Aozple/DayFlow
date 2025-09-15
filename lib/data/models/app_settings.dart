@@ -7,6 +7,7 @@ class AppSettings {
   final bool notificationSound;
   final bool notificationVibration;
 
+  // Constructor with default values
   const AppSettings({
     this.accentColor = '#0A84FF',
     this.firstDayOfWeek = 'monday',
@@ -17,7 +18,7 @@ class AppSettings {
     this.notificationVibration = true,
   });
 
-  // Enhanced toMap with validation
+  // Convert settings to map with validation
   Map<String, dynamic> toMap() {
     return {
       'accentColor': validateHexColor(accentColor),
@@ -32,7 +33,7 @@ class AppSettings {
     };
   }
 
-  // Enhanced fromMap with better defaults and validation
+  // Create settings from map with validation
   factory AppSettings.fromMap(Map<String, dynamic> map) {
     return AppSettings(
       accentColor: validateHexColor(map['accentColor'] ?? '#0A84FF'),
@@ -47,7 +48,7 @@ class AppSettings {
     );
   }
 
-  // Validation helpers
+  // Validate hex color format
   static String validateHexColor(String color) {
     if (color.startsWith('#') && (color.length == 7 || color.length == 4)) {
       return color;
@@ -55,20 +56,23 @@ class AppSettings {
     return '#0A84FF'; // Default fallback
   }
 
+  // Validate first day of week
   static String validateFirstDay(String day) {
     const validDays = ['monday', 'saturday'];
     return validDays.contains(day.toLowerCase()) ? day.toLowerCase() : 'monday';
   }
 
+  // Validate priority range (1-5)
   static int validatePriority(int priority) {
-    return priority.clamp(1, 5); // Ensure priority is between 1-5
+    return priority.clamp(1, 5);
   }
 
+  // Validate notification time (0-1440 minutes)
   static int validateMinutesBefore(int minutes) {
     return minutes.clamp(0, 1440); // Max 24 hours in minutes
   }
 
-  // Enhanced copyWith with validation
+  // Create a new instance with updated fields
   AppSettings copyWith({
     String? accentColor,
     String? firstDayOfWeek,
@@ -103,7 +107,7 @@ class AppSettings {
     );
   }
 
-  // Helper method to check if settings are valid
+  // Check if all settings are valid
   bool isValid() {
     try {
       validateHexColor(accentColor);

@@ -21,14 +21,14 @@ class TaskLoading extends TaskState {
 /// Success state with loaded tasks
 class TaskLoaded extends TaskState {
   final List<TaskModel> tasks;
-  final DateTime? selectedDate; // Currently selected date (if any)
+  final DateTime? selectedDate;
 
   const TaskLoaded({required this.tasks, this.selectedDate});
 
   @override
   List<Object?> get props => [tasks, selectedDate];
 
-  /// Helper getters for UI
+  /// Helper getters for filtered task lists
   List<TaskModel> get activeTasks =>
       tasks.where((task) => !task.isCompleted && !task.isDeleted).toList();
 

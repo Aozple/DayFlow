@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'dart:math' as math; // For mathematical calculations like rotation.
+import 'dart:math' as math;
 import '../../core/constants/app_colors.dart';
 
+// Animated floating action button with expandable options
 class SpeedDialFab extends StatefulWidget {
-  // Callback function to execute when the "Create Task" option is selected.
   final VoidCallback onCreateTask;
-  // Callback function to execute when the "Create Note" option is selected.
   final VoidCallback onCreateNote;
 
   const SpeedDialFab({
@@ -19,36 +18,31 @@ class SpeedDialFab extends StatefulWidget {
   State<SpeedDialFab> createState() => _SpeedDialFabState();
 }
 
-// The state class for our SpeedDialFab, managing its animation and open/close state.
 class _SpeedDialFabState extends State<SpeedDialFab>
     with TickerProviderStateMixin {
-  late AnimationController
-  _animationController; // Controls the FAB's rotation animation.
-  late AnimationController
-  _expandController; // Controls the expand/collapse animation.
-  late Animation<double>
-  _expandAnimation; // Curved animation for smooth movement.
-  bool _isOpen = false; // Tracks whether the FAB is currently open or closed.
-  OverlayEntry?
-  _overlayEntry; // Manages the overlay for background and buttons.
-  final GlobalKey _fabKey = GlobalKey(); // Key to get FAB position on screen.
+  late AnimationController _animationController; // For icon rotation
+  late AnimationController _expandController; // For menu expansion
+  late Animation<double> _expandAnimation; // Curved animation
+  bool _isOpen = false;
+  OverlayEntry? _overlayEntry;
+  final GlobalKey _fabKey = GlobalKey(); // To get FAB position
 
   @override
   void initState() {
     super.initState();
-    // Initialize the rotation animation controller.
+    // Setup rotation animation
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
 
-    // Initialize the expand animation controller.
+    // Setup expansion animation
     _expandController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
 
-    // Create curved animation for smooth easing effect like AnimatedPositioned.
+    // Create smooth easing animation
     _expandAnimation = CurvedAnimation(
       parent: _expandController,
       curve: Curves.easeOutBack,
@@ -58,24 +52,23 @@ class _SpeedDialFabState extends State<SpeedDialFab>
 
   @override
   void dispose() {
-    // Clean up resources to prevent memory leaks.
     _removeOverlay();
     _animationController.dispose();
     _expandController.dispose();
     super.dispose();
   }
 
-  // Toggles the open/close state of the FAB and manages animations.
+  // Toggle menu open/close state
   void _toggle() {
     setState(() {
       _isOpen = !_isOpen;
       if (_isOpen) {
-        // Opening sequence: rotate icon, show overlay, then expand buttons.
+        // Opening sequence
         _animationController.forward();
         _insertOverlay();
         _expandController.forward();
       } else {
-        // Closing sequence: rotate icon, collapse buttons, then remove overlay.
+        // Closing sequence
         _animationController.reverse();
         _expandController.reverse().then((_) {
           _removeOverlay();
@@ -84,9 +77,9 @@ class _SpeedDialFabState extends State<SpeedDialFab>
     });
   }
 
-  // Creates and inserts the overlay containing background and action buttons.
+  // Create and insert overlay with menu options
   void _insertOverlay() {
-    // Get the FAB's position on screen for proper button placement.
+    // Get FAB position for proper placement
     final RenderBox? renderBox =
         _fabKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
@@ -100,18 +93,18 @@ class _SpeedDialFabState extends State<SpeedDialFab>
             color: Colors.transparent,
             child: Stack(
               children: [
-                // Semi-transparent background that captures any touch to close the FAB.
+                // Background overlay to capture taps
                 Positioned.fill(
                   child: GestureDetector(
                     onTapDown: (_) {
-                      if (_isOpen) _toggle(); // Close on any touch.
+                      if (_isOpen) _toggle();
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Container(color: Colors.transparent),
                   ),
                 ),
 
-                // Task button with slide-up animation.
+                // Task button with animation
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {
@@ -124,7 +117,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label appears after button is halfway through animation.
+                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -152,7 +145,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                                 ),
                               ),
 
-                            // Task button.
+                            // Task button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -178,7 +171,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                   },
                 ),
 
-                // Note button with slide-up animation.
+                // Note button with animation
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {
@@ -191,7 +184,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label appears after button is halfway through animation.
+                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -219,7 +212,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                                 ),
                               ),
 
-                            // Note button.
+                            // Note button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -249,11 +242,11 @@ class _SpeedDialFabState extends State<SpeedDialFab>
           ),
     );
 
-    // Insert the overlay into the widget tree.
+    // Add overlay to widget tree
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  // Removes the overlay from the widget tree.
+  // Remove overlay from widget tree
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
@@ -261,17 +254,17 @@ class _SpeedDialFabState extends State<SpeedDialFab>
 
   @override
   Widget build(BuildContext context) {
-    // Main FAB button that's always visible.
+    // Main FAB button
     return FloatingActionButton(
-      key: _fabKey, // Key to track position for overlay placement.
-      heroTag: 'main_fab', // Unique tag for hero animations.
-      onPressed: _toggle, // Toggle open/close state.
+      key: _fabKey,
+      heroTag: 'main_fab',
+      onPressed: _toggle,
       backgroundColor: AppColors.accent,
       elevation: 8,
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
-          // Rotate icon 45 degrees when opening (+ becomes ×).
+          // Rotate + icon to × when opening
           return Transform.rotate(
             angle: _animationController.value * 0.25 * 2 * math.pi,
             child: Icon(

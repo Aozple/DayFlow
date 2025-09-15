@@ -5,16 +5,9 @@ import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'home_date_item.dart';
 import 'home_week_navigation.dart';
 
-/// The horizontal date selector for navigating through days of the week.
-///
-/// This widget provides a visual interface for selecting dates within a week,
-/// with navigation controls to move between weeks. It adapts based on user
-/// settings for whether the week starts on Monday or Saturday.
+/// Horizontal date selector for navigating through days
 class HomeDateSelector extends StatelessWidget {
-  /// The currently selected date.
   final DateTime selectedDate;
-
-  /// Callback function when a new date is selected.
   final Function(DateTime) onDateSelected;
 
   const HomeDateSelector({
@@ -27,6 +20,7 @@ class HomeDateSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
+        // Get first day of week setting
         final isSaturdayFirst =
             settingsState is SettingsLoaded
                 ? settingsState.isSaturdayFirst
@@ -44,16 +38,16 @@ class HomeDateSelector extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Week navigation
+              // Week navigation controls
               HomeWeekNavigation(
                 selectedDate: selectedDate,
                 isSaturdayFirst: isSaturdayFirst,
                 onWeekChanged: onDateSelected,
               ),
 
-              // Date items container with consistent styling
+              // Day selector row
               Container(
-                height: 64, // Compact height
+                height: 64,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -66,6 +60,7 @@ class HomeDateSelector extends StatelessWidget {
                 ),
                 child: Row(
                   children: List.generate(7, (index) {
+                    // Calculate date for each day in the week
                     final weekStart = _getWeekStart(
                       selectedDate,
                       isSaturdayFirst,
@@ -90,27 +85,23 @@ class HomeDateSelector extends StatelessWidget {
     );
   }
 
-  /// Helper method to determine the start of the week based on settings (Monday or Saturday).
+  /// Calculate the first day of the week based on settings
   DateTime _getWeekStart(DateTime date, bool isSaturdayFirst) {
-    final weekday =
-        date.weekday; // Get the day of the week (1 for Monday, 7 for Sunday).
+    final weekday = date.weekday; // 1 for Monday, 7 for Sunday
 
     if (isSaturdayFirst) {
-      // If Saturday is the first day of the week (weekday 6).
+      // Saturday-first week calculation
       int daysToSubtract;
       if (weekday == 6) {
-        daysToSubtract = 0; // If it's Saturday, subtract 0 days.
+        daysToSubtract = 0; // Saturday
       } else if (weekday == 7) {
-        daysToSubtract =
-            1; // If it's Sunday, subtract 1 day to get to Saturday.
+        daysToSubtract = 1; // Sunday
       } else {
-        daysToSubtract =
-            weekday +
-            1; // For Monday-Friday, calculate days to subtract to get to Saturday.
+        daysToSubtract = weekday + 1; // Monday-Friday
       }
       return date.subtract(Duration(days: daysToSubtract));
     } else {
-      // Default behavior: Monday is the first day of the week.
+      // Monday-first week calculation
       return date.subtract(Duration(days: weekday - 1));
     }
   }

@@ -3,16 +3,9 @@ import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-/// The current time indicator line in the timeline.
-///
-/// This widget displays a horizontal line with a circle indicator that shows
-/// the current time within the timeline. It updates every minute to accurately
-/// reflect the current time. Only visible when viewing today's schedule.
-class HomeCurrentTimeIndicator extends StatelessWidget {
-  /// The currently selected date.
+/// Enhanced current time indicator with pulse animation
+class HomeCurrentTimeIndicator extends StatefulWidget {
   final DateTime selectedDate;
-
-  /// List of tasks being displayed in the timeline.
   final List<TaskModel> displayTasks;
 
   const HomeCurrentTimeIndicator({
@@ -22,60 +15,128 @@ class HomeCurrentTimeIndicator extends StatelessWidget {
   });
 
   @override
+  State<HomeCurrentTimeIndicator> createState() =>
+      _HomeCurrentTimeIndicatorState();
+}
+
+class _HomeCurrentTimeIndicatorState extends State<HomeCurrentTimeIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pulse animation for the indicator dot
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _pulseController.repeat(reverse: true);
+
+    // Update every minute
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  double _calculatePosition() {
+    final currentTime = DateTime.now();
+    final currentMinute = currentTime.minute;
+    final hourProgress = currentMinute / 60.0;
+    double position = 16;
+
+    // Calculate position based on hour slots and tasks
+    for (int i = 0; i < currentTime.hour; i++) {
+      final hourTaskCount =
+          widget.displayTasks.where((t) => t.dueDate?.hour == i).length;
+      position += hourTaskCount == 0 ? 90 : 90 + (hourTaskCount * 58);
+    }
+    position += hourProgress * 90;
+
+    return position;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: Stream.periodic(
-        const Duration(minutes: 1),
-      ), // Update every minute.
-      builder: (context, snapshot) {
-        final currentTime = DateTime.now();
-        final currentMinute = currentTime.minute;
-        final hourProgress =
-            currentMinute / 60.0; // Progress within the current hour.
-        double position = 16; // Initial offset.
+    final position = _calculatePosition();
 
-        // Calculate vertical position based on previous hour slots and tasks.
-        for (int i = 0; i < currentTime.hour; i++) {
-          final hourTaskCount =
-              displayTasks.where((t) => t.dueDate?.hour == i).length;
-          position +=
-              hourTaskCount == 0
-                  ? 80
-                  : 80 + (hourTaskCount * 58); // Adjust height based on tasks.
-        }
-        position += hourProgress * 80; // Add progress within current hour.
-
-        return Positioned(
-          top: position,
-          left: 60, // Aligned with the timeline.
-          right: 0,
-          child: Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withAlpha(50),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withAlpha(25),
-                      blurRadius: 8,
-                      spreadRadius: 2,
-                    ),
-                  ],
+    return Positioned(
+      top: position,
+      left: 0,
+      right: 0,
+      child: Row(
+        children: [
+          // Time label
+          Container(
+            width: 70,
+            alignment: Alignment.center,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.accent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              Expanded(
-                child: Container(
-                  height: 1.5,
-                  color: AppColors.accent.withAlpha(50),
-                ),
-              ),
-            ],
+            ),
           ),
-        );
-      },
+          // Animated indicator dot
+          AnimatedBuilder(
+            animation: _pulseAnimation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _pulseAnimation.value,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accent.withAlpha(60),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          // Line
+          Expanded(
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.accent, AppColors.accent.withAlpha(50)],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

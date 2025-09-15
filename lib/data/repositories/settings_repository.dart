@@ -8,7 +8,7 @@ class SettingsRepository {
   late SharedPreferences _prefs;
   bool _isInitialized = false;
 
-  // Enhanced initialization with error handling
+  // Initialize the repository with SharedPreferences
   Future<void> init() async {
     try {
       _prefs = await SharedPreferences.getInstance();
@@ -19,7 +19,7 @@ class SettingsRepository {
     }
   }
 
-  // Enhanced getSettings with caching and validation
+  // Get current app settings with validation
   AppSettings getSettings() {
     if (!_isInitialized) {
       debugPrint('Warning: SettingsRepository not initialized');
@@ -32,11 +32,11 @@ class SettingsRepository {
         final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
         final settings = AppSettings.fromMap(settingsMap);
 
-        // Validate settings and fix if necessary
+        // Auto-fix invalid settings
         if (!settings.isValid()) {
           debugPrint('Invalid settings detected, using defaults');
           final fixedSettings = _fixInvalidSettings(settings);
-          saveSettings(fixedSettings); // Save the fixed version
+          saveSettings(fixedSettings);
           return fixedSettings;
         }
 
@@ -49,7 +49,7 @@ class SettingsRepository {
     return const AppSettings();
   }
 
-  // Helper to fix invalid settings
+  // Fix invalid settings with default values
   AppSettings _fixInvalidSettings(AppSettings settings) {
     return AppSettings(
       accentColor: AppSettings.validateHexColor(settings.accentColor),
@@ -66,7 +66,7 @@ class SettingsRepository {
     );
   }
 
-  // Enhanced saveSettings with validation and error handling
+  // Save settings with validation
   Future<bool> saveSettings(AppSettings settings) async {
     if (!_isInitialized) {
       debugPrint('Warning: SettingsRepository not initialized');
@@ -74,7 +74,7 @@ class SettingsRepository {
     }
 
     try {
-      // Validate settings before saving
+      // Validate before saving
       if (!settings.isValid()) {
         debugPrint('Attempted to save invalid settings');
         return false;
@@ -96,7 +96,7 @@ class SettingsRepository {
     }
   }
 
-  // Enhanced clearSettings with confirmation
+  // Reset settings to default
   Future<bool> clearSettings() async {
     if (!_isInitialized) {
       debugPrint('Warning: SettingsRepository not initialized');
@@ -117,7 +117,7 @@ class SettingsRepository {
     }
   }
 
-  // Enhanced update methods with validation
+  // Update accent color with validation
   Future<bool> updateAccentColor(String colorHex) async {
     try {
       final validatedColor = AppSettings.validateHexColor(colorHex);
@@ -132,6 +132,7 @@ class SettingsRepository {
     }
   }
 
+  // Update first day of week with validation
   Future<bool> updateFirstDayOfWeek(String day) async {
     try {
       final validatedDay = AppSettings.validateFirstDay(day);
@@ -146,6 +147,7 @@ class SettingsRepository {
     }
   }
 
+  // Update default priority with validation
   Future<bool> updateDefaultPriority(int priority) async {
     try {
       final validatedPriority = AppSettings.validatePriority(priority);
@@ -160,7 +162,7 @@ class SettingsRepository {
     }
   }
 
-  // Enhanced export/import with error handling
+  // Export settings as JSON string
   String exportSettings() {
     try {
       final settings = getSettings();
@@ -175,6 +177,7 @@ class SettingsRepository {
     }
   }
 
+  // Import settings from JSON string
   Future<bool> importSettings(String jsonString) async {
     try {
       final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
@@ -192,6 +195,6 @@ class SettingsRepository {
     }
   }
 
-  // New method to check if repository is initialized
+  // Check if repository is initialized
   bool get isInitialized => _isInitialized;
 }

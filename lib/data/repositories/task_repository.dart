@@ -1,64 +1,55 @@
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-// This class acts as a bridge between our app's task logic and the database.
-// It uses Hive, a local NoSQL database, to store and retrieve task data.
+// Repository for task data operations using Hive database
 class TaskRepository {
-  // This is our reference to the 'tasks' box in Hive, where all task data lives.
+  // Reference to the Hive box storing tasks
   final Box _taskBox;
 
-  // The constructor initializes the repository by getting the 'tasks' box.
+  // Initialize with the tasks box
   TaskRepository() : _taskBox = Hive.box('tasks');
 
-  // Adds a new task to the database.
-  // It takes a TaskModel object and saves its data.
-  // Returns the ID of the newly added task.
+  // Add a new task to the database
   Future<String> addTask(TaskModel task) async {
     try {
-      // We store the task as a Map, using its ID as the key for easy retrieval.
+      // Store task using its ID as the key
       await _taskBox.put(task.id, task.toMap());
       return task.id;
     } catch (e) {
-      // If something goes wrong, we throw an exception.
       throw Exception('Failed to add task: $e');
     }
   }
 
-  // Retrieves a single task from the database using its ID.
-  // Returns the TaskModel if found, otherwise returns null.
+  // Get a single task by ID
   TaskModel? getTask(String id) {
     try {
-      final taskMap = _taskBox.get(id); // Get the task data as a Map.
+      final taskMap = _taskBox.get(id);
       if (taskMap != null) {
-        // Convert the Map back into a TaskModel object.
         return TaskModel.fromMap(Map<String, dynamic>.from(taskMap));
       }
-      return null; // Task not found.
+      return null;
     } catch (e) {
       throw Exception('Failed to get task: $e');
     }
   }
 
-  // Fetches all tasks that haven't been marked as deleted.
-  // The tasks are sorted by their creation date, with the newest ones first.
+  // Get all non-deleted tasks, sorted by creation date
   List<TaskModel> getAllTasks() {
     try {
       final tasks = <TaskModel>[];
 
-      // Loop through all entries in the task box.
+      // Collect all non-deleted tasks
       for (var key in _taskBox.keys) {
         final taskMap = _taskBox.get(key);
         if (taskMap != null) {
           final task = TaskModel.fromMap(Map<String, dynamic>.from(taskMap));
-
-          // Only add tasks that are not marked as deleted.
           if (!task.isDeleted) {
             tasks.add(task);
           }
         }
       }
 
-      // Sort the tasks so the most recently created ones appear first.
+      // Sort by creation date (newest first)
       tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       return tasks;
@@ -67,19 +58,18 @@ class TaskRepository {
     }
   }
 
-  // Retrieves tasks that are due on a specific date.
-  // This is super handy for displaying tasks in a daily view.
+  // Get tasks due on a specific date
   List<TaskModel> getTasksByDate(DateTime date) {
     try {
-      final tasks = getAllTasks(); // Get all tasks first.
+      final tasks = getAllTasks();
 
-      // Filter the tasks to only include those whose due date matches the given date.
+      // Filter tasks by matching due date
       return tasks.where((task) {
         if (task.dueDate == null) {
-          return false; // If a task has no due date, it's not for this specific day.
+          return false;
         }
 
-        // Compare year, month, and day to see if it's the same day.
+        // Compare year, month, and day
         return task.dueDate!.year == date.year &&
             task.dueDate!.month == date.month &&
             task.dueDate!.day == date.day;
@@ -89,74 +79,64 @@ class TaskRepository {
     }
   }
 
-  // Updates an existing task in the database.
-  // It takes an updated TaskModel object and saves its new state.
+  // Update an existing task
   Future<void> updateTask(TaskModel task) async {
     try {
-      await _taskBox.put(task.id, task.toMap()); // Overwrite the existing task with the new data.
+      await _taskBox.put(task.id, task.toMap());
     } catch (e) {
       throw Exception('Failed to update task: $e');
     }
   }
 
-  // Performs a "soft delete" on a task.
-  // Instead of removing it completely, it just marks the task as deleted.
-  // This allows for potential recovery later.
+  // Soft delete a task (mark as deleted)
   Future<void> deleteTask(String id) async {
     try {
-      final task = getTask(id); // Get the task first.
+      final task = getTask(id);
       if (task != null) {
-        // Create a copy of the task, but set `isDeleted` to true.
         final deletedTask = task.copyWith(isDeleted: true);
-        await updateTask(deletedTask); // Update the task in the database.
+        await updateTask(deletedTask);
       }
     } catch (e) {
       throw Exception('Failed to delete task: $e');
     }
   }
 
-  // Permanently deletes a task from the database.
-  // Use this with extreme caution, as the data cannot be recovered after this.
+  // Permanently remove a task from the database
   Future<void> permanentlyDeleteTask(String id) async {
     try {
-      await _taskBox.delete(id); // Remove the task entry completely.
+      await _taskBox.delete(id);
     } catch (e) {
       throw Exception('Failed to permanently delete task: $e');
     }
   }
 
-  // Toggles the completion status of a task (completed/pending).
-  // It also updates the `completedAt` timestamp.
+  // Toggle task completion status
   Future<void> toggleTaskComplete(String id) async {
     try {
-      final task = getTask(id); // Get the task.
+      final task = getTask(id);
       if (task != null) {
-        // Create an updated task with the toggled `isCompleted` status
-        // and set `completedAt` accordingly.
         final updatedTask = task.copyWith(
           isCompleted: !task.isCompleted,
           completedAt: !task.isCompleted ? DateTime.now() : null,
         );
-        await updateTask(updatedTask); // Save the updated task.
+        await updateTask(updatedTask);
       }
     } catch (e) {
       throw Exception('Failed to toggle task completion: $e');
     }
   }
 
-  // Gathers various statistics about tasks for display on a dashboard.
-  // Returns a Map containing total, completed, pending, today's tasks, and overdue tasks.
+  // Get task statistics for dashboard
   Map<String, dynamic> getStatistics() {
-    final allTasks = getAllTasks(); // Get all non-deleted tasks.
-    final today = DateTime.now(); // Get the current date.
+    final allTasks = getAllTasks();
+    final today = DateTime.now();
 
     return {
-      'total': allTasks.length, // Total number of tasks.
-      'completed': allTasks.where((t) => t.isCompleted).length, // Number of completed tasks.
-      'pending': allTasks.where((t) => !t.isCompleted).length, // Number of pending tasks.
-      'todayTasks': getTasksByDate(today).length, // Number of tasks due today.
+      'total': allTasks.length,
+      'completed': allTasks.where((t) => t.isCompleted).length,
+      'pending': allTasks.where((t) => !t.isCompleted).length,
+      'todayTasks': getTasksByDate(today).length,
       'overdue': allTasks.where((t) {
-        // Count tasks that are not completed and have a due date before today.
         if (t.dueDate == null || t.isCompleted) {
           return false;
         }
@@ -165,11 +145,10 @@ class TaskRepository {
     };
   }
 
-  // Clears all tasks from the database.
-  // This is a powerful operation and should be used with extreme caution!
+  // Remove all tasks from the database
   Future<void> clearAllTasks() async {
     try {
-      await _taskBox.clear(); // Remove all entries from the 'tasks' box.
+      await _taskBox.clear();
     } catch (e) {
       throw Exception('Failed to clear all tasks: $e');
     }

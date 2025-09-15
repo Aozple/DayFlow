@@ -1,34 +1,32 @@
 part of 'settings_bloc.dart';
 
-// This is the base class for all states related to app settings.
-// States represent the different conditions or data the UI can be in.
+// Base class for all settings states
 abstract class SettingsState extends Equatable {
   const SettingsState();
 
   @override
-  List<Object?> get props => []; // All states should be equatable for proper comparison.
+  List<Object?> get props => [];
 }
 
-// The initial state of the settings bloc when the app first starts.
+// Initial state when app starts
 class SettingsInitial extends SettingsState {
   const SettingsInitial();
 }
 
-// This state indicates that settings are currently being loaded or saved.
+// Loading state during operations
 class SettingsLoading extends SettingsState {
   const SettingsLoading();
 }
 
-// This state holds the successfully loaded application settings.
-// It's the main state when settings are ready for display or use.
+// State with loaded settings data
 class SettingsLoaded extends SettingsState {
-  final AppSettings settings; // The actual settings data.
+  final AppSettings settings;
   const SettingsLoaded(this.settings);
 
   @override
   List<Object?> get props => [settings];
 
-  // Convenience getters to easily access individual setting values.
+  // Convenience getters for settings values
   String get accentColor => settings.accentColor;
   String get firstDayOfWeek => settings.firstDayOfWeek;
   int get defaultPriority => settings.defaultTaskPriority;
@@ -38,12 +36,12 @@ class SettingsLoaded extends SettingsState {
   bool get notificationSound => settings.notificationSound;
   bool get notificationVibration => settings.notificationVibration;
 
-  // Returns a human-readable label for the first day of the week.
+  // Human-readable first day label
   String get firstDayLabel {
     return settings.firstDayOfWeek == 'saturday' ? 'Saturday' : 'Monday';
   }
 
-  // Returns a human-readable label for the default task priority.
+  // Human-readable priority label
   String get priorityLabel {
     switch (settings.defaultTaskPriority) {
       case 1:
@@ -57,11 +55,11 @@ class SettingsLoaded extends SettingsState {
       case 5:
         return 'Urgent';
       default:
-        return 'Medium'; // Fallback for unexpected values.
+        return 'Medium';
     }
   }
 
-  // Returns a human-readable label for notification time.
+  // Human-readable notification time label
   String get notificationTimeLabel {
     if (settings.defaultNotificationMinutesBefore == 0) return 'At time';
     if (settings.defaultNotificationMinutesBefore == 5) return '5 min before';
@@ -72,28 +70,24 @@ class SettingsLoaded extends SettingsState {
     return '${settings.defaultNotificationMinutesBefore} min before';
   }
 
-  // Checks if Saturday is set as the first day of the week.
+  // Helper methods for first day of week
   bool get isSaturdayFirst => settings.firstDayOfWeek == 'saturday';
-
-  // Checks if Monday is set as the first day of the week.
   bool get isMondayFirst => settings.firstDayOfWeek == 'monday';
 }
 
-// This state is emitted when an error occurs during settings operations.
+// Error state
 class SettingsError extends SettingsState {
-  final String message; // A message describing the error.
+  final String message;
   const SettingsError(this.message);
 
   @override
   List<Object?> get props => [message];
 }
 
-// This state is used to indicate a successful operation, often with a message
-// to show to the user (e.g., "Settings saved!").
+// Success state after operation
 class SettingsOperationSuccess extends SettingsState {
-  final String message; // The success message.
-  final AppSettings
-  settings; // The current settings after the successful operation.
+  final String message;
+  final AppSettings settings;
 
   const SettingsOperationSuccess({
     required this.message,
@@ -104,11 +98,10 @@ class SettingsOperationSuccess extends SettingsState {
   List<Object?> get props => [message, settings];
 }
 
-// This state is specifically for when the accent color has been updated.
-// It might be used for immediate UI feedback before full persistence.
+// Special state for accent color updates
 class SettingsAccentColorUpdated extends SettingsState {
-  final AppSettings settings; // The new settings with the updated color.
-  final String previousColor; // The color before the update.
+  final AppSettings settings;
+  final String previousColor;
 
   const SettingsAccentColorUpdated({
     required this.settings,
@@ -119,10 +112,10 @@ class SettingsAccentColorUpdated extends SettingsState {
   List<Object?> get props => [settings, previousColor];
 }
 
-// This state is emitted when settings data is ready to be exported.
+// State for settings export
 class SettingsExportReady extends SettingsState {
-  final String exportData; // The settings data as a JSON string.
-  final AppSettings settings; // The current settings.
+  final String exportData;
+  final AppSettings settings;
 
   const SettingsExportReady({required this.exportData, required this.settings});
 
@@ -130,10 +123,10 @@ class SettingsExportReady extends SettingsState {
   List<Object?> get props => [exportData, settings];
 }
 
-// This state indicates that settings have been successfully imported.
+// State for settings import
 class SettingsImportSuccess extends SettingsState {
-  final AppSettings settings; // The settings after a successful import.
-  final int itemsImported; // Number of items (e.g., tasks, notes) imported.
+  final AppSettings settings;
+  final int itemsImported;
 
   const SettingsImportSuccess({
     required this.settings,

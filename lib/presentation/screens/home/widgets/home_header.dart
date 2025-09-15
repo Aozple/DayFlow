@@ -4,25 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// The header section of the home screen, including date display and action buttons.
-///
-/// This widget displays the currently selected date in a prominent format and provides
-/// quick access to common actions like returning to today, filtering tasks, searching,
-/// and accessing settings.
+/// Header section of the home screen with date display and action buttons
 class HomeHeader extends StatelessWidget {
-  /// The currently selected date to display.
   final DateTime selectedDate;
-
-  /// Callback function when a new date is selected.
   final Function(DateTime) onDateSelected;
-
-  /// Whether any filters are currently active.
   final bool hasActiveFilters;
-
-  /// Callback function when the filter button is pressed.
   final VoidCallback onFilterPressed;
-
-  /// Callback function when the search button is pressed.
   final VoidCallback onSearchPressed;
 
   const HomeHeader({
@@ -38,21 +25,19 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRect(
       child: Container(
-        color: AppColors.surface.withAlpha(200), // Semi-transparent background.
+        color: AppColors.surface.withAlpha(200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Column for displaying the selected date.
+            // Date display section
             Padding(
               padding: const EdgeInsets.only(left: 4.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    DateFormat('EEEE').format(
-                      selectedDate,
-                    ), // Day of the week (e.g., "Wednesday").
+                    DateFormat('EEEE').format(selectedDate),
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
@@ -60,9 +45,7 @@ class HomeHeader extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    DateFormat(
-                      'd MMM',
-                    ).format(selectedDate), // Day and month (e.g., "21 Aug").
+                    DateFormat('d MMM').format(selectedDate),
                     style: const TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 28,
@@ -73,16 +56,16 @@ class HomeHeader extends StatelessWidget {
                 ],
               ),
             ),
-            // Row for action buttons (Today, Filter, Search, Settings).
+            // Action buttons row
             Row(
               children: [
-                // "Today" button, visible only if the selected date is not today.
+                // "Today" button - only visible when not on today's date
                 if (!_isSameDay(selectedDate, DateTime.now()))
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     onPressed: () {
                       final today = DateTime.now();
-                      onDateSelected(today); // Set selected date to today.
+                      onDateSelected(today);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -104,19 +87,19 @@ class HomeHeader extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(width: 12),
-                // Filter button with an indicator if filters are active.
+                // Filter button with active indicator
                 CupertinoButton(
                   padding: const EdgeInsets.all(4),
                   minSize: 28,
-                  onPressed: onFilterPressed, // Open the filter modal.
+                  onPressed: onFilterPressed,
                   child: Stack(
                     children: [
                       const Icon(
-                        CupertinoIcons.slider_horizontal_3, // Filter icon.
+                        CupertinoIcons.slider_horizontal_3,
                         color: AppColors.textSecondary,
                         size: 24,
                       ),
-                      // Small dot indicator if any filters are applied.
+                      // Indicator dot for active filters
                       if (hasActiveFilters)
                         Positioned(
                           right: 0,
@@ -134,26 +117,26 @@ class HomeHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Search button.
+                // Search button
                 CupertinoButton(
                   padding: const EdgeInsets.all(4),
                   minSize: 28,
-                  onPressed: onSearchPressed, // Open the search delegate.
+                  onPressed: onSearchPressed,
                   child: const Icon(
-                    CupertinoIcons.search, // Search icon.
+                    CupertinoIcons.search,
                     color: AppColors.textSecondary,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Settings button.
+                // Settings button
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: () {
-                    context.push('/settings'); // Navigate to settings screen.
+                    context.push('/settings');
                   },
                   child: const Icon(
-                    CupertinoIcons.gear, // Settings icon.
+                    CupertinoIcons.gear,
                     color: AppColors.textSecondary,
                     size: 24,
                   ),
@@ -166,7 +149,7 @@ class HomeHeader extends StatelessWidget {
     );
   }
 
-  /// Helper method to check if two DateTime objects represent the same day (ignoring time).
+  /// Check if two dates are the same day
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }

@@ -1,21 +1,11 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
-/// A confirmation dialog before deleting a task or note.
-///
-/// This widget presents a modal dialog asking the user to confirm the deletion
-/// of a task or note, with options to cancel or proceed with the deletion.
+/// Confirmation dialog for deleting tasks or notes
 class HomeConfirmDeleteDialog extends StatelessWidget {
-  /// The title of the dialog.
   final String title;
-
-  /// The main content message of the dialog.
   final String content;
-
-  /// Optional subtitle or additional information to display.
   final String? subtitle;
-
-  /// Callback function when the delete action is confirmed.
   final VoidCallback onDelete;
 
   const HomeConfirmDeleteDialog({
@@ -43,21 +33,23 @@ class HomeConfirmDeleteDialog extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
               maxLines: 2,
-              overflow: TextOverflow.ellipsis, // Truncate long descriptions.
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],
       ),
       actions: [
+        // Cancel button
         CupertinoDialogAction(
           child: const Text('Cancel'),
-          onPressed: () => Navigator.pop(context), // Close dialog.
+          onPressed: () => Navigator.pop(context),
         ),
+        // Delete button (red)
         CupertinoDialogAction(
-          isDestructiveAction: true, // Make this action red.
+          isDestructiveAction: true,
           onPressed: () {
-            Navigator.pop(context); // Close dialog.
-            onDelete(); // Proceed with deletion.
+            Navigator.pop(context);
+            onDelete();
           },
           child: const Text('Delete'),
         ),

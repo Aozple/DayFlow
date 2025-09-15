@@ -19,10 +19,7 @@ import 'widgets/sheets/home_quick_add_sheet.dart';
 import 'widgets/sheets/home_task_options_sheet.dart';
 import 'widgets/timeline/home_timeline.dart';
 
-/// The main home screen of our app, showing tasks and notes organized by date.
-///
-/// This screen serves as the primary dashboard where users can view their daily tasks,
-/// navigate between dates, filter tasks, and manage their schedule.
+/// Main home screen showing tasks and notes organized by date
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -30,30 +27,23 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-/// The state for our HomeScreen, managing selected date, filters, and task list.
-///
-/// This class handles the core functionality of the home screen including:
-/// - Date selection and navigation
-/// - Task filtering and sorting
-/// - Task and note management operations
-/// - UI state management
 class _HomeScreenState extends State<HomeScreen> {
-  /// The date currently selected in the date selector.
+  /// Currently selected date
   DateTime _selectedDate = DateTime.now();
 
-  /// Controller for the timeline's scroll position.
+  /// Timeline scroll controller
   final ScrollController _scrollController = ScrollController();
 
-  /// Current filter options applied to tasks.
+  /// Current filter settings
   TaskFilterOptions _currentFilters = TaskFilterOptions();
 
-  /// The list of tasks after applying filters.
+  /// Tasks after applying filters
   List<TaskModel> _filteredTasks = [];
 
   @override
   void initState() {
     super.initState();
-    // After the first frame, scroll the timeline to the current time.
+    // Scroll to current time after first render
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentTime();
     });
@@ -61,55 +51,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    // Clean up the scroll controller when the widget is removed.
     _scrollController.dispose();
     super.dispose();
   }
 
-  /// Scrolls the timeline to approximately the current hour.
-  ///
-  /// This method calculates the appropriate scroll position based on the current hour
-  /// and animates the timeline to that position with a smooth transition.
+  /// Scrolls timeline to current hour
   void _scrollToCurrentTime() {
     if (!_scrollController.hasClients) {
-      return; // Don't scroll if controller isn't attached.
+      return;
     }
 
     final now = DateTime.now();
-    // Calculate scroll position: each hour slot is about 80 pixels.
-    final scrollPosition =
-        (now.hour * 80.0) - 200; // Offset to show some hours before current.
+    // Each hour is approximately 80 pixels
+    final scrollPosition = (now.hour * 80.0) - 200;
 
     _scrollController.animateTo(
-      scrollPosition.clamp(
-        0,
-        _scrollController.position.maxScrollExtent,
-      ), // Keep scroll within bounds.
-      duration: const Duration(milliseconds: 800), // Smooth animation duration.
-      curve: Curves.easeInOutCubic, // Animation curve.
+      scrollPosition.clamp(0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOutCubic,
     );
   }
 
-  /// Opens the search delegate to allow users to search for tasks.
-  ///
-  /// This method presents a search interface and navigates to the task details
-  /// if a task is selected from the search results.
+  /// Opens task search interface
   void _openSearch() async {
     final selectedTask = await showSearch<TaskModel?>(
       context: context,
-      delegate: TaskSearchDelegate(), // Our custom search delegate.
+      delegate: TaskSearchDelegate(),
     );
 
-    // If a task was selected from the search results, navigate to its details.
     if (selectedTask != null && mounted) {
       context.push('/task-details', extra: selectedTask);
     }
   }
 
-  /// Checks if any filters are currently active.
-  ///
-  /// Returns true if any of the filter options (date, priority, completion, tags)
-  /// have been set by the user.
+  /// Checks if any filters are active
   bool _hasActiveFilters() {
     return _currentFilters.dateFilter != null ||
         _currentFilters.priorityFilter != null ||
@@ -117,13 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _currentFilters.tagFilters.isNotEmpty;
   }
 
-  /// Opens the modal bottom sheet for task filtering options.
-  ///
-  /// This method collects all available tags from the loaded tasks and presents
-  /// a filter modal sheet. If new filters are selected, it updates the state
-  /// and reapplies the filters to the task list.
+  /// Opens filter modal
   void _openFilterModal() async {
-    // Collect all unique tags from the loaded tasks to populate filter options.
+    // Collect all unique tags
     final allTags = <String>{};
     final state = context.read<TaskBloc>().state;
     if (state is TaskLoaded) {
@@ -132,22 +103,19 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // Show the filter modal and wait for a result.
+    // Show filter modal
     final result = await showModalBottomSheet<TaskFilterOptions>(
       context: context,
-      isScrollControlled: true, // Allows the modal to take full height.
-      backgroundColor:
-          Colors.transparent, // Transparent background for custom styling.
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder:
           (context) => TaskFilterModal(
-            initialFilters:
-                _currentFilters, // Pass current filters to pre-select.
-            availableTags:
-                allTags.toList()..sort(), // Pass available tags, sorted.
+            initialFilters: _currentFilters,
+            availableTags: allTags.toList()..sort(),
           ),
     );
 
-    // If new filters were selected, update the state and re-apply filters.
+    // Apply new filters if selected
     if (result != null) {
       setState(() {
         _currentFilters = result;
@@ -156,33 +124,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Applies the currently selected filters to the list of tasks.
-  ///
-  /// This method processes the task list based on the current filter options,
-  /// including date filters, priority filters, completion status, and tag filters.
-  /// It also applies sorting based on the selected sort option.
+  /// Applies selected filters to task list
   void _applyFilters() {
     final state = context.read<TaskBloc>().state;
     if (state is TaskLoaded) {
-      // Start with all non-deleted tasks.
+      // Start with non-deleted tasks
       var filtered = state.tasks.where((task) => !task.isDeleted).toList();
 
-      // Apply date filter if set.
+      // Apply date filter
       if (_currentFilters.dateFilter != null) {
         final now = DateTime.now();
         filtered =
             filtered.where((task) {
               if (task.dueDate == null) {
-                return false; // Tasks without due dates are excluded.
+                return false;
               }
               switch (_currentFilters.dateFilter!) {
                 case DateFilter.today:
-                  return _isSameDay(
-                    task.dueDate!,
-                    now,
-                  ); // Check if due date is today.
+                  return _isSameDay(task.dueDate!, now);
                 case DateFilter.thisWeek:
-                  // Check if due date is within the current week (Monday to Sunday).
                   final weekStart = now.subtract(
                     Duration(days: now.weekday - 1),
                   );
@@ -194,16 +154,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         weekEnd.add(const Duration(days: 1)),
                       );
                 case DateFilter.thisMonth:
-                  // Check if due date is within the current month.
                   return task.dueDate!.year == now.year &&
                       task.dueDate!.month == now.month;
                 case DateFilter.custom:
-                  return true; // TODO: Implement custom date range filtering.
+                  return true; // TODO: Implement custom date range filtering
               }
             }).toList();
       }
 
-      // Apply priority filter if set.
+      // Apply priority filter
       if (_currentFilters.priorityFilter != null) {
         filtered =
             filtered
@@ -213,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 .toList();
       }
 
-      // Apply completion status filter if set.
+      // Apply completion status filter
       if (_currentFilters.completedFilter != null) {
         filtered =
             filtered
@@ -223,56 +182,51 @@ class _HomeScreenState extends State<HomeScreen> {
                 .toList();
       }
 
-      // Apply tag filters if any tags are selected.
+      // Apply tag filters
       if (_currentFilters.tagFilters.isNotEmpty) {
         filtered =
             filtered.where((task) {
               for (final tag in _currentFilters.tagFilters) {
                 if (task.tags.contains(tag)) {
-                  return true; // Task must have at least one selected tag.
+                  return true;
                 }
               }
               return false;
             }).toList();
       }
 
-      // Apply sorting based on the selected sort option.
+      // Apply sorting
       switch (_currentFilters.sortBy) {
         case SortOption.dateDesc:
-          // Sort by due date (or creation date if no due date) descending.
           filtered.sort(
             (a, b) =>
                 (b.dueDate ?? b.createdAt).compareTo(a.dueDate ?? a.createdAt),
           );
           break;
         case SortOption.dateAsc:
-          // Sort by due date (or creation date if no due date) ascending.
           filtered.sort(
             (a, b) =>
                 (a.dueDate ?? a.createdAt).compareTo(b.dueDate ?? b.createdAt),
           );
           break;
         case SortOption.priorityDesc:
-          // Sort by priority descending (higher priority first).
           filtered.sort((a, b) => b.priority.compareTo(a.priority));
           break;
         case SortOption.priorityAsc:
-          // Sort by priority ascending (lower priority first).
           filtered.sort((a, b) => a.priority.compareTo(b.priority));
           break;
         case SortOption.alphabetical:
-          // Sort by title alphabetically.
           filtered.sort((a, b) => a.title.compareTo(b.title));
           break;
       }
 
       setState(() {
-        _filteredTasks = filtered; // Update the displayed tasks.
+        _filteredTasks = filtered;
       });
     }
   }
 
-  /// Shows a confirmation dialog before deleting a note.
+  /// Shows delete note confirmation
   void _confirmDeleteNote(TaskModel note) {
     showCupertinoDialog(
       context: context,
@@ -285,48 +239,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Deletes a note by dispatching a DeleteTask event to the TaskBloc.
+  /// Deletes a note
   void _deleteNote(TaskModel note) {
     context.read<TaskBloc>().add(DeleteTask(note.id));
-    CustomSnackBar.success(
-      context,
-      'Note deleted successfully',
-    ); // Show success message.
+    CustomSnackBar.success(context, 'Note deleted successfully');
   }
 
-  /// Duplicates a note by creating a new TaskModel and adding it to the TaskBloc.
+  /// Duplicates a note
   void _duplicateNote(TaskModel note) {
     final duplicatedNote = TaskModel(
-      title: '${note.title} (Copy)', // Add "(Copy)" to the title.
+      title: '${note.title} (Copy)',
       markdownContent: note.markdownContent,
       dueDate: note.dueDate,
       color: note.color,
       tags: note.tags,
-      isNote: true, // Ensure it's still marked as a note.
-      priority: 1, // Default priority for duplicated notes.
+      isNote: true,
+      priority: 1,
     );
-    context.read<TaskBloc>().add(AddTask(duplicatedNote)); // Add the new note.
-    CustomSnackBar.success(
-      context,
-      'Note duplicated successfully',
-    ); // Show success message.
+    context.read<TaskBloc>().add(AddTask(duplicatedNote));
+    CustomSnackBar.success(context, 'Note duplicated successfully');
   }
 
-  /// Toggles the completion status of a task and provides haptic feedback.
+  /// Toggles task completion status
   void _toggleTaskCompletion(TaskModel task) {
-    HapticFeedback.lightImpact(); // Provide a subtle vibration.
-    context.read<TaskBloc>().add(
-      ToggleTaskComplete(task.id),
-    ); // Dispatch event to update task.
+    HapticFeedback.lightImpact();
+    context.read<TaskBloc>().add(ToggleTaskComplete(task.id));
     CustomSnackBar.success(
       context,
-      task.isCompleted
-          ? 'Task marked as pending'
-          : 'Task completed! 🎉', // Show appropriate message.
+      task.isCompleted ? 'Task marked as pending' : 'Task completed! 🎉',
     );
   }
 
-  /// Shows a confirmation dialog before deleting a task.
+  /// Shows delete task confirmation
   void _confirmDeleteTask(TaskModel task) {
     showCupertinoDialog(
       context: context,
@@ -341,36 +285,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Deletes a task by dispatching a DeleteTask event to the TaskBloc.
+  /// Deletes a task
   void _deleteTask(TaskModel task) {
     context.read<TaskBloc>().add(DeleteTask(task.id));
-    CustomSnackBar.success(
-      context,
-      'Task deleted successfully',
-    ); // Show success message.
+    CustomSnackBar.success(context, 'Task deleted successfully');
   }
 
-  /// Duplicates a task by creating a new TaskModel and adding it to the TaskBloc.
+  /// Duplicates a task
   void _duplicateTask(TaskModel task) {
     final duplicatedTask = TaskModel(
-      title: '${task.title} (Copy)', // Add "(Copy)" to the title.
+      title: '${task.title} (Copy)',
       description: task.description,
       dueDate: task.dueDate,
       priority: task.priority,
       color: task.color,
       tags: task.tags,
-      // Reset completion status for the duplicated task.
       isCompleted: false,
       completedAt: null,
     );
-    context.read<TaskBloc>().add(AddTask(duplicatedTask)); // Add the new task.
-    CustomSnackBar.success(
-      context,
-      'Task duplicated successfully',
-    ); // Show success message.
+    context.read<TaskBloc>().add(AddTask(duplicatedTask));
+    CustomSnackBar.success(context, 'Task duplicated successfully');
   }
 
-  /// Shows a quick add menu (action sheet) to create a new task or note at a specific hour.
+  /// Shows quick add menu for specific hour
   void _showQuickAddMenu(int hour) {
     showCupertinoModalPopup(
       context: context,
@@ -384,23 +321,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Navigates to the create task screen with the selected date and hour pre-filled.
+  /// Navigates to create task screen with prefilled time
   void _createTaskAtHour(int hour) {
-    final dateString =
-        _selectedDate
-            .toIso8601String(); // Convert date to string for URL parameter.
+    final dateString = _selectedDate.toIso8601String();
     context.push('/create-task?hour=$hour&date=$dateString');
   }
 
-  /// Navigates to the create note screen with the selected date and hour pre-filled.
+  /// Navigates to create note screen with prefilled time
   void _createNoteAtHour(int hour) {
-    final dateString =
-        _selectedDate
-            .toIso8601String(); // Convert date to string for URL parameter.
+    final dateString = _selectedDate.toIso8601String();
     context.push('/create-note?hour=$hour&date=$dateString');
   }
 
-  /// Helper method to check if two DateTime objects represent the same day (ignoring time).
+  /// Checks if two dates are the same day
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
@@ -419,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 color: AppColors.surface.withAlpha(200),
               ),
-              // The header section of the home screen.
+              // Header with title and actions
               HomeHeader(
                 selectedDate: _selectedDate,
                 onDateSelected: (date) {
@@ -432,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onSearchPressed: _openSearch,
               ),
 
-              // Horizontal date selector for navigating days.
+              // Date selector for navigation
               HomeDateSelector(
                 selectedDate: _selectedDate,
                 onDateSelected: (date) {
@@ -441,10 +374,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
 
-              // A thin divider line.
               Container(height: 0.5, color: AppColors.divider),
 
-              // The main timeline area where tasks are displayed by hour.
+              // Timeline with tasks
               Expanded(
                 child: BlocBuilder<TaskBloc, TaskState>(
                   builder: (context, taskState) {
@@ -483,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Shows a Cupertino-style action sheet for note options (edit, duplicate, delete).
+  /// Shows note options menu
   void _showNoteOptionsMenu(TaskModel note) {
     showCupertinoModalPopup(
       context: context,
@@ -491,22 +423,22 @@ class _HomeScreenState extends State<HomeScreen> {
           (context) => HomeNoteOptionsSheet(
             note: note,
             onEdit: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               context.push('/edit-note', extra: note);
             },
             onDuplicate: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               _duplicateNote(note);
             },
             onDelete: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               _confirmDeleteNote(note);
             },
           ),
     );
   }
 
-  /// Shows a Cupertino-style action sheet for task options.
+  /// Shows task options menu
   void _showTaskOptionsMenu(TaskModel task) {
     showCupertinoModalPopup(
       context: context,
@@ -514,23 +446,23 @@ class _HomeScreenState extends State<HomeScreen> {
           (context) => HomeTaskOptionsSheet(
             task: task,
             onToggleComplete: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               _toggleTaskCompletion(task);
             },
             onEdit: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               context.push('/edit-task', extra: task);
             },
             onViewDetails: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               context.push('/task-details', extra: task);
             },
             onDuplicate: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               _duplicateTask(task);
             },
             onDelete: () {
-              Navigator.pop(context); // Close the action sheet.
+              Navigator.pop(context);
               _confirmDeleteTask(task);
             },
           ),

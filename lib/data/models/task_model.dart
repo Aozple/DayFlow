@@ -18,19 +18,23 @@ class TaskModel {
   final String color;
   final List<String> tags;
 
+  // Flag to distinguish between tasks and notes
   final bool isNote;
   final String? noteContent;
 
   final int? estimatedMinutes;
   final int? actualMinutes;
 
+  // Legacy field for markdown content
   final String? markdownContent;
 
   final bool hasNotification;
   final int? notificationMinutesBefore;
 
+  // Structured content for rich text notes
   final List<NoteBlock>? blocks;
 
+  // Constructor with default values and UUID generation
   TaskModel({
     String? id,
     required this.title,
@@ -55,6 +59,7 @@ class TaskModel {
        createdAt = createdAt ?? DateTime.now(),
        tags = tags ?? [];
 
+  // Convert model to map for storage
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -79,6 +84,7 @@ class TaskModel {
     };
   }
 
+  // Create model from stored map data
   factory TaskModel.fromMap(Map<String, dynamic> map) {
     // Parse blocks if available
     List<NoteBlock>? blocks;
@@ -118,6 +124,7 @@ class TaskModel {
     );
   }
 
+  // Create a new instance with updated fields
   TaskModel copyWith({
     String? id,
     String? title,
@@ -163,7 +170,7 @@ class TaskModel {
     );
   }
 
-  // Helper method to convert legacy markdown content to blocks
+  // Convert legacy markdown to block format
   List<NoteBlock> getLegacyBlocks() {
     if (markdownContent != null && markdownContent!.isNotEmpty) {
       return [TextBlock(id: const Uuid().v4(), text: markdownContent!)];

@@ -3,19 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// The week navigation component showing the current week range and navigation buttons.
-///
-/// This widget displays the date range of the current week (e.g., "Aug 21 - 27")
-/// and provides buttons to navigate to the previous or next week. It also shows
-/// an indicator when Saturday is set as the first day of the week.
+/// Week navigation component with date range and navigation buttons
 class HomeWeekNavigation extends StatelessWidget {
-  /// The currently selected date.
   final DateTime selectedDate;
-
-  /// Whether the week starts on Saturday (affects display).
   final bool isSaturdayFirst;
-
-  /// Callback function when the week is changed.
   final Function(DateTime) onWeekChanged;
 
   const HomeWeekNavigation({
@@ -39,7 +30,7 @@ class HomeWeekNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Week range and indicator
+          // Week range display with first day indicator
           Expanded(
             child: Row(
               children: [
@@ -58,7 +49,7 @@ class HomeWeekNavigation extends StatelessWidget {
                     letterSpacing: 0.2,
                   ),
                 ),
-                // Saturday indicator
+                // Saturday first day indicator
                 if (isSaturdayFirst) ...[
                   const SizedBox(width: 12),
                   Container(
@@ -89,7 +80,7 @@ class HomeWeekNavigation extends StatelessWidget {
             ),
           ),
 
-          // Navigation buttons
+          // Week navigation buttons
           Container(
             decoration: BoxDecoration(
               color: AppColors.surfaceLight,
@@ -118,7 +109,7 @@ class HomeWeekNavigation extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Divider
+                // Divider between buttons
                 Container(
                   width: 0.5,
                   height: 24,
@@ -152,52 +143,44 @@ class HomeWeekNavigation extends StatelessWidget {
     );
   }
 
-  /// Helper method to format the week range string (e.g., "Aug 21 - 27" or "Aug 21 - Sep 3").
+  /// Format week range string (e.g., "Aug 21 - 27" or "Aug 21 - Sep 3")
   String _getWeekRange(DateTime date) {
-    final weekStart = _getWeekStart(date); // Get the start date of the week.
-    final weekEnd = weekStart.add(
-      const Duration(days: 6),
-    ); // Get the end date of the week.
+    final weekStart = _getWeekStart(date);
+    final weekEnd = weekStart.add(const Duration(days: 6));
 
     if (weekStart.month == weekEnd.month) {
-      // If both start and end are in the same month.
+      // Same month format
       return '${DateFormat('MMM d').format(weekStart)} - ${weekEnd.day}';
     } else {
-      // If the week spans two months.
+      // Different month format
       return '${DateFormat('MMM d').format(weekStart)} - ${DateFormat('MMM d').format(weekEnd)}';
     }
   }
 
-  /// Helper method to determine the start of the week based on settings (Monday or Saturday).
+  /// Calculate first day of week based on settings
   DateTime _getWeekStart(DateTime date) {
-    final weekday =
-        date.weekday; // Get the day of the week (1 for Monday, 7 for Sunday).
+    final weekday = date.weekday; // 1 for Monday, 7 for Sunday
 
     if (isSaturdayFirst) {
-      // If Saturday is the first day of the week (weekday 6).
+      // Saturday-first week calculation
       int daysToSubtract;
       if (weekday == 6) {
-        daysToSubtract = 0; // If it's Saturday, subtract 0 days.
+        daysToSubtract = 0; // Saturday
       } else if (weekday == 7) {
-        daysToSubtract =
-            1; // If it's Sunday, subtract 1 day to get to Saturday.
+        daysToSubtract = 1; // Sunday
       } else {
-        daysToSubtract =
-            weekday +
-            1; // For Monday-Friday, calculate days to subtract to get to Saturday.
+        daysToSubtract = weekday + 1; // Monday-Friday
       }
       return date.subtract(Duration(days: daysToSubtract));
     } else {
-      // Default behavior: Monday is the first day of the week.
+      // Monday-first week calculation
       return date.subtract(Duration(days: weekday - 1));
     }
   }
 
-  /// Navigates the selected date by a full week (forward or backward).
+  /// Navigate to previous or next week
   void _navigateWeek(int direction) {
-    final newDate = selectedDate.add(
-      Duration(days: 7 * direction),
-    ); // Add or subtract 7 days.
+    final newDate = selectedDate.add(Duration(days: 7 * direction));
     onWeekChanged(newDate);
   }
 }
