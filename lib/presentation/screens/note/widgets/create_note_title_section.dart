@@ -47,7 +47,7 @@ class CreateNoteTitleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.surface, // Background color for this section.
         borderRadius: BorderRadius.circular(16),

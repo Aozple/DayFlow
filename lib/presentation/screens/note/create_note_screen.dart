@@ -1,5 +1,6 @@
 import 'package:dayflow/data/models/note_block.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
+import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -179,55 +180,52 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              CreateNoteHeader(
-                isEditMode: isEditMode,
-                hasChanges: _hasChanges,
-                autoSaveEnabled: _autoSaveEnabled,
-                isPreviewMode: false, // Always false now
-                onTogglePreview: () {}, // Empty function since we don't need it
-                onDelete: _showDeleteConfirmation,
-                onSave: _saveNote,
-                onCancel: () {
-                  if (_hasChanges) {
-                    _showDiscardDialog();
-                  } else {
-                    context.pop();
-                  }
-                },
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Column(
-                      children: [
-                        CreateNoteTitleSection(
-                          titleController: _titleController,
-                          titleFocus: _titleFocus,
-                          selectedColor: _selectedColor,
-                          selectedTime: _selectedTime,
-                          prefilledDate: widget.prefilledDate,
-                          onColorTap: _showColorPicker,
-                          onDateTimeTap: _selectDateTime,
-                          tagsController: _tagsController,
-                        ),
+        body: Column(
+          children: [
+            const StatusBarPadding(),
+            CreateNoteHeader(
+              isEditMode: isEditMode,
+              hasChanges: _hasChanges,
+              autoSaveEnabled: _autoSaveEnabled,
+              onDelete: _showDeleteConfirmation,
+              onSave: _saveNote,
+              onCancel: () {
+                if (_hasChanges) {
+                  _showDiscardDialog();
+                } else {
+                  context.pop();
+                }
+              },
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      CreateNoteTitleSection(
+                        titleController: _titleController,
+                        titleFocus: _titleFocus,
+                        selectedColor: _selectedColor,
+                        selectedTime: _selectedTime,
+                        prefilledDate: widget.prefilledDate,
+                        onColorTap: _showColorPicker,
+                        onDateTimeTap: _selectDateTime,
+                        tagsController: _tagsController,
+                      ),
 
-                        // Replace the old editor with the new block editor
-                        Expanded(
-                          child: NoteBlockEditor(
-                            initialBlocks: _blocks,
-                            onBlocksChanged: _onBlocksChanged,
-                          ),
+                      // Replace the old editor with the new block editor
+                      Expanded(
+                        child: NoteBlockEditor(
+                          initialBlocks: _blocks,
+                          onBlocksChanged: _onBlocksChanged,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

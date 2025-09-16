@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
@@ -20,7 +19,7 @@ class CodeBlockWidget extends BaseBlockWidget {
 
   @override
   Widget buildContent(BuildContext context) {
-    return _CodeFieldWidget(
+    return _CodeEditorWidget(
       block: block,
       focusNode: focusNode,
       onChanged: onChanged,
@@ -30,14 +29,14 @@ class CodeBlockWidget extends BaseBlockWidget {
   }
 }
 
-class _CodeFieldWidget extends StatefulWidget {
+class _CodeEditorWidget extends StatefulWidget {
   final CodeBlock block;
   final FocusNode focusNode;
   final Function(CodeBlock) onChanged;
   final Function(TextSelection) onSelectionChanged;
   final Function(String, String) onTextChange;
 
-  const _CodeFieldWidget({
+  const _CodeEditorWidget({
     required this.block,
     required this.focusNode,
     required this.onChanged,
@@ -46,183 +45,304 @@ class _CodeFieldWidget extends StatefulWidget {
   });
 
   @override
-  State<_CodeFieldWidget> createState() => _CodeFieldWidgetState();
+  State<_CodeEditorWidget> createState() => _CodeEditorWidgetState();
 }
 
-class _CodeFieldWidgetState extends State<_CodeFieldWidget> {
+class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
   late TextEditingController _controller;
-  bool _isDisposed = false;
-  String _selectedLanguage = 'plain';
+  late ScrollController _scrollController;
+  String _selectedLanguage = 'dart';
   bool _showLineNumbers = true;
+  bool _wordWrap = false;
 
-  // Popular programming languages
-  final List<_LanguageOption> _languages = [
-    const _LanguageOption('plain', 'Plain Text', Colors.grey),
-    const _LanguageOption('dart', 'Dart', Colors.blue),
-    const _LanguageOption('javascript', 'JavaScript', Colors.yellow),
-    const _LanguageOption('python', 'Python', Colors.green),
-    const _LanguageOption('java', 'Java', Colors.orange),
-    const _LanguageOption('swift', 'Swift', Colors.orange),
-    const _LanguageOption('kotlin', 'Kotlin', Colors.purple),
-    const _LanguageOption('cpp', 'C++', Colors.blue),
-    const _LanguageOption('csharp', 'C#', Colors.purple),
-    const _LanguageOption('html', 'HTML', Colors.orange),
-    const _LanguageOption('css', 'CSS', Colors.blue),
-    const _LanguageOption('sql', 'SQL', Colors.cyan),
-    const _LanguageOption('json', 'JSON', Colors.green),
-    const _LanguageOption('yaml', 'YAML', Colors.red),
-    const _LanguageOption('markdown', 'Markdown', Colors.grey),
-  ];
+  // Language configurations
+  late final Map<String, LanguageConfig> _languages;
 
   @override
   void initState() {
     super.initState();
+    _initializeLanguages();
     _controller = TextEditingController(text: widget.block.code);
-    _controller.addListener(_onTextChanged);
-    _controller.addListener(_onSelectionChanged);
-    _selectedLanguage = widget.block.language ?? 'plain';
+    _scrollController = ScrollController();
+    _selectedLanguage = widget.block.language ?? 'dart';
+
+    _controller.addListener(() {
+      widget.onChanged(widget.block.copyWith(code: _controller.text));
+      widget.onTextChange(_controller.text, widget.block.id);
+      setState(() {}); // Rebuild for syntax highlighting
+    });
+  }
+
+  void _initializeLanguages() {
+    _languages = {
+      'dart': const LanguageConfig(
+        name: 'Dart',
+        icon: Icons.flutter_dash,
+        primaryColor: Color(0xFF40C4FF),
+        keywords: {
+          'class',
+          'void',
+          'final',
+          'const',
+          'var',
+          'if',
+          'else',
+          'return',
+          'import',
+          'extends',
+          'implements',
+          'static',
+          'async',
+          'await',
+          'try',
+          'catch',
+          'throw',
+          'new',
+          'this',
+          'super',
+          'null',
+          'true',
+          'false',
+        },
+        keywordColor: Color(0xFF569CD6),
+        stringColor: Color(0xFFCE9178),
+        commentColor: Color(0xFF6A9955),
+        numberColor: Color(0xFFB5CEA8),
+      ),
+      'javascript': const LanguageConfig(
+        name: 'JavaScript',
+        icon: Icons.javascript,
+        primaryColor: Color(0xFFF7DF1E),
+        keywords: {
+          'function',
+          'const',
+          'let',
+          'var',
+          'if',
+          'else',
+          'return',
+          'class',
+          'new',
+          'async',
+          'await',
+          'for',
+          'while',
+          'do',
+          'switch',
+          'case',
+          'break',
+          'continue',
+          'typeof',
+          'instanceof',
+          'true',
+          'false',
+          'null',
+          'undefined',
+        },
+        keywordColor: Color(0xFFC586C0),
+        stringColor: Color(0xFFCE9178),
+        commentColor: Color(0xFF6A9955),
+        numberColor: Color(0xFFB5CEA8),
+      ),
+      'python': const LanguageConfig(
+        name: 'Python',
+        icon: Icons.code,
+        primaryColor: Color(0xFF3776AB),
+        keywords: {
+          'def',
+          'class',
+          'if',
+          'else',
+          'elif',
+          'return',
+          'import',
+          'from',
+          'as',
+          'try',
+          'except',
+          'with',
+          'for',
+          'while',
+          'break',
+          'continue',
+          'pass',
+          'lambda',
+          'True',
+          'False',
+          'None',
+          'and',
+          'or',
+          'not',
+          'in',
+        },
+        keywordColor: Color(0xFF569CD6),
+        stringColor: Color(0xFFCE9178),
+        commentColor: Color(0xFF6A9955),
+        numberColor: Color(0xFFB5CEA8),
+      ),
+      'html': const LanguageConfig(
+        name: 'HTML',
+        icon: Icons.html,
+        primaryColor: Color(0xFFE34C26),
+        keywords: {
+          'html',
+          'head',
+          'body',
+          'div',
+          'span',
+          'p',
+          'a',
+          'img',
+          'ul',
+          'li',
+          'table',
+          'form',
+          'input',
+          'button',
+          'script',
+          'style',
+          'link',
+          'meta',
+        },
+        keywordColor: Color(0xFF569CD6),
+        stringColor: Color(0xFFCE9178),
+        commentColor: Color(0xFF6A9955),
+        numberColor: Color(0xFFB5CEA8),
+      ),
+      'css': const LanguageConfig(
+        name: 'CSS',
+        icon: Icons.css,
+        primaryColor: Color(0xFF1572B6),
+        keywords: {
+          'color',
+          'background',
+          'border',
+          'margin',
+          'padding',
+          'font',
+          'display',
+          'position',
+          'width',
+          'height',
+          'top',
+          'left',
+          'right',
+          'bottom',
+          'flex',
+          'grid',
+        },
+        keywordColor: Color(0xFF569CD6),
+        stringColor: Color(0xFFCE9178),
+        commentColor: Color(0xFF6A9955),
+        numberColor: Color(0xFFB5CEA8),
+      ),
+      'sql': const LanguageConfig(
+        name: 'SQL',
+        icon: Icons.storage,
+        primaryColor: Color(0xFF336791),
+        keywords: {
+          'SELECT',
+          'FROM',
+          'WHERE',
+          'INSERT',
+          'UPDATE',
+          'DELETE',
+          'CREATE',
+          'TABLE',
+          'JOIN',
+          'ON',
+          'AS',
+          'AND',
+          'OR',
+          'NOT',
+          'NULL',
+          'PRIMARY',
+          'KEY',
+          'FOREIGN',
+          'INDEX',
+          'INTO',
+          'VALUES',
+          'SET',
+          'ALTER',
+          'DROP',
+        },
+        keywordColor: Color(0xFF569CD6),
+        stringColor: Color(0xFFCE9178),
+        commentColor: Color(0xFF6A9955),
+        numberColor: Color(0xFFB5CEA8),
+      ),
+    };
   }
 
   @override
   void dispose() {
-    _isDisposed = true;
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(_CodeFieldWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.block.code != widget.block.code && !_isDisposed) {
-      if (_controller.text != widget.block.code) {
-        _controller.text = widget.block.code;
-      }
-    }
-    if (oldWidget.block.language != widget.block.language) {
-      _selectedLanguage = widget.block.language ?? 'plain';
-    }
-  }
-
-  void _onTextChanged() {
-    if (_isDisposed) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isDisposed && mounted) {
-        widget.onChanged(widget.block.copyWith(code: _controller.text));
-        widget.onTextChange(_controller.text, widget.block.id);
-      }
-    });
-  }
-
-  void _onSelectionChanged() {
-    if (_isDisposed || !mounted) return;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isDisposed && mounted) {
-        widget.onSelectionChanged(_controller.selection);
-      }
-    });
-  }
-
-  // Get line numbers for the code
   List<int> _getLineNumbers() {
     if (_controller.text.isEmpty) return [1];
-    return List.generate(
-      _controller.text.split('\n').length,
-      (index) => index + 1,
-    );
+    return List.generate(_controller.text.split('\n').length, (i) => i + 1);
   }
 
   @override
   Widget build(BuildContext context) {
+    final config = _languages[_selectedLanguage]!;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider.withAlpha(50), width: 1),
+        border: Border.all(color: AppColors.divider.withAlpha(50), width: 0.5),
       ),
       child: Column(
         children: [
-          // Header with language selector and actions
+          // Professional header bar
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight.withAlpha(50),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.divider.withAlpha(50),
-                  width: 1,
-                ),
-              ),
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2D2D30),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
-                // Language selector
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.background.withAlpha(100),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: PopupMenuButton<String>(
-                    initialValue: _selectedLanguage,
-                    onSelected: (value) {
-                      setState(() {
-                        _selectedLanguage = value;
-                      });
-                      widget.onChanged(widget.block.copyWith(language: value));
-                    },
-                    itemBuilder:
-                        (context) =>
-                            _languages.map((lang) {
-                              return PopupMenuItem(
-                                value: lang.code,
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      margin: const EdgeInsets.only(right: 8),
-                                      decoration: BoxDecoration(
-                                        color: lang.color,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    Text(lang.name),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                // Language selector with icon
+                InkWell(
+                  onTap: () => _showLanguageSelector(context),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: config.primaryColor.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: config.primaryColor.withAlpha(40),
+                        width: 0.5,
+                      ),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.code,
-                          size: 14,
-                          color: AppColors.textSecondary,
-                        ),
+                        Icon(config.icon, size: 14, color: config.primaryColor),
                         const SizedBox(width: 6),
                         Text(
-                          _languages
-                              .firstWhere((l) => l.code == _selectedLanguage)
-                              .name,
-                          style: const TextStyle(
+                          config.name,
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w500,
+                            color: config.primaryColor,
                           ),
                         ),
-                        const Icon(
+                        const SizedBox(width: 4),
+                        Icon(
                           Icons.arrow_drop_down,
                           size: 16,
-                          color: AppColors.textSecondary,
+                          color: config.primaryColor.withAlpha(150),
                         ),
                       ],
                     ),
@@ -231,133 +351,128 @@ class _CodeFieldWidgetState extends State<_CodeFieldWidget> {
 
                 const Spacer(),
 
-                // Line numbers toggle
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _showLineNumbers = !_showLineNumbers;
-                    });
-                  },
-                  icon: Icon(
-                    Icons.format_list_numbered,
-                    size: 18,
-                    color:
-                        _showLineNumbers
-                            ? AppColors.accent
-                            : AppColors.textTertiary,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                  tooltip: 'Toggle line numbers',
-                ),
-
-                // Copy button
-                IconButton(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: widget.block.code));
-                    HapticFeedback.lightImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Code copied to clipboard'),
-                        backgroundColor: AppColors.surface,
-                        duration: const Duration(seconds: 2),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.content_copy,
-                    size: 18,
-                    color: AppColors.textSecondary,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                  tooltip: 'Copy code',
+                // Editor actions
+                Row(
+                  children: [
+                    _buildActionButton(
+                      icon: Icons.format_list_numbered_rounded,
+                      isActive: _showLineNumbers,
+                      onTap:
+                          () => setState(
+                            () => _showLineNumbers = !_showLineNumbers,
+                          ),
+                      tooltip: 'Line numbers',
+                    ),
+                    const SizedBox(width: 4),
+                    _buildActionButton(
+                      icon: Icons.wrap_text_rounded,
+                      isActive: _wordWrap,
+                      onTap: () => setState(() => _wordWrap = !_wordWrap),
+                      tooltip: 'Word wrap',
+                    ),
+                    const SizedBox(width: 4),
+                    _buildActionButton(
+                      icon: Icons.copy_rounded,
+                      onTap: () {
+                        Clipboard.setData(
+                          ClipboardData(text: _controller.text),
+                        );
+                        HapticFeedback.lightImpact();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Code copied'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      tooltip: 'Copy',
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
-          // Code content area
+          // Code editor area
           Container(
-            constraints: const BoxConstraints(minHeight: 100),
+            constraints: const BoxConstraints(minHeight: 150, maxHeight: 400),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Line numbers
+                // Line numbers column
                 if (_showLineNumbers)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
+                    width: 50,
+                    padding: const EdgeInsets.only(top: 12, right: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.background.withAlpha(50),
+                      color: const Color(0xFF252526),
                       border: Border(
                         right: BorderSide(
                           color: AppColors.divider.withAlpha(30),
-                          width: 1,
+                          width: 0.5,
                         ),
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children:
-                          _getLineNumbers().map((lineNumber) {
-                            return Container(
-                              height: 24,
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                lineNumber.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textTertiary,
-                                  fontFamily: 'monospace',
-                                  height: 1.5,
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children:
+                            _getLineNumbers().map((line) {
+                              return Container(
+                                height: 20,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  line.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: 'monospace',
+                                    color: Color(0xFF858585),
+                                    height: 1.5,
+                                  ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                      ),
                     ),
                   ),
 
-                // Code editor
+                // Code text field with syntax highlighting
                 Expanded(
-                  child: Container(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(12),
-                    child: TextField(
-                      controller: _controller,
-                      focusNode: widget.focusNode,
-                      maxLines: null,
-                      enableInteractiveSelection: true,
-                      selectionControls: _CustomTextSelectionControls(),
-                      decoration: const InputDecoration(
-                        hintText: 'Paste or type your code here...',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                        isDense: true,
-                        hintStyle: TextStyle(
-                          color: Color(0xFF48484A),
-                          fontSize: 14,
-                          fontFamily: 'monospace',
+                    child: Stack(
+                      children: [
+                        // Syntax highlighted text
+                        _buildSyntaxHighlightedText(config),
+
+                        // Transparent input field on top
+                        TextField(
+                          controller: _controller,
+                          focusNode: widget.focusNode,
+                          maxLines: null,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'monospace',
+                            color: Colors.transparent,
+                            height: 1.5,
+                            letterSpacing: 0,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                          ),
+                          cursorColor: AppColors.accent,
+                          cursorWidth: 2,
                         ),
-                      ),
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.5,
-                        color: _getCodeColor(),
-                        fontFamily: 'monospace',
-                      ),
-                      onTap: _onSelectionChanged,
+                      ],
                     ),
                   ),
                 ),
@@ -369,35 +484,259 @@ class _CodeFieldWidgetState extends State<_CodeFieldWidget> {
     );
   }
 
-  // Get code color based on language
-  Color _getCodeColor() {
-    final lang = _languages.firstWhere((l) => l.code == _selectedLanguage);
-    return lang.color.withAlpha(200);
+  Widget _buildSyntaxHighlightedText(LanguageConfig config) {
+    final text = _controller.text;
+    if (text.isEmpty) {
+      return Text(
+        'Enter your ${config.name} code here...',
+        style: const TextStyle(
+          fontSize: 14,
+          fontFamily: 'monospace',
+          color: Color(0xFF6A6A6A),
+          height: 1.5,
+        ),
+      );
+    }
+
+    // Process text line by line for proper comment handling
+    final lines = text.split('\n');
+    final List<TextSpan> allSpans = [];
+
+    for (int i = 0; i < lines.length; i++) {
+      if (i > 0) {
+        allSpans.add(const TextSpan(text: '\n'));
+      }
+      allSpans.addAll(_highlightLine(lines[i], config));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 14,
+          fontFamily: 'monospace',
+          color: Color(0xFFD4D4D4),
+          height: 1.5,
+        ),
+        children: allSpans,
+      ),
+    );
+  }
+
+  List<TextSpan> _highlightLine(String line, LanguageConfig config) {
+    final spans = <TextSpan>[];
+
+    // Check if line contains comment
+    int commentIndex = -1;
+    if (_selectedLanguage == 'python') {
+      commentIndex = line.indexOf('#');
+    } else if (_selectedLanguage == 'dart' ||
+        _selectedLanguage == 'javascript' ||
+        _selectedLanguage == 'css') {
+      commentIndex = line.indexOf('//');
+    }
+
+    // If comment found, split line into code and comment parts
+    if (commentIndex != -1) {
+      final codePart = line.substring(0, commentIndex);
+      final commentPart = line.substring(commentIndex);
+
+      // Highlight code part
+      spans.addAll(_highlightCode(codePart, config));
+
+      // Add comment part with comment color
+      spans.add(
+        TextSpan(
+          text: commentPart,
+          style: TextStyle(
+            color: config.commentColor,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+    } else {
+      // No comment, highlight entire line
+      spans.addAll(_highlightCode(line, config));
+    }
+
+    return spans;
+  }
+
+  List<TextSpan> _highlightCode(String code, LanguageConfig config) {
+    final spans = <TextSpan>[];
+
+    // Split by word boundaries but preserve spaces
+    final pattern = RegExp(r'(\b\w+\b|\s+|[^\w\s]+)');
+    final matches = pattern.allMatches(code);
+
+    for (final match in matches) {
+      final token = match.group(0)!;
+
+      if (token.trim().isEmpty) {
+        // Preserve spaces
+        spans.add(TextSpan(text: token));
+      } else if (config.keywords.contains(token)) {
+        // Keyword
+        spans.add(
+          TextSpan(
+            text: token,
+            style: TextStyle(
+              color: config.keywordColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      } else if (_isString(token)) {
+        // String
+        spans.add(
+          TextSpan(text: token, style: TextStyle(color: config.stringColor)),
+        );
+      } else if (_isNumber(token)) {
+        // Number
+        spans.add(
+          TextSpan(text: token, style: TextStyle(color: config.numberColor)),
+        );
+      } else {
+        // Default text
+        spans.add(TextSpan(text: token));
+      }
+    }
+
+    return spans;
+  }
+
+  bool _isString(String text) {
+    return (text.startsWith('"') && text.endsWith('"')) ||
+        (text.startsWith("'") && text.endsWith("'")) ||
+        (text.startsWith('`') && text.endsWith('`'));
+  }
+
+  bool _isNumber(String text) {
+    return RegExp(r'^\d+\.?\d*$').hasMatch(text);
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    bool isActive = false,
+    required VoidCallback onTap,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color:
+                isActive ? AppColors.accent.withAlpha(20) : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            border:
+                isActive
+                    ? Border.all(
+                      color: AppColors.accent.withAlpha(40),
+                      width: 0.5,
+                    )
+                    : null,
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: isActive ? AppColors.accent : const Color(0xFF858585),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select Language',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ..._languages.entries.map((entry) {
+                final isSelected = entry.key == _selectedLanguage;
+                return ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: entry.value.primaryColor.withAlpha(20),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      entry.value.icon,
+                      color: entry.value.primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    entry.value.name,
+                    style: TextStyle(
+                      color:
+                          isSelected ? AppColors.accent : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  trailing:
+                      isSelected
+                          ? Icon(Icons.check_circle, color: AppColors.accent)
+                          : null,
+                  onTap: () {
+                    setState(() => _selectedLanguage = entry.key);
+                    widget.onChanged(
+                      widget.block.copyWith(language: entry.key),
+                    );
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
-// Language option model
-class _LanguageOption {
-  final String code;
+// Language configuration class
+class LanguageConfig {
   final String name;
-  final Color color;
+  final IconData icon;
+  final Color primaryColor;
+  final Set<String> keywords;
+  final Color keywordColor;
+  final Color stringColor;
+  final Color commentColor;
+  final Color numberColor;
 
-  const _LanguageOption(this.code, this.name, this.color);
-}
-
-// Custom selection controls
-class _CustomTextSelectionControls extends MaterialTextSelectionControls {
-  @override
-  Widget buildToolbar(
-    BuildContext context,
-    Rect globalEditableRegion,
-    double textLineHeight,
-    Offset selectionMidpoint,
-    List<TextSelectionPoint> endpoints,
-    TextSelectionDelegate delegate,
-    ValueListenable<ClipboardStatus>? clipboardStatus,
-    Offset? lastSecondaryTapDownPosition,
-  ) {
-    return const SizedBox.shrink();
-  }
+  const LanguageConfig({
+    required this.name,
+    required this.icon,
+    required this.primaryColor,
+    required this.keywords,
+    required this.keywordColor,
+    required this.stringColor,
+    required this.commentColor,
+    required this.numberColor,
+  });
 }

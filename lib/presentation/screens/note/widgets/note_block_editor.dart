@@ -1,14 +1,14 @@
+import 'dart:math' as math;
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/callout_block_widget.dart';
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/code_block_widget.dart';
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/quote_block_widget.dart';
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/toggle_block_widget.dart';
+import 'package:dayflow/presentation/widgets/draggable_modal.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/note_block.dart';
-
-// Import our components
-import 'editor_components/editor_header.dart';
 import 'editor_components/formatting_toolbar.dart';
 import 'editor_components/block_type_selector.dart';
 import 'editor_components/block_actions_menu.dart';
@@ -58,6 +58,13 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
   bool _showBlockActions = false;
   int _selectedBlockIndex = -1;
 
+  late AnimationController _fabRotationController; // Controls icon rotation
+  late AnimationController _fabExpandController; // Controls menu expansion
+  late Animation<double> _fabExpandAnimation; // Curved animation for menu items
+  bool _isFabOpen = false; // Track menu state
+  OverlayEntry? _fabOverlayEntry; // Overlay for menu items
+  final GlobalKey _fabKey = GlobalKey(); // Key to get FAB position
+
   @override
   void initState() {
     super.initState();
@@ -86,6 +93,24 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     if (_blocks.isEmpty) {
       _addTextBlock();
     }
+
+    // Setup FAB animations
+    _fabRotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+
+    _fabExpandController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    // Create smooth expansion curve
+    _fabExpandAnimation = CurvedAnimation(
+      parent: _fabExpandController,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeIn,
+    );
   }
 
   @override
@@ -98,6 +123,9 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     for (final node in _blockFocusNodes.values) {
       node.dispose();
     }
+    _removeFabOverlay();
+    _fabRotationController.dispose();
+    _fabExpandController.dispose();
     super.dispose();
   }
 
@@ -122,9 +150,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       decoration: const BoxDecoration(color: AppColors.background),
       child: Column(
         children: [
-          // Top header with controls
-          EditorHeader(onAddBlock: _showBlockTypeSelector),
-
           // Main editing area
           Expanded(
             child: Stack(
@@ -165,7 +190,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       ),
       child: ReorderableListView.builder(
         scrollController: _scrollController,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         itemCount: _blocks.length,
         proxyDecorator: (child, index, animation) {
           return AnimatedBuilder(
@@ -199,11 +224,11 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build individual block item with better design
+  // Build individual block
   Widget _buildBlockItem(NoteBlock block, int index) {
     return Container(
       key: ValueKey(block.id),
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 4),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -213,27 +238,29 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.surface.withAlpha(20),
+              color:
+                  _isBlockFocused(block.id)
+                      ? AppColors.accent.withAlpha(8)
+                      : AppColors.surface.withAlpha(15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color:
                     _isBlockFocused(block.id)
-                        ? AppColors.accent.withAlpha(100)
-                        : AppColors.divider.withAlpha(20),
-                width: _isBlockFocused(block.id) ? 1.5 : 0.5,
+                        ? AppColors.accent.withAlpha(50)
+                        : AppColors.divider.withAlpha(50),
+                width: 1.5,
               ),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                // Enhanced drag handle that actually works
-                _buildDragHandle(block, index),
+                // Top action bar
+                _buildBlockActionBar(block, index),
 
-                // Main block content
-                Expanded(child: _buildBlockContent(block, index)),
-
-                // Quick action buttons
-                _buildQuickActions(index),
+                // Main block content with minimal padding
+                Padding(
+                  padding: const EdgeInsets.only(left: 0, right: 0, bottom: 0),
+                  child: _buildBlockContent(block, index),
+                ),
               ],
             ),
           ),
@@ -242,75 +269,130 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Enhanced drag handle with block type visual indicator
-  Widget _buildDragHandle(NoteBlock block, int index) {
-    return ReorderableDragStartListener(
-      index: index,
-      child: Container(
-        width: 48,
-        padding: const EdgeInsets.only(left: 12, top: 16, bottom: 16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Visual indicator for block type
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: _getBlockTypeColor(block.type).withAlpha(20),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                _getBlockTypeIcon(block.type),
-                size: 14,
-                color: _getBlockTypeColor(block.type),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Drag handle icon
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.divider.withAlpha(30),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(
-                Icons.drag_handle,
-                size: 18,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
+  Widget _buildBlockActionBar(NoteBlock block, int index) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight.withAlpha(30),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
         ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.divider.withAlpha(30),
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Drag handle with block type indicator
+          ReorderableDragStartListener(
+            index: index,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  // Block type icon
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: _getBlockTypeColor(block.type).withAlpha(20),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: _getBlockTypeColor(block.type).withAlpha(40),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Icon(
+                      _getBlockTypeIcon(block.type),
+                      size: 14,
+                      color: _getBlockTypeColor(block.type),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Drag icon
+                  Icon(
+                    Icons.drag_indicator,
+                    size: 16,
+                    color: AppColors.textSecondary.withAlpha(150),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Block type name
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withAlpha(10),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: AppColors.accent.withAlpha(20),
+                width: 0.5,
+              ),
+            ),
+            child: Text(
+              _getBlockTypeName(block.type),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.accent,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          // Action buttons
+          Row(
+            children: [
+              // Convert button
+              _buildActionButton(
+                icon: Icons.transform_rounded,
+                onPressed: () => _showConvertMenu(index),
+                tooltip: 'Convert',
+              ),
+              const SizedBox(width: 4),
+              // More options
+              _buildActionButton(
+                icon: Icons.more_horiz_rounded,
+                onPressed: () => _showBlockActionsMenuAt(index),
+                tooltip: 'More',
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  // Quick action buttons on the right of each block
-  Widget _buildQuickActions(int index) {
-    return Container(
-      width: 36,
-      padding: const EdgeInsets.only(right: 8, top: 12),
-      child: Column(
-        children: [
-          // Convert block type button
-          IconButton(
-            onPressed: () => _showConvertMenu(index),
-            icon: const Icon(Icons.transform, size: 16),
-            color: AppColors.textTertiary,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+  // Helper method for action buttons
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: AppColors.surface.withAlpha(50),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: AppColors.divider.withAlpha(30),
+            width: 0.5,
           ),
-          const SizedBox(height: 4),
-          // More options button
-          IconButton(
-            onPressed: () => _showBlockActionsMenuAt(index),
-            icon: const Icon(Icons.more_vert, size: 16),
-            color: AppColors.textTertiary,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-          ),
-        ],
+        ),
+        child: Icon(icon, size: 16, color: AppColors.textSecondary),
       ),
     );
   }
@@ -336,25 +418,429 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Floating add button with animation
+  // Floating add button
   Widget _buildFloatingAddButton() {
     return Positioned(
       right: 20,
-      bottom: 20 + _keyboardHeight, // Adjust for keyboard
-      child: AnimatedBuilder(
-        animation: _addButtonAnimationController,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: 0.8 + (_addButtonAnimationController.value * 0.2),
-            child: FloatingActionButton(
-              onPressed: _showBlockTypeSelector,
-              backgroundColor: AppColors.accent,
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          );
-        },
+      bottom: 20 + _keyboardHeight,
+      child: FloatingActionButton(
+        key: _fabKey,
+        heroTag: 'main_add_fab',
+        onPressed: _toggleFabMenu,
+        backgroundColor: AppColors.accent,
+        elevation: _isFabOpen ? 8 : 4,
+        child: AnimatedBuilder(
+          animation: _fabRotationController,
+          builder: (context, child) {
+            // Rotate icon when menu opens
+            return Transform.rotate(
+              angle: _fabRotationController.value * 0.125 * 2 * math.pi,
+              child: Icon(
+                _isFabOpen ? Icons.close : Icons.add,
+                color: Colors.white,
+                size: 28,
+              ),
+            );
+          },
+        ),
       ),
     );
+  }
+
+  // Toggle FAB menu state
+  void _toggleFabMenu() {
+    setState(() {
+      _isFabOpen = !_isFabOpen;
+      if (_isFabOpen) {
+        // Opening sequence
+        _fabRotationController.forward();
+        _insertFabOverlay();
+        _fabExpandController.forward();
+        HapticFeedback.lightImpact();
+      } else {
+        // Closing sequence
+        _fabRotationController.reverse();
+        _fabExpandController.reverse().then((_) {
+          _removeFabOverlay();
+        });
+      }
+    });
+  }
+
+  // Create overlay with menu options
+  void _insertFabOverlay() {
+    // Get FAB position for proper placement
+    final RenderBox? renderBox =
+        _fabKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final fabPosition = renderBox.localToGlobal(Offset.zero);
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    _fabOverlayEntry = OverlayEntry(
+      builder:
+          (context) => Material(
+            color: Colors.transparent,
+            child: Stack(
+              children: [
+                // Background overlay to capture taps
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTapDown: (_) {
+                      if (_isFabOpen) _toggleFabMenu();
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(color: Colors.transparent),
+                  ),
+                ),
+
+                // Text button with animation
+                AnimatedBuilder(
+                  animation: _fabExpandAnimation,
+                  builder: (context, child) {
+                    final animValue = _fabExpandAnimation.value.clamp(0.0, 1.0);
+                    return Positioned(
+                      right: screenWidth - fabPosition.dx - 54,
+                      top: fabPosition.dy - (70 * animValue),
+                      child: Opacity(
+                        opacity: animValue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Label with delayed appearance
+                            if (animValue > 0.5)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'Text',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // Text button
+                            SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FloatingActionButton(
+                                heroTag: 'text_fab_overlay',
+                                onPressed: () {
+                                  _toggleFabMenu();
+                                  _addBlockOfType(BlockType.text);
+                                },
+                                backgroundColor: AppColors.accent,
+                                elevation: 4,
+                                child: const Icon(
+                                  Icons.text_fields,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // Todo button with animation
+                AnimatedBuilder(
+                  animation: _fabExpandAnimation,
+                  builder: (context, child) {
+                    final animValue = _fabExpandAnimation.value.clamp(0.0, 1.0);
+                    return Positioned(
+                      right: screenWidth - fabPosition.dx - 54,
+                      top: fabPosition.dy - (140 * animValue),
+                      child: Opacity(
+                        opacity: animValue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Label with delayed appearance
+                            if (animValue > 0.5)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'Todo',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // Todo button
+                            SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FloatingActionButton(
+                                heroTag: 'todo_fab_overlay',
+                                onPressed: () {
+                                  _toggleFabMenu();
+                                  _addBlockOfType(BlockType.todoList);
+                                },
+                                backgroundColor: Colors.green,
+                                elevation: 4,
+                                child: const Icon(
+                                  Icons.checklist,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // Heading button with animation
+                AnimatedBuilder(
+                  animation: _fabExpandAnimation,
+                  builder: (context, child) {
+                    final animValue = _fabExpandAnimation.value.clamp(0.0, 1.0);
+                    return Positioned(
+                      right: screenWidth - fabPosition.dx - 54,
+                      top: fabPosition.dy - (210 * animValue),
+                      child: Opacity(
+                        opacity: animValue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Label with delayed appearance
+                            if (animValue > 0.5)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'Heading',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // Heading button
+                            SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FloatingActionButton(
+                                heroTag: 'heading_fab_overlay',
+                                onPressed: () {
+                                  _toggleFabMenu();
+                                  _addBlockOfType(BlockType.heading);
+                                },
+                                backgroundColor: AppColors.accent,
+                                elevation: 4,
+                                child: const Icon(
+                                  Icons.title,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // List button with animation
+                AnimatedBuilder(
+                  animation: _fabExpandAnimation,
+                  builder: (context, child) {
+                    final animValue = _fabExpandAnimation.value.clamp(0.0, 1.0);
+                    return Positioned(
+                      right: screenWidth - fabPosition.dx - 54,
+                      top: fabPosition.dy - (280 * animValue),
+                      child: Opacity(
+                        opacity: animValue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Label with delayed appearance
+                            if (animValue > 0.5)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'List',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // List button
+                            SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FloatingActionButton(
+                                heroTag: 'list_fab_overlay',
+                                onPressed: () {
+                                  _toggleFabMenu();
+                                  _addBlockOfType(BlockType.bulletList);
+                                },
+                                backgroundColor: Colors.orange,
+                                elevation: 4,
+                                child: const Icon(
+                                  Icons.format_list_bulleted,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // More button with animation
+                AnimatedBuilder(
+                  animation: _fabExpandAnimation,
+                  builder: (context, child) {
+                    final animValue = _fabExpandAnimation.value.clamp(0.0, 1.0);
+                    return Positioned(
+                      right: screenWidth - fabPosition.dx - 54,
+                      top: fabPosition.dy - (350 * animValue),
+                      child: Opacity(
+                        opacity: animValue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Label with delayed appearance
+                            if (animValue > 0.5)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'More',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            // More button
+                            SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FloatingActionButton(
+                                heroTag: 'more_fab_overlay',
+                                onPressed: () {
+                                  _toggleFabMenu();
+                                  _showBlockTypeSelector();
+                                },
+                                backgroundColor: AppColors.textSecondary,
+                                elevation: 4,
+                                child: const Icon(
+                                  Icons.more_horiz,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+    );
+
+    // Add overlay to widget tree
+    Overlay.of(context).insert(_fabOverlayEntry!);
+  }
+
+  // Remove overlay
+  void _removeFabOverlay() {
+    _fabOverlayEntry?.remove();
+    _fabOverlayEntry = null;
   }
 
   // Check if a block is currently focused
@@ -518,150 +1004,104 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
 
   // Show convert block type menu
   void _showConvertMenu(int index) {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildConvertMenu(index),
+      builder:
+          (context) => DraggableModal(
+            title: 'Convert Block',
+            initialHeight: MediaQuery.of(context).size.height * 0.6,
+            minHeight: 300,
+            allowFullScreen: true,
+            child: _buildConvertMenuContent(index),
+          ),
     );
   }
 
   // Build convert menu with proper sizing to prevent overflow
-  Widget _buildConvertMenu(int index) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppColors.divider, width: 0.5),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Text(
-                  'Convert Block',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
-                  padding: EdgeInsets.zero,
-                ),
-              ],
-            ),
-          ),
-
-          // Scrollable content
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                ...BlockType.values.map(
-                  (type) => _buildConvertOption(type, index),
-                ),
-              ],
-            ),
-          ),
-
-          // Bottom safe area
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
-        ],
-      ),
-    );
-  }
-
-  // Enhanced convert option with better design
-  Widget _buildConvertOption(BlockType type, int index) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-            _convertBlock(index, type);
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight.withAlpha(30),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.divider.withAlpha(30),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                // Icon with colored background
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _getBlockTypeColor(type).withAlpha(20),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _getBlockTypeIcon(type),
-                    size: 20,
-                    color: _getBlockTypeColor(type),
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                // Text content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getBlockTypeName(type),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
+  Widget _buildConvertMenuContent(int index) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children:
+          BlockType.values.map((type) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _convertBlock(index, type);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight.withAlpha(30),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.divider.withAlpha(30),
+                        width: 1,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _getBlockTypeDescription(type),
-                        style: const TextStyle(
-                          fontSize: 13,
+                    ),
+                    child: Row(
+                      children: [
+                        // Icon with colored background
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _getBlockTypeColor(type).withAlpha(20),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getBlockTypeIcon(type),
+                            size: 20,
+                            color: _getBlockTypeColor(type),
+                          ),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        // Text content
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getBlockTypeName(type),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _getBlockTypeDescription(type),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textTertiary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Arrow icon
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
                           color: AppColors.textTertiary,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-
-                // Arrow icon
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AppColors.textTertiary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            );
+          }).toList(),
     );
   }
 
@@ -854,15 +1294,15 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
 
   // Show block type selector modal
   void _showBlockTypeSelector() {
-    _addButtonAnimationController.forward();
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BlockTypeSelector(onBlockSelected: _addBlockOfType),
-    ).then((_) {
-      _addButtonAnimationController.reverse();
-    });
+      builder:
+          (context) => BlockTypeSelector(
+            onBlockSelected: (type) {
+              _addBlockOfType(type);
+            },
+          ),
+    );
   }
 
   // Add new block of specified type

@@ -69,24 +69,27 @@ class PriorityPicker extends StatelessWidget {
                 // Determine color, label, and icon based on priority level.
                 switch (priority) {
                   case 5:
-                    priorityColor = AppColors.error;
+                    priorityColor = AppColors.getPriorityColor(5);
                     priorityLabel = 'Urgent';
-                    priorityIcon = CupertinoIcons.exclamationmark_triangle_fill;
+                    priorityIcon = CupertinoIcons.flag;
                     break;
                   case 4:
-                    priorityColor = AppColors.warning;
+                    priorityColor = AppColors.getPriorityColor(4);
                     priorityLabel = 'High';
-                    priorityIcon = CupertinoIcons.flag_fill;
+                    priorityIcon = CupertinoIcons.flag;
                     break;
                   case 3:
+                    priorityColor = AppColors.getPriorityColor(3);
                     priorityLabel = 'Medium';
                     priorityIcon = CupertinoIcons.flag;
                     break;
                   case 2:
+                    priorityColor = AppColors.getPriorityColor(2);
                     priorityLabel = 'Normal';
                     priorityIcon = CupertinoIcons.flag;
                     break;
                   case 1:
+                    priorityColor = AppColors.getPriorityColor(1);
                     priorityLabel = 'Low';
                     priorityIcon = CupertinoIcons.flag;
                     break;

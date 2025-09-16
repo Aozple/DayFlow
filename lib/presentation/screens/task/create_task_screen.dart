@@ -1,6 +1,7 @@
 import 'package:dayflow/presentation/screens/task/widgets/create_task_date_picker.dart';
 import 'package:dayflow/presentation/screens/task/widgets/create_task_notification_section.dart';
 import 'package:dayflow/presentation/screens/task/widgets/create_task_time_picker.dart';
+import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -182,7 +183,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          _buildStatusBarPadding(),
+          const StatusBarPadding(),
           // The header section with cancel and save buttons
           CreateTaskHeader(
             isEditMode: isEditMode,
@@ -262,14 +263,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  /// Builds status bar padding container
-  Widget _buildStatusBarPadding() {
-    return Container(
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-      color: AppColors.surface.withAlpha(200),
     );
   }
 

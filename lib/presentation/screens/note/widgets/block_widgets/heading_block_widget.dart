@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/note_block.dart';
@@ -51,6 +50,7 @@ class _HeadingFieldWidget extends StatefulWidget {
 class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
   late TextEditingController _controller;
   bool _isDisposed = false;
+  TextDirection _textDirection = TextDirection.ltr;
 
   @override
   void initState() {
@@ -58,6 +58,7 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     _controller = TextEditingController(text: widget.block.text);
     _controller.addListener(_onTextChanged);
     _controller.addListener(_onSelectionChanged);
+    _updateTextDirection(widget.block.text);
   }
 
   @override
@@ -73,12 +74,15 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     if (oldWidget.block.text != widget.block.text && !_isDisposed) {
       if (_controller.text != widget.block.text) {
         _controller.text = widget.block.text;
+        _updateTextDirection(widget.block.text);
       }
     }
   }
 
   void _onTextChanged() {
     if (_isDisposed) return;
+
+    _updateTextDirection(_controller.text);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_isDisposed && mounted) {
@@ -98,86 +102,165 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     });
   }
 
+  // Smart RTL/LTR detection
+  void _updateTextDirection(String text) {
+    if (text.isEmpty) {
+      setState(() => _textDirection = TextDirection.ltr);
+      return;
+    }
+
+    // Check first significant character
+    final trimmedText = text.trim();
+    if (trimmedText.isEmpty) {
+      setState(() => _textDirection = TextDirection.ltr);
+      return;
+    }
+
+    // Get first actual character (non-space, non-punctuation)
+    final firstChar = trimmedText.runes.first;
+
+    // Check if it's a Persian/Arabic character
+    final isRTL = _isRTLCharacter(firstChar);
+
+    setState(() {
+      _textDirection = isRTL ? TextDirection.rtl : TextDirection.ltr;
+    });
+  }
+
+  // Check if character is Persian/Arabic
+  bool _isRTLCharacter(int char) {
+    // Persian/Arabic Unicode ranges
+    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
+        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
+        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms
+        (char >= 0xFE70 && char <= 0xFEFF); // Arabic Presentation Forms-B
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Enhanced level selector with visual indicators
+          // Compact level selector
           Container(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 8),
             child: Row(
+              textDirection: TextDirection.ltr, // Keep selector always LTR
               children: [
-                // Current level indicator
+                // Visual heading indicator
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
+                  width: 3,
+                  height: _getHeadingFontSize(widget.block.level),
+                  margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withAlpha(20),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppColors.accent.withAlpha(50),
-                      width: 1,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.accent,
+                        AppColors.accent.withAlpha(100),
+                      ],
                     ),
-                  ),
-                  child: Text(
-                    'H${widget.block.level}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
-                    ),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
 
-                const SizedBox(width: 12),
-
-                // Level size preview
+                // Level badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
                   ),
-                  child: Text(
-                    _getLevelDescription(widget.block.level),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textTertiary,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.accent.withAlpha(20),
+                        AppColors.accent.withAlpha(10),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.accent.withAlpha(40),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'H${widget.block.level}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.accent,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.text_fields,
+                        size: 12,
+                        color: AppColors.accent.withAlpha(150),
+                      ),
+                    ],
                   ),
                 ),
 
                 const Spacer(),
 
-                // Level selector
-                _buildLevelSelector(),
+                // RTL/LTR indicator
+                if (_controller.text.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withAlpha(50),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      _textDirection == TextDirection.rtl
+                          ? Icons.format_align_right
+                          : Icons.format_align_left,
+                      size: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+
+                // Level selector buttons
+                _buildCompactLevelSelector(),
               ],
             ),
           ),
 
-          // Heading text field with dynamic sizing
+          // Heading text field with RTL support
           TextField(
             controller: _controller,
             focusNode: widget.focusNode,
             maxLines: null,
-            enableInteractiveSelection: true,
-            selectionControls: _CustomTextSelectionControls(),
-            decoration: const InputDecoration(
-              hintText: 'Heading text...',
+            textDirection: _textDirection,
+            textAlign:
+                _textDirection == TextDirection.rtl
+                    ? TextAlign.right
+                    : TextAlign.left,
+            decoration: InputDecoration(
+              hintText: _getPlaceholderText(widget.block.level),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
               isDense: true,
-              hintStyle: TextStyle(color: Color(0xFF48484A)),
+              hintStyle: TextStyle(
+                color: AppColors.textTertiary.withAlpha(100),
+                fontSize: _getHeadingFontSize(widget.block.level),
+                fontWeight: _getHeadingWeight(widget.block.level),
+              ),
             ),
             style: TextStyle(
               fontSize: _getHeadingFontSize(widget.block.level),
-              fontWeight: FontWeight.bold,
+              fontWeight: _getHeadingWeight(widget.block.level),
               height: 1.3,
               color: AppColors.textPrimary,
+              letterSpacing: widget.block.level <= 2 ? -0.5 : 0,
             ),
             onTap: _onSelectionChanged,
           ),
@@ -186,67 +269,79 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     );
   }
 
-  // Build enhanced level selector with preview
-  Widget _buildLevelSelector() {
-    return PopupMenuButton<int>(
-      icon: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceLight.withAlpha(50),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: const Icon(Icons.tune, size: 16, color: AppColors.textTertiary),
+  // Build compact level selector with H1, H2, etc.
+  Widget _buildCompactLevelSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface.withAlpha(50),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
       ),
-      onSelected: (level) {
-        widget.onChanged(widget.block.copyWith(level: level));
-      },
-      itemBuilder:
-          (context) => List.generate(6, (index) {
-            final level = index + 1;
-            return PopupMenuItem(
-              value: level,
-              child: Row(
-                children: [
-                  Text(
-                    'H$level',
-                    style: TextStyle(
-                      fontSize: _getHeadingFontSize(level) * 0.7,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _getLevelDescription(level),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(6, (index) {
+          final level = index + 1;
+          final isSelected = widget.block.level == level;
+
+          return InkWell(
+            onTap: () {
+              widget.onChanged(widget.block.copyWith(level: level));
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              height: 28,
+              constraints: const BoxConstraints(minWidth: 32),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? AppColors.accent.withAlpha(20)
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+                border:
+                    isSelected
+                        ? Border.all(
+                          color: AppColors.accent.withAlpha(40),
+                          width: 0.5,
+                        )
+                        : null,
               ),
-            );
-          }),
+              child: Center(
+                child: Text(
+                  'H$level',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color:
+                        isSelected ? AppColors.accent : AppColors.textSecondary,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 
-  // Get description for heading levels
-  String _getLevelDescription(int level) {
+  // Get placeholder text based on level (bilingual)
+  String _getPlaceholderText(int level) {
     switch (level) {
       case 1:
-        return 'Very Large';
+        return 'Main heading...';
       case 2:
-        return 'Large';
+        return 'Section heading...';
       case 3:
-        return 'Medium';
+        return 'Subsection heading...';
       case 4:
-        return 'Small';
+        return 'Paragraph heading...';
       case 5:
-        return 'Very Small';
+        return 'Small heading...';
       case 6:
-        return 'Tiny';
+        return 'Tiny heading...';
       default:
-        return 'Medium';
+        return 'Heading text...';
     }
   }
 
@@ -269,21 +364,24 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
         return 18;
     }
   }
-}
 
-// Custom selection controls to hide system menu
-class _CustomTextSelectionControls extends MaterialTextSelectionControls {
-  @override
-  Widget buildToolbar(
-    BuildContext context,
-    Rect globalEditableRegion,
-    double textLineHeight,
-    Offset selectionMidpoint,
-    List<TextSelectionPoint> endpoints,
-    TextSelectionDelegate delegate,
-    ValueListenable<ClipboardStatus>? clipboardStatus,
-    Offset? lastSecondaryTapDownPosition,
-  ) {
-    return const SizedBox.shrink();
+  // Get font weight for different heading levels
+  FontWeight _getHeadingWeight(int level) {
+    switch (level) {
+      case 1:
+        return FontWeight.w800;
+      case 2:
+        return FontWeight.w700;
+      case 3:
+        return FontWeight.w600;
+      case 4:
+        return FontWeight.w600;
+      case 5:
+        return FontWeight.w500;
+      case 6:
+        return FontWeight.w500;
+      default:
+        return FontWeight.w600;
+    }
   }
 }

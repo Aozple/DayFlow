@@ -77,7 +77,6 @@ class DayFlowApp extends StatelessWidget {
       // Update UI based on settings changes
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
-          // todo: Use settingsState.themeMode instead of hardcoded dark mode
           return MaterialApp.router(
             title: 'DayFlow',
             debugShowCheckedModeBanner: false,
