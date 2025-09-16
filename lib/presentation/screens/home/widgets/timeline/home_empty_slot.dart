@@ -8,19 +8,30 @@ class HomeEmptySlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 36,
-        height: 36,
+      child: Container(
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color: AppColors.divider.withAlpha(20),
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.divider.withAlpha(40), width: 1),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surface.withAlpha(60),
+              AppColors.surfaceLight.withAlpha(40),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.divider.withAlpha(30),
+            width: 0.5,
+          ),
         ),
-        child: Icon(
-          CupertinoIcons.plus,
-          color: AppColors.textTertiary.withAlpha(100),
-          size: 18,
+        child: Center(
+          child: Icon(
+            CupertinoIcons.plus,
+            color: AppColors.textTertiary.withAlpha(120),
+            size: 16,
+          ),
         ),
       ),
     );

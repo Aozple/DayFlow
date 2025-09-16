@@ -1,8 +1,8 @@
 import 'package:dayflow/data/models/task_model.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'home_current_time_indicator.dart';
 import 'home_time_slot.dart';
 
 /// Main timeline view with overscroll day navigation
@@ -46,16 +46,16 @@ class _HomeTimelineState extends State<HomeTimeline>
   bool _isAtTop = false;
   bool _isAtBottom = false;
   bool _hasNavigated = false;
-  bool _canStartNewGesture = true; // New flag for gesture control
-  DateTime? _lastNavigationTime; // Track last navigation
+  bool _canStartNewGesture = true;
+  DateTime? _lastNavigationTime;
 
-  static const double _threshold = 250.0;
+  static const double _threshold = 200.0;
 
   @override
   void initState() {
     super.initState();
     _indicatorController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _indicatorAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -99,9 +99,9 @@ class _HomeTimelineState extends State<HomeTimeline>
               // Reset if scrolling normally (not at edges)
               if (_isOverscrolling &&
                   notification.metrics.pixels >
-                      notification.metrics.minScrollExtent + 10 &&
+                      notification.metrics.minScrollExtent + 25 &&
                   notification.metrics.pixels <
-                      notification.metrics.maxScrollExtent - 10) {
+                      notification.metrics.maxScrollExtent - 25) {
                 _resetOverscroll();
               }
             }
@@ -109,7 +109,7 @@ class _HomeTimelineState extends State<HomeTimeline>
           },
           child: ListView.builder(
             controller: widget.scrollController,
-            padding: const EdgeInsets.only(top: 16, bottom: 100),
+            padding: const EdgeInsets.only(top: 0, bottom: 20),
             physics: const AlwaysScrollableScrollPhysics(),
             itemCount: 24,
             itemBuilder: (context, index) {
@@ -140,13 +140,6 @@ class _HomeTimelineState extends State<HomeTimeline>
           ),
         ),
 
-        // Current time indicator
-        if (isToday)
-          HomeCurrentTimeIndicator(
-            selectedDate: widget.selectedDate,
-            displayTasks: displayTasks,
-          ),
-
         // Navigation indicator
         if (_isOverscrolling && !_hasNavigated)
           AnimatedBuilder(
@@ -154,13 +147,13 @@ class _HomeTimelineState extends State<HomeTimeline>
             builder: (context, child) {
               return Positioned(
                 top: _isAtTop ? 20 : null,
-                bottom: _isAtBottom ? 120 : null,
+                bottom: _isAtBottom ? 100 : null,
                 left: 0,
                 right: 0,
                 child: Opacity(
                   opacity: _indicatorAnimation.value,
                   child: Transform.scale(
-                    scale: 0.9 + (_indicatorAnimation.value * 0.1),
+                    scale: 0.8 + (_indicatorAnimation.value * 0.2),
                     child: _buildNavigationIndicator(),
                   ),
                 ),
@@ -204,7 +197,7 @@ class _HomeTimelineState extends State<HomeTimeline>
         _overscrollAmount += overscroll.abs();
         _overscrollAmount = _overscrollAmount.clamp(
           0.0,
-          _threshold + 20,
+          _threshold + 50,
         ); // Cap the amount
       });
 
@@ -261,14 +254,14 @@ class _HomeTimelineState extends State<HomeTimeline>
 
         widget.scrollController.animateTo(
           targetOffset,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
         );
       }
     });
 
     // Reset after delay
-    Future.delayed(const Duration(milliseconds: 400), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         _resetOverscroll();
       }
@@ -299,67 +292,215 @@ class _HomeTimelineState extends State<HomeTimeline>
     final isReady = progress >= 1.0;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: isReady ? AppColors.accent : AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isReady ? AppColors.accent : AppColors.divider.withAlpha(100),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isReady ? AppColors.accent : Colors.black).withAlpha(10),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Icon(
-            isNext ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-            color: isReady ? Colors.white : AppColors.textSecondary,
-            size: 16,
-          ),
-          const SizedBox(width: 8),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isReady ? 'Release to go to' : 'Pull to navigate',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isReady ? Colors.white : AppColors.textSecondary,
+          // Glow effect when ready
+          if (isReady)
+            Container(
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.accent.withAlpha(40),
+                    AppColors.accent.withAlpha(20),
+                    AppColors.accent.withAlpha(0),
+                  ],
                 ),
               ),
-              Text(
-                _formatDate(targetDate),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isReady ? Colors.white : AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: 2,
-              backgroundColor:
+            ),
+
+          // Main container
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              gradient:
                   isReady
-                      ? Colors.white.withAlpha(50)
-                      : AppColors.divider.withAlpha(100),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isReady ? Colors.white : AppColors.accent,
+                      ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.accent,
+                          AppColors.accent.withAlpha(230),
+                        ],
+                      )
+                      : const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.surface, AppColors.surfaceLight],
+                      ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color:
+                    isReady
+                        ? AppColors.accent
+                        : AppColors.divider.withAlpha(60),
+                width: 0.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      isReady
+                          ? AppColors.accent.withAlpha(50)
+                          : AppColors.background.withAlpha(40),
+                  blurRadius: isReady ? 20 : 10,
+                  offset: const Offset(0, 4),
+                  spreadRadius: isReady ? 2 : 0,
+                ),
+                if (isReady)
+                  BoxShadow(
+                    color: AppColors.accent.withAlpha(30),
+                    blurRadius: 30,
+                    offset: const Offset(0, 8),
+                    spreadRadius: -5,
+                  ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Direction icon with background
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color:
+                        isReady
+                            ? Colors.white.withAlpha(20)
+                            : AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color:
+                          isReady
+                              ? Colors.white.withAlpha(30)
+                              : AppColors.divider.withAlpha(40),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Icon(
+                    isNext
+                        ? CupertinoIcons.arrow_down
+                        : CupertinoIcons.arrow_up,
+                    color: isReady ? Colors.white : AppColors.textSecondary,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Text content
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isReady ? 'Release to navigate' : 'Pull to continue',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            isReady
+                                ? Colors.white.withAlpha(200)
+                                : AppColors.textSecondary,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          _formatDate(targetDate),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color:
+                                isReady ? Colors.white : AppColors.textPrimary,
+                            letterSpacing: 0.1,
+                          ),
+                        ),
+                        if (_isSameDay(targetDate, DateTime.now())) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  isReady
+                                      ? Colors.white.withAlpha(20)
+                                      : AppColors.accent.withAlpha(20),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color:
+                                    isReady
+                                        ? Colors.white.withAlpha(30)
+                                        : AppColors.accent.withAlpha(40),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Text(
+                              'TODAY',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    isReady ? Colors.white : AppColors.accent,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+
+                // Progress indicator
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color:
+                            isReady
+                                ? Colors.white.withAlpha(15)
+                                : AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color:
+                              isReady
+                                  ? Colors.white.withAlpha(30)
+                                  : AppColors.divider.withAlpha(40),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 2.5,
+                        backgroundColor:
+                            isReady
+                                ? Colors.white.withAlpha(20)
+                                : AppColors.divider.withAlpha(40),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isReady ? Colors.white : AppColors.accent,
+                        ),
+                      ),
+                    ),
+                    if (isReady)
+                      const Icon(
+                        CupertinoIcons.checkmark_alt,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
