@@ -1,21 +1,61 @@
 import 'package:dayflow/data/models/task_model.dart';
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 // Repository for task data operations using Hive database
 class TaskRepository {
-  // Reference to the Hive box storing tasks
   final Box _taskBox;
 
-  // Initialize with the tasks box
   TaskRepository() : _taskBox = Hive.box('tasks');
 
-  // Add a new task to the database
+  // Deep conversion helper to handle nested maps and lists
+  dynamic _convertValue(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(
+        value.map((k, v) => MapEntry(k.toString(), _convertValue(v))),
+      );
+    } else if (value is List) {
+      return value.map((item) => _convertValue(item)).toList();
+    }
+    return value;
+  }
+
+  Map<String, dynamic> _convertToTypedMap(dynamic data) {
+    debugPrint('Converting data type: ${data.runtimeType}');
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (data is Map) {
+      try {
+        final converted = <String, dynamic>{};
+        data.forEach((key, value) {
+          converted[key.toString()] = _convertValue(value);
+        });
+        return converted;
+      } catch (e) {
+        debugPrint('Error in map conversion: $e');
+        debugPrint('Map keys: ${data.keys.toList()}');
+        debugPrint(
+          'Map values types: ${data.values.map((v) => v.runtimeType).toList()}',
+        );
+        rethrow;
+      }
+    }
+
+    throw Exception(
+      'Cannot convert ${data.runtimeType} to Map<String, dynamic>',
+    );
+  }
+
   Future<String> addTask(TaskModel task) async {
     try {
-      // Store task using its ID as the key
+      debugPrint('📝 Adding task to Hive: ${task.id}');
       await _taskBox.put(task.id, task.toMap());
       return task.id;
     } catch (e) {
+      debugPrint('❌ Error adding task: $e');
       throw Exception('Failed to add task: $e');
     }
   }
@@ -25,10 +65,15 @@ class TaskRepository {
     try {
       final taskMap = _taskBox.get(id);
       if (taskMap != null) {
-        return TaskModel.fromMap(Map<String, dynamic>.from(taskMap));
+        debugPrint('📖 Reading task from Hive: $id');
+
+        final typedMap = _convertToTypedMap(taskMap);
+        return TaskModel.fromMap(typedMap);
       }
       return null;
     } catch (e) {
+      debugPrint('❌ Error getting task $id: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
       throw Exception('Failed to get task: $e');
     }
   }
@@ -36,24 +81,46 @@ class TaskRepository {
   // Get all non-deleted tasks, sorted by creation date
   List<TaskModel> getAllTasks() {
     try {
+      debugPrint('\n📚 Getting all tasks from Hive');
+      debugPrint('Total keys in box: ${_taskBox.keys.length}');
+
       final tasks = <TaskModel>[];
 
-      // Collect all non-deleted tasks
       for (var key in _taskBox.keys) {
-        final taskMap = _taskBox.get(key);
-        if (taskMap != null) {
-          final task = TaskModel.fromMap(Map<String, dynamic>.from(taskMap));
-          if (!task.isDeleted) {
-            tasks.add(task);
+        try {
+          final taskMap = _taskBox.get(key);
+          if (taskMap != null) {
+            debugPrint('\n🔍 Processing task: $key');
+
+            final typedMap = _convertToTypedMap(taskMap);
+            debugPrint('✅ Map converted successfully');
+
+            final task = TaskModel.fromMap(typedMap);
+            debugPrint('✅ Task created: ${task.title}');
+
+            if (!task.isDeleted) {
+              tasks.add(task);
+            }
           }
+        } catch (e) {
+          debugPrint('❌ Error processing task $key: $e');
+
+          // Try to print the raw data for debugging
+          try {
+            final rawData = _taskBox.get(key);
+            debugPrint('Raw task data: $rawData');
+          } catch (_) {}
+
+          continue;
         }
       }
 
-      // Sort by creation date (newest first)
       tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      debugPrint('\n✅ Successfully loaded ${tasks.length} tasks');
 
       return tasks;
     } catch (e) {
+      debugPrint('❌ Fatal error in getAllTasks: $e');
       throw Exception('Failed to get tasks: $e');
     }
   }
@@ -61,20 +128,26 @@ class TaskRepository {
   // Get tasks due on a specific date
   List<TaskModel> getTasksByDate(DateTime date) {
     try {
+      debugPrint(
+        '\n📅 Getting tasks for date: ${date.toString().split(' ')[0]}',
+      );
+
       final tasks = getAllTasks();
+      final filteredTasks =
+          tasks.where((task) {
+            if (task.dueDate == null) {
+              return false;
+            }
 
-      // Filter tasks by matching due date
-      return tasks.where((task) {
-        if (task.dueDate == null) {
-          return false;
-        }
+            return task.dueDate!.year == date.year &&
+                task.dueDate!.month == date.month &&
+                task.dueDate!.day == date.day;
+          }).toList();
 
-        // Compare year, month, and day
-        return task.dueDate!.year == date.year &&
-            task.dueDate!.month == date.month &&
-            task.dueDate!.day == date.day;
-      }).toList();
+      debugPrint('✅ Found ${filteredTasks.length} tasks for this date');
+      return filteredTasks;
     } catch (e) {
+      debugPrint('❌ Error getting tasks by date: $e');
       throw Exception('Failed to get tasks by date: $e');
     }
   }
@@ -82,8 +155,10 @@ class TaskRepository {
   // Update an existing task
   Future<void> updateTask(TaskModel task) async {
     try {
+      debugPrint('🔄 Updating task: ${task.id}');
       await _taskBox.put(task.id, task.toMap());
     } catch (e) {
+      debugPrint('❌ Error updating task: $e');
       throw Exception('Failed to update task: $e');
     }
   }
@@ -91,12 +166,14 @@ class TaskRepository {
   // Soft delete a task (mark as deleted)
   Future<void> deleteTask(String id) async {
     try {
+      debugPrint('🗑️ Soft deleting task: $id');
       final task = getTask(id);
       if (task != null) {
         final deletedTask = task.copyWith(isDeleted: true);
         await updateTask(deletedTask);
       }
     } catch (e) {
+      debugPrint('❌ Error deleting task: $e');
       throw Exception('Failed to delete task: $e');
     }
   }
@@ -113,6 +190,7 @@ class TaskRepository {
   // Toggle task completion status
   Future<void> toggleTaskComplete(String id) async {
     try {
+      debugPrint('✅ Toggling task completion: $id');
       final task = getTask(id);
       if (task != null) {
         final updatedTask = task.copyWith(
@@ -122,6 +200,7 @@ class TaskRepository {
         await updateTask(updatedTask);
       }
     } catch (e) {
+      debugPrint('❌ Error toggling task: $e');
       throw Exception('Failed to toggle task completion: $e');
     }
   }
@@ -148,8 +227,10 @@ class TaskRepository {
   // Remove all tasks from the database
   Future<void> clearAllTasks() async {
     try {
+      debugPrint('🧹 Clearing all tasks');
       await _taskBox.clear();
     } catch (e) {
+      debugPrint('❌ Error clearing tasks: $e');
       throw Exception('Failed to clear all tasks: $e');
     }
   }

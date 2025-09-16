@@ -24,15 +24,25 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<UpdateTask>(_onUpdateTask);
     on<ToggleTaskComplete>(_onToggleTaskComplete);
     on<DeleteTask>(_onDeleteTask);
+    on<ClearError>(_onClearError);
   }
 
   // Load all tasks
   Future<void> _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) async {
+    debugPrint('\n📋 === LOADING ALL TASKS ===');
+    debugPrint('Current state: ${state.runtimeType}');
+
     try {
       final tasks = _repository.getAllTasks();
+      debugPrint('✅ Loaded ${tasks.length} tasks successfully');
       emit(TaskLoaded(tasks: tasks));
     } catch (e) {
+      debugPrint('❌ Error loading tasks: $e');
       emit(TaskError(e.toString()));
+
+      // Recover from error state
+      await Future.delayed(const Duration(milliseconds: 100));
+      emit(const TaskLoaded(tasks: []));
     }
   }
 
@@ -41,13 +51,37 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     LoadTasksByDate event,
     Emitter<TaskState> emit,
   ) async {
-    emit(const TaskLoading());
+    debugPrint('\n📅 === LOADING TASKS BY DATE ===');
+    debugPrint('Date: ${event.date.toString().split(' ')[0]}');
+    debugPrint('Current state: ${state.runtimeType}');
+
+    // Don't emit loading state if we already have data
+    if (state is! TaskLoaded) {
+      emit(const TaskLoading());
+    }
 
     try {
-      final tasks = _repository.getTasksByDate(event.date);
-      emit(TaskLoaded(tasks: tasks, selectedDate: event.date));
+      final allTasks = _repository.getAllTasks();
+      debugPrint('Total tasks in repository: ${allTasks.length}');
+
+      final tasksForDate = _repository.getTasksByDate(event.date);
+      debugPrint('✅ Found ${tasksForDate.length} tasks for selected date');
+
+      // Always use all tasks but track selected date
+      emit(TaskLoaded(tasks: allTasks, selectedDate: event.date));
     } catch (e) {
-      emit(TaskError(e.toString()));
+      debugPrint('❌ Error loading tasks by date: $e');
+
+      // Try to maintain existing data if possible
+      if (state is TaskLoaded) {
+        final currentState = state as TaskLoaded;
+        emit(TaskLoaded(tasks: currentState.tasks, selectedDate: event.date));
+      } else {
+        emit(TaskError(e.toString()));
+        // Auto-recover after showing error
+        await Future.delayed(const Duration(seconds: 1));
+        emit(TaskLoaded(tasks: const [], selectedDate: event.date));
+      }
     }
   }
 
@@ -184,5 +218,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     } catch (e) {
       emit(TaskError(e.toString()));
     }
+  }
+
+  Future<void> _onClearError(ClearError event, Emitter<TaskState> emit) async {
+    debugPrint('🧹 Clearing error state');
+    add(const LoadTasks());
   }
 }

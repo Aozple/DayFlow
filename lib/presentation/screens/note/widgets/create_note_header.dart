@@ -1,7 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 
 class CreateNoteHeader extends StatelessWidget {
   final bool isEditMode;

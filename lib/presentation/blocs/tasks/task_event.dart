@@ -62,3 +62,7 @@ class DeleteTask extends TaskEvent {
   @override
   List<Object?> get props => [taskId];
 }
+
+class ClearError extends TaskEvent {
+  const ClearError();
+}
