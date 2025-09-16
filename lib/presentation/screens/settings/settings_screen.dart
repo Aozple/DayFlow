@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'package:dayflow/core/services/export_import_service.dart';
 import 'package:dayflow/data/models/app_settings.dart';
+import 'package:dayflow/data/repositories/settings_repository.dart';
+import 'package:dayflow/data/repositories/task_repository.dart';
+import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/screens/settings/widgets/notification_time_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,22 +12,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dayflow/core/utils/custom_snackbar.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'widgets/settings_header.dart';
 import 'widgets/settings_section.dart';
 import 'widgets/settings_tile.dart';
 import 'widgets/accent_color_picker.dart';
 import 'widgets/first_day_picker.dart';
 import 'widgets/priority_picker.dart';
-import 'widgets/data_management_options.dart';
 import 'widgets/about_section.dart';
 import 'widgets/confirmation_dialog.dart';
 
-/// Screen for displaying and managing application settings.
-///
-/// This screen provides a comprehensive interface for users to customize
-/// various aspects of the app, including appearance preferences, data management,
-/// and app information. It uses BLoC for state management and follows
-/// a clean architecture pattern.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -30,15 +30,23 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-/// State class for SettingsScreen.
-///
-/// This class manages the UI state and interactions for the settings screen,
-/// including handling settings updates and displaying appropriate feedback.
 class _SettingsScreenState extends State<SettingsScreen> {
+  late final ExportImportService _exportImportService;
+  bool _isProcessing = false;
+  DateTime? _lastExportTime;
+  ExportResult? _lastExportResult;
+
+  @override
+  void initState() {
+    super.initState();
+    _exportImportService = ExportImportService(
+      taskRepository: TaskRepository(),
+      settingsRepository: SettingsRepository(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // BlocListener listens for state changes from the SettingsBloc
-    // and shows appropriate snackbar messages (success or error).
     return BlocListener<SettingsBloc, SettingsState>(
       listener: (context, state) {
         if (state is SettingsOperationSuccess) {
@@ -53,24 +61,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         body: SafeArea(
           child: BlocBuilder<SettingsBloc, SettingsState>(
             builder: (context, state) {
-              // Show a loading indicator while settings are being fetched.
               if (state is SettingsLoading) {
                 return const Center(
                   child: CupertinoActivityIndicator(radius: 20),
                 );
               }
-              // Get the settings data if available, otherwise null.
+
               final settings = state is SettingsLoaded ? state.settings : null;
-              // Use CustomScrollView for a scrollable screen with a sticky app bar.
+
               return CustomScrollView(
-                physics:
-                    const BouncingScrollPhysics(), // iOS-style scroll physics.
+                physics: const BouncingScrollPhysics(),
                 slivers: [
-                  const SettingsHeader(), // The app bar for the settings screen.
+                  const SettingsHeader(),
                   SliverToBoxAdapter(
                     child: Column(
                       children: [
-                        // Sections for different categories of settings.
                         _buildPersonalizationSection(settings),
                         const SizedBox(height: 16),
                         _buildPreferencesSection(settings),
@@ -80,9 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildDataSection(),
                         const SizedBox(height: 16),
                         _buildAboutSection(),
-                        const SizedBox(
-                          height: 100,
-                        ), // Extra space at the bottom.
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -95,30 +98,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Builds the "Personalization" section of the settings.
   Widget _buildPersonalizationSection(AppSettings? settings) {
     return SettingsSection(
       title: 'Personalization',
-      icon: CupertinoIcons.paintbrush_fill, // Paintbrush icon.
+      icon: CupertinoIcons.paintbrush_fill,
       children: [
-        // Tile for choosing the app's accent color.
         SettingsTile(
           title: 'Accent Color',
           subtitle: 'Choose your app theme color',
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Display the currently selected accent color.
               Container(
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
                   color:
                       settings != null
-                          ? AppColors.fromHex(
-                            settings.accentColor,
-                          ) // Use current setting.
-                          : AppColors.accent, // Fallback to default accent.
+                          ? AppColors.fromHex(settings.accentColor)
+                          : AppColors.accent,
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.divider, width: 2),
                   boxShadow: [
@@ -126,9 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: (settings != null
                               ? AppColors.fromHex(settings.accentColor)
                               : AppColors.accent)
-                          .withAlpha(
-                            100,
-                          ), // Subtle shadow for the color circle.
+                          .withAlpha(100),
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -137,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(width: 8),
               const Icon(
-                CupertinoIcons.chevron_right, // Disclosure indicator.
+                CupertinoIcons.chevron_right,
                 size: 16,
                 color: AppColors.textSecondary,
               ),
@@ -145,19 +141,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           onTap:
               () => _showAccentColorPicker(settings?.accentColor ?? '#0A84FF'),
-          icon: CupertinoIcons.drop_fill, // Droplet icon.
+          icon: CupertinoIcons.drop_fill,
         ),
       ],
     );
   }
 
-  /// Builds the "Preferences" section of the settings.
   Widget _buildPreferencesSection(AppSettings? settings) {
     return SettingsSection(
       title: 'Preferences',
-      icon: CupertinoIcons.settings, // Settings icon.
+      icon: CupertinoIcons.settings,
       children: [
-        // Tile for setting the first day of the week.
         SettingsTile(
           title: 'First Day of Week',
           subtitle: 'Start your week on',
@@ -165,9 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                settings?.firstDayOfWeek == 'saturday'
-                    ? 'Saturday'
-                    : 'Monday', // Display current selection.
+                settings?.firstDayOfWeek == 'saturday' ? 'Saturday' : 'Monday',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.accent,
@@ -184,16 +176,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           onTap:
               () => _showFirstDayPicker(settings?.firstDayOfWeek ?? 'monday'),
-          icon: CupertinoIcons.calendar, // Calendar icon.
+          icon: CupertinoIcons.calendar,
         ),
-        // Tile for setting the default task priority.
         SettingsTile(
           title: 'Default Task Priority',
           subtitle: 'Priority for new tasks',
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Display the current default priority.
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -202,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.getPriorityColor(
                     settings?.defaultTaskPriority ?? 3,
-                  ).withAlpha(20), // Background color based on priority.
+                  ).withAlpha(20),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: AppColors.getPriorityColor(
@@ -212,7 +202,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 child: Text(
-                  'P${settings?.defaultTaskPriority ?? 3}', // "P3", "P5", etc.
+                  'P${settings?.defaultTaskPriority ?? 3}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -231,7 +221,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           onTap: () => _showPriorityPicker(settings?.defaultTaskPriority ?? 3),
-          icon: CupertinoIcons.flag_fill, // Flag icon.
+          icon: CupertinoIcons.flag_fill,
         ),
       ],
     );
@@ -242,7 +232,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: 'Notifications',
       icon: CupertinoIcons.bell_fill,
       children: [
-        // Default notification toggle
         SettingsTile(
           title: 'Default Reminder',
           subtitle: 'Enable reminders for new tasks',
@@ -258,8 +247,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: () {},
           icon: CupertinoIcons.bell,
         ),
-
-        // Default notification time
         if (settings?.defaultNotificationEnabled ?? false)
           SettingsTile(
             title: 'Default Reminder Time',
@@ -305,8 +292,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
             icon: CupertinoIcons.time,
           ),
-
-        // Notification sound toggle
         SettingsTile(
           title: 'Notification Sound',
           subtitle: 'Play sound for reminders',
@@ -320,8 +305,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: () {},
           icon: CupertinoIcons.speaker_2_fill,
         ),
-
-        // Notification vibration toggle
         SettingsTile(
           title: 'Vibration',
           subtitle: 'Vibrate for reminders',
@@ -341,154 +324,592 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Builds the "Data Management" section of the settings.
   Widget _buildDataSection() {
     return SettingsSection(
       title: 'Data Management',
-      icon: CupertinoIcons.folder_fill, // Folder icon.
+      icon: CupertinoIcons.folder_fill,
       children: [
-        // Tile for exporting data.
         SettingsTile(
           title: 'Export Data',
           subtitle: 'Backup your tasks and notes',
-          trailing: Icon(
-            CupertinoIcons.share, // Share icon.
-            size: 18,
-            color: AppColors.accent,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // This is the new part that displays the time
+              if (_lastExportTime != null)
+                Text(
+                  _getTimeSinceExport(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Icon(CupertinoIcons.share, size: 18, color: AppColors.accent),
+            ],
           ),
-          onTap: () => _showDataManagementOptions(),
-          icon: CupertinoIcons.arrow_up_doc, // Upload document icon.
+          onTap: () => _showExportOptions(),
+          icon: CupertinoIcons.arrow_up_doc,
         ),
-        // Tile for importing data.
         SettingsTile(
           title: 'Import Data',
           subtitle: 'Restore from backup file',
           trailing: Icon(
-            CupertinoIcons.arrow_down, // Download icon.
+            CupertinoIcons.arrow_down,
             size: 18,
             color: AppColors.accent,
           ),
-          onTap: () => _showDataManagementOptions(),
-          icon: CupertinoIcons.arrow_down_doc, // Download document icon.
+          onTap: () => _showImportOptions(),
+          icon: CupertinoIcons.arrow_down_doc,
         ),
-        // Tile for clearing all data (destructive action).
         SettingsTile(
           title: 'Clear All Data',
           subtitle: 'Delete all tasks and notes',
           trailing: const Icon(
-            CupertinoIcons.trash, // Trash icon.
+            CupertinoIcons.trash,
             size: 18,
-            color: AppColors.error, // Red for destructive action.
+            color: AppColors.error,
           ),
           onTap: () => _showClearDataConfirmation(),
-          icon: CupertinoIcons.trash_fill, // Filled trash icon.
-          isDestructive: true, // Mark as destructive for styling.
+          icon: CupertinoIcons.trash_fill,
+          isDestructive: true,
         ),
       ],
     );
   }
 
-  /// Builds the "About" section of the settings.
   Widget _buildAboutSection() {
     return SettingsSection(
       title: 'About',
-      icon: CupertinoIcons.info_circle_fill, // Info circle icon.
+      icon: CupertinoIcons.info_circle_fill,
       children: [
-        // Tile displaying the app version.
         const SettingsInfoTile(
           title: 'Version',
-          value: '1.0.0', // Hardcoded version.
-          icon: CupertinoIcons.device_phone_portrait, // Phone icon.
+          value: '1.0.0',
+          icon: CupertinoIcons.device_phone_portrait,
         ),
-        // Tile for sending feedback.
         SettingsTile(
           title: 'Send Feedback',
           subtitle: 'Help us improve DayFlow',
           trailing: Icon(
-            CupertinoIcons.mail, // Mail icon.
+            CupertinoIcons.mail,
             size: 18,
             color: AppColors.accent,
           ),
           onTap: () => _sendFeedback(),
-          icon: CupertinoIcons.chat_bubble_fill, // Chat bubble icon.
+          icon: CupertinoIcons.chat_bubble_fill,
         ),
-        // Tile for rating the app.
         SettingsTile(
           title: 'Rate App',
           subtitle: 'Show some love on App Store',
           trailing: const Icon(
-            CupertinoIcons.star_fill, // Star icon.
+            CupertinoIcons.star_fill,
             size: 18,
-            color: AppColors.warning, // Warning color for star.
+            color: AppColors.warning,
           ),
           onTap: () => _rateApp(),
-          icon: CupertinoIcons.heart_fill, // Heart icon.
+          icon: CupertinoIcons.heart_fill,
         ),
       ],
     );
   }
 
-  /// Shows a modal for picking the app's accent color.
-  void _showAccentColorPicker(String currentColor) {
+  // Export Options
+  void _showExportOptions() {
     showCupertinoModalPopup(
       context: context,
-      builder: (BuildContext modalContext) {
-        return AccentColorPicker(
-          currentColor: currentColor,
-          onColorSelected: (colorHex) {
-            context.read<SettingsBloc>().add(UpdateAccentColor(colorHex));
-          },
-        );
-      },
+      builder:
+          (context) => CupertinoActionSheet(
+            title: const Text('Export Data'),
+            message: const Text('Choose export format'),
+            actions: [
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exportAsJSON();
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.doc_text, size: 18),
+                    SizedBox(width: 8),
+                    Text('JSON (Complete Backup)'),
+                  ],
+                ),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exportAsCSV();
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.table, size: 18),
+                    SizedBox(width: 8),
+                    Text('CSV (Spreadsheet)'),
+                  ],
+                ),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exportAsMarkdown();
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.doc_richtext, size: 18),
+                    SizedBox(width: 8),
+                    Text('Markdown (Readable)'),
+                  ],
+                ),
+              ),
+              // This is the new conditional button
+              if (_lastExportResult != null &&
+                  _exportImportService.canQuickExport)
+                CupertinoActionSheetAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _quickReExport();
+                  },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.arrow_counterclockwise, size: 18),
+                      SizedBox(width: 8),
+                      Text('Re-export Last File'),
+                    ],
+                  ),
+                ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ),
     );
   }
 
-  /// Shows a modal for picking the first day of the week.
-  void _showFirstDayPicker(String currentDay) {
+  void _showImportOptions() {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) {
-        return FirstDayPicker(
-          currentDay: currentDay,
-          onDaySelected: (day) {
-            context.read<SettingsBloc>().add(UpdateFirstDayOfWeek(day));
-          },
-        );
-      },
+      builder:
+          (context) => CupertinoActionSheet(
+            title: const Text('Import Data'),
+            message: const Text('Choose import source'),
+            actions: [
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _importFromFiles();
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.folder, size: 18),
+                    SizedBox(width: 8),
+                    Text('From Files'),
+                  ],
+                ),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _importFromClipboard();
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(CupertinoIcons.doc_on_clipboard, size: 18),
+                    SizedBox(width: 8),
+                    Text('From Clipboard'),
+                  ],
+                ),
+              ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ),
     );
   }
 
-  /// Shows a modal for picking the default task priority.
-  void _showPriorityPicker(int currentPriority) {
-    showCupertinoModalPopup(
+  // Export Methods
+  Future<void> _exportAsJSON() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      _showLoadingDialog('Preparing export...');
+
+      final result = await _exportImportService.exportToJSON(
+        includeCompleted: true,
+        includeSettings: true,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        if (result.success) {
+          setState(() {
+            _lastExportResult = result;
+            _lastExportTime = DateTime.now();
+          });
+          _showExportOptionsDialog(result);
+        } else {
+          CustomSnackBar.error(context, result.error ?? 'Export failed');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.error(context, 'Export failed: $e');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  Future<void> _exportAsCSV() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      _showLoadingDialog('Preparing CSV export...');
+
+      final result = await _exportImportService.exportToCSV(
+        includeCompleted: true,
+        includeNotes: true,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        if (result.success) {
+          setState(() {
+            _lastExportResult = result;
+            _lastExportTime = DateTime.now();
+          });
+          _showExportOptionsDialog(result);
+        } else {
+          CustomSnackBar.error(context, result.error ?? 'Export failed');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.error(context, 'Export failed: $e');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  Future<void> _exportAsMarkdown() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      _showLoadingDialog('Preparing Markdown export...');
+
+      final result = await _exportImportService.exportToMarkdown(
+        includeCompleted: true,
+        groupByDate: true,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        if (result.success) {
+          setState(() {
+            _lastExportResult = result;
+            _lastExportTime = DateTime.now();
+          });
+          _showExportOptionsDialog(result);
+        } else {
+          CustomSnackBar.error(context, result.error ?? 'Export failed');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.error(context, 'Export failed: $e');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  // Import Methods
+  Future<void> _importFromFiles() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      final content = await _exportImportService.pickFileForImport();
+
+      if (content != null && mounted) {
+        final validation = await _exportImportService.validateImport(content);
+
+        if (mounted) {
+          if (validation.isValid) {
+            _showImportConfirmDialog(content, validation);
+          } else {
+            CustomSnackBar.error(context, 'Invalid file: ${validation.error}');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.error(context, 'Failed to read file: $e');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  Future<void> _importFromClipboard() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      final ClipboardData? data = await Clipboard.getData('text/plain');
+
+      if (data?.text?.isEmpty ?? true) {
+        if (mounted) {
+          CustomSnackBar.error(context, 'Clipboard is empty');
+        }
+        return;
+      }
+
+      final validation = await _exportImportService.validateImport(data!.text!);
+
+      if (mounted) {
+        if (validation.isValid) {
+          _showImportConfirmDialog(data.text!, validation);
+        } else {
+          CustomSnackBar.error(context, 'Invalid data in clipboard');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.error(context, 'Failed to read clipboard');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  Future<void> _processImport(
+    String data,
+    ImportValidation validation, {
+    bool merge = true,
+  }) async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      _showLoadingDialog('Importing data...');
+
+      ImportResult result;
+
+      if (validation.format == 'csv') {
+        result = await _exportImportService.importFromCSV(data);
+      } else {
+        result = await _exportImportService.importFromJSON(data, merge: merge);
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        if (result.success) {
+          context.read<TaskBloc>().add(const LoadTasks());
+          if (validation.hasSettings) {
+            context.read<SettingsBloc>().add(const LoadSettings());
+          }
+
+          _showImportSuccessDialog(result);
+        } else {
+          CustomSnackBar.error(context, result.error ?? 'Import failed');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.error(context, 'Import failed: $e');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  Future<void> _performClearAllData() async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
+    try {
+      _showLoadingDialog('Creating backup and clearing data...');
+
+      final success = await _exportImportService.clearAllData(
+        createBackup: true,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        if (success) {
+          context.read<TaskBloc>().add(const LoadTasks());
+          context.read<SettingsBloc>().add(const LoadSettings());
+
+          CustomSnackBar.success(context, 'All data cleared (backup saved)');
+          context.go('/');
+        } else {
+          CustomSnackBar.error(context, 'Failed to clear data');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.error(context, 'Failed to clear data');
+      }
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  // Dialog Methods
+  void _showLoadingDialog(String message) {
+    showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return PriorityPicker(
-          currentPriority: currentPriority,
-          onPrioritySelected: (priority) {
-            context.read<SettingsBloc>().add(UpdateDefaultPriority(priority));
-          },
-        );
-      },
+      barrierDismissible: false,
+      builder:
+          (context) => CupertinoAlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CupertinoActivityIndicator(),
+                const SizedBox(height: 16),
+                Text(message),
+              ],
+            ),
+          ),
     );
   }
 
-  /// Shows options for data management (export/import).
-  void _showDataManagementOptions() {
-    showCupertinoModalPopup(
+  void _showExportOptionsDialog(ExportResult result) {
+    showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return DataManagementOptions(
-          onExportJSON: _exportAsJSON,
-          onExportCSV: _exportAsCSV,
-          onImportFromFiles: _importFromFiles,
-          onImportFromClipboard: _importFromClipboard,
-        );
-      },
+      builder:
+          (dialogContext) => CupertinoAlertDialog(
+            title: const Text('Export Ready'),
+            content: Text(
+              '${result.itemCount} items exported\n'
+              'Size: ${result.formattedSize}',
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  final shared = await _exportImportService.shareExport(result);
+                  if (!shared && mounted) {
+                    CustomSnackBar.error(context, 'Failed to share');
+                  }
+                },
+                child: const Text('Share'),
+              ),
+              CupertinoDialogAction(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  final path = await _exportImportService.saveToDevice(result);
+                  if (mounted) {
+                    if (path != null) {
+                      CustomSnackBar.success(
+                        context,
+                        'Saved to DayFlow folder',
+                      );
+                    } else {
+                      CustomSnackBar.error(context, 'Failed to save');
+                    }
+                  }
+                },
+                child: const Text('Save to Device'),
+              ),
+            ],
+          ),
     );
   }
 
-  /// Shows a confirmation dialog before clearing all app data.
+  void _showImportConfirmDialog(String data, ImportValidation validation) {
+    showCupertinoDialog(
+      context: context,
+      builder:
+          (dialogContext) => CupertinoAlertDialog(
+            title: const Text('Import Data'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Format: ${validation.format?.toUpperCase()}'),
+                Text('Items to import: ${validation.totalItems}'),
+                if (validation.hasSettings)
+                  const Text(
+                    '\nIncludes settings',
+                    style: TextStyle(fontSize: 12),
+                  ),
+              ],
+            ),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+              CupertinoDialogAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  _processImport(data, validation, merge: true);
+                },
+                child: const Text('Import'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showImportSuccessDialog(ImportResult result) {
+    showCupertinoDialog(
+      context: context,
+      builder:
+          (dialogContext) => CupertinoAlertDialog(
+            title: const Text('Import Complete'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (result.importedCount != null)
+                  Text('✅ Imported: ${result.importedCount}'),
+                if (result.failedCount != null && result.failedCount! > 0)
+                  Text(
+                    '❌ Failed: ${result.failedCount}',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+              ],
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  context.go('/');
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+    );
+  }
+
   void _showClearDataConfirmation() {
     showCupertinoDialog(
       context: context,
@@ -504,9 +925,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text('This will permanently delete:'),
               SizedBox(height: 8),
               Text('• All tasks and notes'),
-              Text('• All settings and preferences'),
-              Text('• All app data'),
+              Text('• All settings'),
               SizedBox(height: 12),
+              Text(
+                '✅ A backup will be created first',
+                style: TextStyle(color: CupertinoColors.systemGreen),
+              ),
+              SizedBox(height: 8),
               Text(
                 'This action cannot be undone!',
                 style: TextStyle(
@@ -524,340 +949,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Shows options for sending feedback (email or copy template).
-  void _sendFeedback() {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) {
-        return AboutSection(
-          onSendEmail: _openEmail,
-          onCopyTemplate: _copyFeedbackTemplate,
-        );
-      },
-    );
-  }
+  String _getTimeSinceExport() {
+    if (_lastExportTime == null) return '';
 
-  /// Simulates exporting data as JSON.
-  void _exportAsJSON() async {
-    try {
-      // Show a loading dialog.
-      showCupertinoDialog(
-        context: context,
-        barrierDismissible: false,
-        builder:
-            (context) => const CupertinoAlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CupertinoActivityIndicator(),
-                  SizedBox(height: 16),
-                  Text('Preparing export...'),
-                ],
-              ),
-            ),
-      );
-      // Simulate a delay for the export process.
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        Navigator.pop(context); // Close loading dialog.
-        // Show a success dialog with options to share or save.
-        showCupertinoDialog(
-          context: context,
-          builder:
-              (context) => const CupertinoAlertDialog(
-                title: Text('Export Ready'),
-                content: Text('Your data has been exported successfully.'),
-                actions: [
-                  CupertinoDialogAction(onPressed: null, child: Text('Share')),
-                  CupertinoDialogAction(
-                    onPressed: null,
-                    child: Text('Save to Files'),
-                  ),
-                ],
-              ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close loading dialog on error.
-        _showErrorDialog(
-          'Export failed. Please try again.',
-        ); // Show error message.
-      }
+    final difference = DateTime.now().difference(_lastExportTime!);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
     }
-  }
-
-  /// Placeholder for CSV export functionality.
-  void _exportAsCSV() async {
-    _showErrorDialog('CSV export coming soon!');
-  }
-
-  /// Placeholder for file import functionality.
-  void _importFromFiles() async {
-    _showErrorDialog('File import coming soon!');
-  }
-
-  /// Imports data from the clipboard.
-  void _importFromClipboard() async {
-    try {
-      // Get text data from the clipboard.
-      final ClipboardData? data = await Clipboard.getData('text/plain');
-      // If clipboard is empty, show an error.
-      if (data?.text?.isEmpty ?? true) {
-        if (mounted) {
-          _showErrorDialog('Clipboard is empty or contains no text.');
-        }
-        return;
-      }
-      // Show a confirmation dialog with a preview of the clipboard data.
-      if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder:
-              (context) => CupertinoAlertDialog(
-                title: const Text('Import from Clipboard'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Found data in clipboard:'),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceLight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        data!.text!.length >
-                                100 // Truncate long text for preview.
-                            ? '${data.text!.substring(0, 100)}...'
-                            : data.text!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('Import this data?'),
-                  ],
-                ),
-                actions: [
-                  CupertinoDialogAction(
-                    child: const Text('Cancel'),
-                    onPressed: () => Navigator.pop(context), // Cancel import.
-                  ),
-                  CupertinoDialogAction(
-                    onPressed: () {
-                      Navigator.pop(context); // Close dialog.
-                      _processImportData(
-                        data.text!,
-                      ); // Process the imported data.
-                    },
-                    child: const Text('Import'),
-                  ),
-                ],
-              ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorDialog(
-          'Failed to read clipboard data.',
-        ); // Show error if clipboard access fails.
-      }
-    }
-  }
-
-  /// Simulates processing imported data.
-  void _processImportData(String data) async {
-    // Show a loading dialog.
-    showCupertinoDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => const CupertinoAlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CupertinoActivityIndicator(),
-                SizedBox(height: 16),
-                Text('Processing import...'),
-              ],
-            ),
-          ),
-    );
-    try {
-      // Simulate processing delay.
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        Navigator.pop(context); // Close loading dialog.
-        // Show success dialog.
-        showCupertinoDialog(
-          context: context,
-          builder:
-              (context) => const CupertinoAlertDialog(
-                title: Text('Import Successful'),
-                content: Text('Your data has been imported successfully.'),
-                actions: [
-                  CupertinoDialogAction(onPressed: null, child: Text('OK')),
-                ],
-              ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close loading dialog on error.
-        _showErrorDialog(
-          'Import failed. Please check your data format.',
-        ); // Show error message.
-      }
-    }
-  }
-
-  /// Simulates clearing all app data.
-  void _performClearAllData() async {
-    // Show a loading indicator.
-    showCupertinoDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) =>
-              const Center(child: CupertinoActivityIndicator(radius: 20)),
-    );
-    try {
-      // In a real app, you would call repository methods here:
-      // await taskRepository.clearAllTasks();
-      // await settingsRepository.clearSettings();
-      // Simulate an async operation.
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) {
-        Navigator.pop(context); // Close loading dialog.
-        // Show success message and navigate to home screen.
-        showCupertinoDialog(
-          context: context,
-          builder:
-              (context) => CupertinoAlertDialog(
-                title: const Text('Data Cleared'),
-                content: const Text('All data has been successfully cleared.'),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () {
-                      Navigator.pop(context); // Close dialog.
-                      // Navigate to home and clear navigation stack.
-                      // Note: This would be context.go('/') in a real app
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Close loading dialog on error.
-        // Show error message.
-        showCupertinoDialog(
-          context: context,
-          builder:
-              (context) => const CupertinoAlertDialog(
-                title: Text('Error'),
-                content: Text('Failed to clear data. Please try again.'),
-                actions: [
-                  CupertinoDialogAction(onPressed: null, child: Text('OK')),
-                ],
-              ),
-        );
-      }
-    }
-  }
-
-  /// Placeholder for opening email client.
-  void _openEmail() async {
-    _showErrorDialog('Email integration coming soon!');
-  }
-
-  /// Copies a feedback template to the clipboard.
-  void _copyFeedbackTemplate() async {
-    final now = DateTime.now();
-    // The feedback template string.
-    final template = '''
-DayFlow Feedback
-App Version: 1.0.0
-Device: iOS/Android
-Date: ${now.toString().split('.')[0]}
-Feedback Type: [Bug Report / Feature Request / General Feedback]
-Description:
-[Please describe your feedback here]
-Steps to Reproduce (if bug):
-1. 
-2. 
-3. 
-Expected Behavior:
-[What did you expect to happen?]
-Actual Behavior:
-[What actually happened?]
-Additional Notes:
-[Any other information that might be helpful]
-''';
-    await Clipboard.setData(
-      ClipboardData(text: template),
-    ); // Copy to clipboard.
-    if (mounted) {
-      // Show a success dialog.
-      showCupertinoDialog(
-        context: context,
-        builder:
-            (context) => const CupertinoAlertDialog(
-              title: Text('Template Copied'),
-              content: Text(
-                'Feedback template has been copied to clipboard. You can paste it in your email app.',
-              ),
-              actions: [
-                CupertinoDialogAction(onPressed: null, child: Text('OK')),
-              ],
-            ),
-      );
-    }
-  }
-
-  /// Shows a dialog asking the user to rate the app.
-  void _rateApp() {
-    showCupertinoDialog(
-      context: context,
-      builder:
-          (context) => const CupertinoAlertDialog(
-            title: Text('Rate DayFlow'),
-            content: Text(
-              'Are you enjoying DayFlow? Please consider rating us on the App Store. Your feedback helps us improve!',
-            ),
-            actions: [
-              CupertinoDialogAction(
-                onPressed: null,
-                child: Text('Maybe Later'), // Dismiss dialog.
-              ),
-              CupertinoDialogAction(
-                onPressed: null, // Close dialog.
-                child: Text('Rate Now'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  /// Helper method to show a generic error/info dialog.
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder:
-          (context) => CupertinoAlertDialog(
-            title: const Text('Info'),
-            content: Text(message),
-            actions: const [
-              CupertinoDialogAction(onPressed: null, child: Text('OK')),
-            ],
-          ),
-    );
   }
 
   String _getNotificationTimeText(int minutes) {
@@ -868,6 +973,56 @@ Additional Notes:
     if (minutes == 30) return '30 min before';
     if (minutes == 60) return '1 hour before';
     return '$minutes min before';
+  }
+
+  void _quickReExport() {
+    if (_lastExportResult != null) {
+      _showExportOptionsDialog(_lastExportResult!);
+      CustomSnackBar.info(context, 'Showing last successful export...');
+    }
+  }
+
+  // Other settings methods
+  void _showAccentColorPicker(String currentColor) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext modalContext) {
+        return AccentColorPicker(
+          currentColor: currentColor,
+          onColorSelected: (colorHex) {
+            context.read<SettingsBloc>().add(UpdateAccentColor(colorHex));
+          },
+        );
+      },
+    );
+  }
+
+  void _showFirstDayPicker(String currentDay) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return FirstDayPicker(
+          currentDay: currentDay,
+          onDaySelected: (day) {
+            context.read<SettingsBloc>().add(UpdateFirstDayOfWeek(day));
+          },
+        );
+      },
+    );
+  }
+
+  void _showPriorityPicker(int currentPriority) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return PriorityPicker(
+          currentPriority: currentPriority,
+          onPrioritySelected: (priority) {
+            context.read<SettingsBloc>().add(UpdateDefaultPriority(priority));
+          },
+        );
+      },
+    );
   }
 
   void _showNotificationTimePicker(int currentMinutes) {
@@ -883,6 +1038,69 @@ Additional Notes:
           },
         );
       },
+    );
+  }
+
+  void _sendFeedback() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return AboutSection(
+          onSendEmail: _openEmail,
+          onCopyTemplate: _copyFeedbackTemplate,
+        );
+      },
+    );
+  }
+
+  void _openEmail() async {
+    CustomSnackBar.info(context, 'Email integration coming soon!');
+  }
+
+  void _copyFeedbackTemplate() async {
+    final now = DateTime.now();
+    final template = '''
+DayFlow Feedback
+App Version: 1.0.0
+Device: ${Platform.operatingSystem}
+Date: ${DateFormat('yyyy-MM-dd HH:mm').format(now)}
+---
+Feedback Type: [Bug/Feature Request/Other]
+Description:
+[Your feedback here]
+''';
+
+    await Clipboard.setData(ClipboardData(text: template));
+
+    if (mounted) {
+      CustomSnackBar.success(context, 'Feedback template copied');
+    }
+  }
+
+  void _rateApp() {
+    showCupertinoDialog(
+      context: context,
+      builder:
+          (dialogContext) => CupertinoAlertDialog(
+            title: const Text('Rate DayFlow'),
+            content: const Text(
+              'Enjoying DayFlow? Your rating helps us improve!',
+            ),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Maybe Later'),
+              ),
+              CupertinoDialogAction(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  // TODO: Open app store
+                  CustomSnackBar.info(context, 'Opening app store...');
+                },
+                child: const Text('Rate Now'),
+              ),
+            ],
+          ),
     );
   }
 }

@@ -1,55 +1,125 @@
 import 'dart:convert';
+import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
-import 'package:flutter/foundation.dart'; // For debug logging
 
 class SettingsRepository {
+  static const String _tag = 'SettingsRepo';
   static const String _settingsKey = 'app_settings';
-  late SharedPreferences _prefs;
+
+  SharedPreferences? _prefs;
   bool _isInitialized = false;
 
-  // Initialize the repository with SharedPreferences
+  // Cache for settings
+  AppSettings? _cachedSettings;
+  DateTime? _lastCacheUpdate;
+  static const Duration _cacheDuration = Duration(minutes: 5);
+
+  // Singleton pattern
+  static final SettingsRepository _instance = SettingsRepository._internal();
+  factory SettingsRepository() => _instance;
+  SettingsRepository._internal();
+
+  bool get isInitialized => _isInitialized;
+
   Future<void> init() async {
-    try {
-      _prefs = await SharedPreferences.getInstance();
-      _isInitialized = true;
-    } catch (e) {
-      debugPrint('Failed to initialize SharedPreferences: $e');
-      rethrow;
+    if (_isInitialized && _prefs != null) {
+      DebugLogger.verbose('Already initialized', tag: _tag);
+      return;
     }
+
+    return DebugLogger.timeOperation('Initialize SettingsRepository', () async {
+      try {
+        _prefs = await SharedPreferences.getInstance();
+        _isInitialized = true;
+        DebugLogger.success('Settings repository initialized', tag: _tag);
+      } catch (e) {
+        DebugLogger.error(
+          'Failed to initialize SharedPreferences',
+          tag: _tag,
+          error: e,
+        );
+        _isInitialized = false;
+        rethrow;
+      }
+    });
   }
 
-  // Get current app settings with validation
+  bool _isCacheValid() {
+    if (_cachedSettings == null || _lastCacheUpdate == null) return false;
+    final age = DateTime.now().difference(_lastCacheUpdate!);
+    return age < _cacheDuration;
+  }
+
+  void _invalidateCache() {
+    _cachedSettings = null;
+    _lastCacheUpdate = null;
+    DebugLogger.verbose('Settings cache invalidated', tag: _tag);
+  }
+
   AppSettings getSettings() {
-    if (!_isInitialized) {
-      debugPrint('Warning: SettingsRepository not initialized');
+    if (!_isInitialized || _prefs == null) {
+      DebugLogger.warning(
+        'Repository not initialized, returning defaults',
+        tag: _tag,
+      );
       return const AppSettings();
     }
 
+    // Return cached if valid
+    if (_isCacheValid() && _cachedSettings != null) {
+      DebugLogger.verbose('Returning cached settings', tag: _tag);
+      return _cachedSettings!;
+    }
+
     try {
-      final settingsJson = _prefs.getString(_settingsKey);
+      final settingsJson = _prefs!.getString(_settingsKey);
+
       if (settingsJson != null) {
+        DebugLogger.debug('Loading settings from storage', tag: _tag);
+
         final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
         final settings = AppSettings.fromMap(settingsMap);
 
-        // Auto-fix invalid settings
+        // Validate and fix if needed
         if (!settings.isValid()) {
-          debugPrint('Invalid settings detected, using defaults');
+          DebugLogger.warning(
+            'Invalid settings detected, fixing...',
+            tag: _tag,
+          );
           final fixedSettings = _fixInvalidSettings(settings);
-          saveSettings(fixedSettings);
+
+          // Save fixed settings
+          saveSettings(fixedSettings).then((_) {
+            DebugLogger.success('Fixed settings saved', tag: _tag);
+          });
+
+          _updateCache(fixedSettings);
           return fixedSettings;
         }
 
+        _updateCache(settings);
+        DebugLogger.success('Settings loaded', tag: _tag);
         return settings;
       }
-    } catch (e) {
-      debugPrint('Error loading settings: $e');
-    }
 
-    return const AppSettings();
+      DebugLogger.info('No saved settings, using defaults', tag: _tag);
+      const defaultSettings = AppSettings();
+      _updateCache(defaultSettings);
+      return defaultSettings;
+    } catch (e) {
+      DebugLogger.error('Error loading settings', tag: _tag, error: e);
+      const fallback = AppSettings();
+      _updateCache(fallback);
+      return fallback;
+    }
   }
 
-  // Fix invalid settings with default values
+  void _updateCache(AppSettings settings) {
+    _cachedSettings = settings;
+    _lastCacheUpdate = DateTime.now();
+  }
+
   AppSettings _fixInvalidSettings(AppSettings settings) {
     return AppSettings(
       accentColor: AppSettings.validateHexColor(settings.accentColor),
@@ -66,58 +136,129 @@ class SettingsRepository {
     );
   }
 
-  // Save settings with validation
   Future<bool> saveSettings(AppSettings settings) async {
-    if (!_isInitialized) {
-      debugPrint('Warning: SettingsRepository not initialized');
+    if (!_isInitialized || _prefs == null) {
+      DebugLogger.warning(
+        'Cannot save - repository not initialized',
+        tag: _tag,
+      );
       return false;
     }
 
-    try {
-      // Validate before saving
-      if (!settings.isValid()) {
-        debugPrint('Attempted to save invalid settings');
+    return DebugLogger.timeOperation('Save settings', () async {
+      try {
+        // Validate before saving
+        if (!settings.isValid()) {
+          DebugLogger.warning('Attempted to save invalid settings', tag: _tag);
+          return false;
+        }
+
+        final settingsJson = jsonEncode(settings.toMap());
+        final result = await _prefs!.setString(_settingsKey, settingsJson);
+
+        if (result) {
+          _updateCache(settings);
+          DebugLogger.success('Settings saved', tag: _tag);
+        } else {
+          DebugLogger.error('Failed to save settings', tag: _tag);
+        }
+
+        return result;
+      } catch (e) {
+        DebugLogger.error('Error saving settings', tag: _tag, error: e);
         return false;
       }
-
-      final settingsJson = jsonEncode(settings.toMap());
-      final result = await _prefs.setString(_settingsKey, settingsJson);
-
-      if (result) {
-        debugPrint('Settings saved successfully');
-      } else {
-        debugPrint('Failed to save settings');
-      }
-
-      return result;
-    } catch (e) {
-      debugPrint('Error saving settings: $e');
-      return false;
-    }
+    });
   }
 
-  // Reset settings to default
   Future<bool> clearSettings() async {
-    if (!_isInitialized) {
-      debugPrint('Warning: SettingsRepository not initialized');
+    if (!_isInitialized || _prefs == null) {
+      DebugLogger.warning(
+        'Cannot clear - repository not initialized',
+        tag: _tag,
+      );
       return false;
     }
 
-    try {
-      final result = await _prefs.remove(_settingsKey);
-      if (result) {
-        debugPrint('Settings cleared successfully');
-      } else {
-        debugPrint('Failed to clear settings');
+    return DebugLogger.timeOperation('Clear settings', () async {
+      try {
+        final result = await _prefs!.remove(_settingsKey);
+
+        if (result) {
+          _invalidateCache();
+          DebugLogger.success('Settings cleared', tag: _tag);
+        } else {
+          DebugLogger.warning('Failed to clear settings', tag: _tag);
+        }
+
+        return result;
+      } catch (e) {
+        DebugLogger.error('Error clearing settings', tag: _tag, error: e);
+        return false;
       }
-      return result;
-    } catch (e) {
-      debugPrint('Error clearing settings: $e');
-      return false;
-    }
+    });
   }
 
-  // Update accent color with validation
+  // Batch update for better performance
+  Future<bool> updateMultiple(Map<String, dynamic> updates) async {
+    return DebugLogger.timeOperation('Batch update settings', () async {
+      try {
+        var currentSettings = getSettings();
+
+        updates.forEach((key, value) {
+          switch (key) {
+            case 'accentColor':
+              currentSettings = currentSettings.copyWith(
+                accentColor: value as String,
+              );
+              break;
+            case 'firstDayOfWeek':
+              currentSettings = currentSettings.copyWith(
+                firstDayOfWeek: value as String,
+              );
+              break;
+            case 'defaultTaskPriority':
+              currentSettings = currentSettings.copyWith(
+                defaultTaskPriority: value as int,
+              );
+              break;
+            case 'defaultNotificationEnabled':
+              currentSettings = currentSettings.copyWith(
+                defaultNotificationEnabled: value as bool,
+              );
+              break;
+            case 'defaultNotificationMinutesBefore':
+              currentSettings = currentSettings.copyWith(
+                defaultNotificationMinutesBefore: value as int,
+              );
+              break;
+            case 'notificationSound':
+              currentSettings = currentSettings.copyWith(
+                notificationSound: value as bool,
+              );
+              break;
+            case 'notificationVibration':
+              currentSettings = currentSettings.copyWith(
+                notificationVibration: value as bool,
+              );
+              break;
+          }
+        });
+
+        final result = await saveSettings(currentSettings);
+        DebugLogger.success(
+          'Batch update completed',
+          tag: _tag,
+          data: '${updates.length} fields',
+        );
+        return result;
+      } catch (e) {
+        DebugLogger.error('Batch update failed', tag: _tag, error: e);
+        return false;
+      }
+    });
+  }
+
   Future<bool> updateAccentColor(String colorHex) async {
     try {
       final validatedColor = AppSettings.validateHexColor(colorHex);
@@ -125,14 +266,19 @@ class SettingsRepository {
       final updatedSettings = currentSettings.copyWith(
         accentColor: validatedColor,
       );
+
+      DebugLogger.info(
+        'Updating accent color',
+        tag: _tag,
+        data: validatedColor,
+      );
       return await saveSettings(updatedSettings);
     } catch (e) {
-      debugPrint('Error updating accent color: $e');
+      DebugLogger.error('Error updating accent color', tag: _tag, error: e);
       return false;
     }
   }
 
-  // Update first day of week with validation
   Future<bool> updateFirstDayOfWeek(String day) async {
     try {
       final validatedDay = AppSettings.validateFirstDay(day);
@@ -140,14 +286,23 @@ class SettingsRepository {
       final updatedSettings = currentSettings.copyWith(
         firstDayOfWeek: validatedDay,
       );
+
+      DebugLogger.info(
+        'Updating first day of week',
+        tag: _tag,
+        data: validatedDay,
+      );
       return await saveSettings(updatedSettings);
     } catch (e) {
-      debugPrint('Error updating first day of week: $e');
+      DebugLogger.error(
+        'Error updating first day of week',
+        tag: _tag,
+        error: e,
+      );
       return false;
     }
   }
 
-  // Update default priority with validation
   Future<bool> updateDefaultPriority(int priority) async {
     try {
       final validatedPriority = AppSettings.validatePriority(priority);
@@ -155,46 +310,74 @@ class SettingsRepository {
       final updatedSettings = currentSettings.copyWith(
         defaultTaskPriority: validatedPriority,
       );
+
+      DebugLogger.info(
+        'Updating default priority',
+        tag: _tag,
+        data: validatedPriority,
+      );
       return await saveSettings(updatedSettings);
     } catch (e) {
-      debugPrint('Error updating default priority: $e');
+      DebugLogger.error('Error updating default priority', tag: _tag, error: e);
       return false;
     }
   }
 
-  // Export settings as JSON string
   String exportSettings() {
     try {
       final settings = getSettings();
       if (!settings.isValid()) {
-        debugPrint('Cannot export invalid settings');
+        DebugLogger.warning('Cannot export invalid settings', tag: _tag);
         return '{}';
       }
-      return jsonEncode(settings.toMap());
+
+      final json = jsonEncode(settings.toMap());
+      DebugLogger.success(
+        'Settings exported',
+        tag: _tag,
+        data: '${json.length} chars',
+      );
+      return json;
     } catch (e) {
-      debugPrint('Error exporting settings: $e');
+      DebugLogger.error('Error exporting settings', tag: _tag, error: e);
       return '{}';
     }
   }
 
-  // Import settings from JSON string
   Future<bool> importSettings(String jsonString) async {
-    try {
-      final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
-      final settings = AppSettings.fromMap(settingsMap);
+    return DebugLogger.timeOperation('Import settings', () async {
+      try {
+        final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
+        final settings = AppSettings.fromMap(settingsMap);
 
-      if (!settings.isValid()) {
-        debugPrint('Imported settings are invalid');
+        if (!settings.isValid()) {
+          DebugLogger.warning('Imported settings are invalid', tag: _tag);
+          return false;
+        }
+
+        final result = await saveSettings(settings);
+        if (result) {
+          DebugLogger.success('Settings imported', tag: _tag);
+        }
+        return result;
+      } catch (e) {
+        DebugLogger.error('Error importing settings', tag: _tag, error: e);
         return false;
       }
-
-      return await saveSettings(settings);
-    } catch (e) {
-      debugPrint('Error importing settings: $e');
-      return false;
-    }
+    });
   }
 
-  // Check if repository is initialized
-  bool get isInitialized => _isInitialized;
+  // Get service status for debugging
+  Map<String, dynamic> getStatus() {
+    return {
+      'initialized': _isInitialized,
+      'hasPrefs': _prefs != null,
+      'cacheValid': _isCacheValid(),
+      'cacheAge':
+          _lastCacheUpdate != null
+              ? DateTime.now().difference(_lastCacheUpdate!).inSeconds
+              : null,
+      'currentSettings': _cachedSettings?.toMap(),
+    };
+  }
 }

@@ -1,6 +1,5 @@
 part of 'settings_bloc.dart';
 
-// Base class for all settings events
 abstract class SettingsEvent extends Equatable {
   const SettingsEvent();
 
@@ -8,24 +7,48 @@ abstract class SettingsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Load settings from storage
+// Load and save events
 class LoadSettings extends SettingsEvent {
-  const LoadSettings();
-}
+  final bool forceRefresh;
 
-// Update app accent color
-class UpdateAccentColor extends SettingsEvent {
-  final String colorHex;
-
-  const UpdateAccentColor(this.colorHex);
+  const LoadSettings({this.forceRefresh = false});
 
   @override
-  List<Object?> get props => [colorHex];
+  List<Object?> get props => [forceRefresh];
 }
 
-// Change first day of week
+class SaveSettings extends SettingsEvent {
+  final AppSettings settings;
+
+  const SaveSettings(this.settings);
+
+  @override
+  List<Object?> get props => [settings];
+}
+
+// Theme and appearance
+class UpdateAccentColor extends SettingsEvent {
+  final String colorHex;
+  final bool saveImmediately;
+
+  const UpdateAccentColor(this.colorHex, {this.saveImmediately = true});
+
+  @override
+  List<Object?> get props => [colorHex, saveImmediately];
+}
+
+class UpdateThemeMode extends SettingsEvent {
+  final ThemeMode mode;
+
+  const UpdateThemeMode(this.mode);
+
+  @override
+  List<Object?> get props => [mode];
+}
+
+// Calendar settings
 class UpdateFirstDayOfWeek extends SettingsEvent {
-  final String day; // 'saturday' or 'monday'
+  final String day;
 
   const UpdateFirstDayOfWeek(this.day);
 
@@ -33,7 +56,16 @@ class UpdateFirstDayOfWeek extends SettingsEvent {
   List<Object?> get props => [day];
 }
 
-// Set default task priority
+class UpdateCalendarView extends SettingsEvent {
+  final CalendarView view;
+
+  const UpdateCalendarView(this.view);
+
+  @override
+  List<Object?> get props => [view];
+}
+
+// Task defaults
 class UpdateDefaultPriority extends SettingsEvent {
   final int priority;
 
@@ -43,17 +75,26 @@ class UpdateDefaultPriority extends SettingsEvent {
   List<Object?> get props => [priority];
 }
 
-// Toggle default notification setting
-class UpdateNotificationEnabled extends SettingsEvent {
-  final bool enabled;
+class UpdateDefaultTaskDuration extends SettingsEvent {
+  final int minutes;
 
-  const UpdateNotificationEnabled(this.enabled);
+  const UpdateDefaultTaskDuration(this.minutes);
 
   @override
-  List<Object?> get props => [enabled];
+  List<Object?> get props => [minutes];
 }
 
-// Change default notification time
+// Notification settings
+class UpdateNotificationEnabled extends SettingsEvent {
+  final bool enabled;
+  final NotificationType? type;
+
+  const UpdateNotificationEnabled(this.enabled, {this.type});
+
+  @override
+  List<Object?> get props => [enabled, type];
+}
+
 class UpdateDefaultNotificationTime extends SettingsEvent {
   final int minutesBefore;
 
@@ -63,48 +104,138 @@ class UpdateDefaultNotificationTime extends SettingsEvent {
   List<Object?> get props => [minutesBefore];
 }
 
-// Toggle notification sound
 class UpdateNotificationSound extends SettingsEvent {
   final bool enabled;
+  final String? soundName;
 
-  const UpdateNotificationSound(this.enabled);
+  const UpdateNotificationSound(this.enabled, {this.soundName});
 
   @override
-  List<Object?> get props => [enabled];
+  List<Object?> get props => [enabled, soundName];
 }
 
-// Toggle notification vibration
 class UpdateNotificationVibration extends SettingsEvent {
   final bool enabled;
+  final VibrationType? pattern;
 
-  const UpdateNotificationVibration(this.enabled);
+  const UpdateNotificationVibration(this.enabled, {this.pattern});
 
   @override
-  List<Object?> get props => [enabled];
+  List<Object?> get props => [enabled, pattern];
 }
 
-// Reset all settings to defaults
+class UpdateQuietHours extends SettingsEvent {
+  final bool enabled;
+  final TimeOfDay? startTime;
+  final TimeOfDay? endTime;
+
+  const UpdateQuietHours({required this.enabled, this.startTime, this.endTime});
+
+  @override
+  List<Object?> get props => [enabled, startTime, endTime];
+}
+
+// Batch updates
+class BatchUpdateSettings extends SettingsEvent {
+  final Map<String, dynamic> updates;
+  final bool validateBeforeSave;
+
+  const BatchUpdateSettings(this.updates, {this.validateBeforeSave = true});
+
+  @override
+  List<Object?> get props => [updates, validateBeforeSave];
+}
+
+// Reset and export/import
 class ResetSettings extends SettingsEvent {
-  const ResetSettings();
-}
+  final SettingsResetScope scope;
 
-// Export settings to file
-class ExportSettings extends SettingsEvent {
-  final String format; // 'json' or 'csv'
-
-  const ExportSettings({required this.format});
+  const ResetSettings({this.scope = SettingsResetScope.all});
 
   @override
-  List<Object?> get props => [format];
+  List<Object?> get props => [scope];
 }
 
-// Import settings from file
+class ExportSettings extends SettingsEvent {
+  final String format;
+  final bool includeStatistics;
+
+  const ExportSettings({this.format = 'json', this.includeStatistics = false});
+
+  @override
+  List<Object?> get props => [format, includeStatistics];
+}
+
 class ImportSettings extends SettingsEvent {
   final String data;
-  final String format; // 'json' or 'csv'
+  final String format;
+  final bool merge;
 
-  const ImportSettings({required this.data, required this.format});
+  const ImportSettings({
+    required this.data,
+    required this.format,
+    this.merge = false,
+  });
 
   @override
-  List<Object?> get props => [data, format];
+  List<Object?> get props => [data, format, merge];
 }
+
+// Privacy and data
+class UpdateDataCollection extends SettingsEvent {
+  final bool allowAnalytics;
+  final bool allowCrashReports;
+
+  const UpdateDataCollection({
+    required this.allowAnalytics,
+    required this.allowCrashReports,
+  });
+
+  @override
+  List<Object?> get props => [allowAnalytics, allowCrashReports];
+}
+
+class ClearUserData extends SettingsEvent {
+  final DataClearScope scope;
+  final bool keepSettings;
+
+  const ClearUserData({required this.scope, this.keepSettings = true});
+
+  @override
+  List<Object?> get props => [scope, keepSettings];
+}
+
+// Sync settings
+class UpdateSyncEnabled extends SettingsEvent {
+  final bool enabled;
+  final SyncProvider? provider;
+
+  const UpdateSyncEnabled(this.enabled, {this.provider});
+
+  @override
+  List<Object?> get props => [enabled, provider];
+}
+
+class SyncSettingsNow extends SettingsEvent {
+  final SyncDirection direction;
+
+  const SyncSettingsNow({this.direction = SyncDirection.both});
+
+  @override
+  List<Object?> get props => [direction];
+}
+
+// Enums for settings events
+enum NotificationType { all, tasks, reminders, updates }
+
+enum VibrationType { none, light, medium, heavy, pattern }
+
+enum CalendarView { day, week, month, agenda }
+
+enum SettingsResetScope { all, appearance, notifications, tasks, privacy }
+
+enum DataClearScope { cache, downloads, userData, all }
+
+enum SyncProvider { google, icloud, dropbox, custom }
+
+enum SyncDirection { upload, download, both }

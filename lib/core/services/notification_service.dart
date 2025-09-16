@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/models/app_settings.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
@@ -13,163 +14,169 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-/// Notification Service for managing all notification operations
 class NotificationService {
-  // Singleton pattern implementation
+  static const String _tag = 'NotificationService';
+
+  // Singleton pattern
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  // Plugin instance for notifications
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  // Service state tracking
   bool _isInitialized = false;
   bool _notificationsEnabled = true;
+
+  // Cache for Android SDK version
+  int? _androidSdkVersion;
 
   // Channel identifiers
   static const String _highPriorityChannel = 'dayflow_high_priority';
   static const String _defaultChannel = 'dayflow_default';
   static const String _reminderChannel = 'dayflow_reminders';
 
-  // Public getters
   bool get isInitialized => _isInitialized;
   bool get notificationsEnabled => _notificationsEnabled;
 
-  /// Initialize the notification service
   Future<bool> initialize() async {
     if (_isInitialized) {
-      debugPrint('⚠️ NotificationService already initialized');
+      DebugLogger.warning('Already initialized', tag: _tag);
       return true;
     }
 
-    try {
-      debugPrint('🔧 Initializing NotificationService...');
+    return DebugLogger.timeOperation(
+      'Initialize NotificationService',
+      () async {
+        try {
+          DebugLogger.info('Initializing notification service', tag: _tag);
 
-      // Set up timezone data
-      await _initializeTimezone();
+          // Set up timezone data
+          await _initializeTimezone();
 
-      // Check and request permissions
-      _notificationsEnabled = await _checkAndRequestPermissions();
-      if (!_notificationsEnabled) {
-        debugPrint('❌ Notification permissions not granted');
-      }
+          // Check and request permissions
+          _notificationsEnabled = await _checkAndRequestPermissions();
+          if (!_notificationsEnabled) {
+            DebugLogger.warning(
+              'Notification permissions not granted',
+              tag: _tag,
+            );
+          }
 
-      // Set up notification plugin
-      await _initializePlugin();
+          // Set up notification plugin
+          await _initializePlugin();
 
-      // Create Android notification channels
-      if (Platform.isAndroid) {
-        await _createNotificationChannels();
-      }
+          // Create Android notification channels
+          if (Platform.isAndroid) {
+            await _createNotificationChannels();
+          }
 
-      _isInitialized = true;
-      debugPrint('✅ NotificationService initialized successfully');
+          _isInitialized = true;
+          DebugLogger.success('Notification service initialized', tag: _tag);
 
-      // Verify channels are working
-      await _verifyChannels();
+          // Verify channels
+          await _verifyChannels();
 
-      return true;
-    } catch (e, stackTrace) {
-      debugPrint('❌ Failed to initialize NotificationService: $e');
-      debugPrint('Stack trace: $stackTrace');
-      _isInitialized = false;
-      return false;
-    }
+          return true;
+        } catch (e, stackTrace) {
+          DebugLogger.error(
+            'Failed to initialize notification service',
+            tag: _tag,
+            error: e,
+            stackTrace: stackTrace,
+          );
+          _isInitialized = false;
+          return false;
+        }
+      },
+    );
   }
 
-  /// Initialize timezone data for accurate scheduling
   Future<void> _initializeTimezone() async {
     try {
-      // Load timezone database
       tz.initializeTimeZones();
 
+      String timeZoneName;
       try {
-        String timeZoneName;
+        timeZoneName = await FlutterTimezone.getLocalTimezone();
+      } catch (_) {
+        timeZoneName = DateTime.now().timeZoneName;
+      }
 
-        // Try multiple methods to get the device timezone
+      try {
+        final location = tz.getLocation(timeZoneName);
+        tz.setLocalLocation(location);
+        DebugLogger.success('Timezone set', tag: _tag, data: timeZoneName);
+      } catch (_) {
+        final fixedName = _fixTimezoneName(timeZoneName);
         try {
-          timeZoneName = await FlutterTimezone.getLocalTimezone();
-        } catch (_) {
-          // Fallback to DateTime's timezone
-          timeZoneName = DateTime.now().timeZoneName;
-        }
-
-        // Validate and set the timezone
-        try {
-          final location = tz.getLocation(timeZoneName);
+          final location = tz.getLocation(fixedName);
           tz.setLocalLocation(location);
-          debugPrint('✅ Timezone set to: $timeZoneName');
+          DebugLogger.success(
+            'Timezone set (corrected)',
+            tag: _tag,
+            data: fixedName,
+          );
         } catch (_) {
-          // Try to fix common timezone naming issues
-          final fixedName = _fixTimezoneName(timeZoneName);
-          try {
-            final location = tz.getLocation(fixedName);
-            tz.setLocalLocation(location);
-            debugPrint('✅ Timezone set to: $fixedName (corrected)');
-          } catch (_) {
-            // Ultimate fallback to UTC
-            tz.setLocalLocation(tz.UTC);
-            debugPrint('⚠️ Using UTC as timezone');
-          }
+          tz.setLocalLocation(tz.UTC);
+          DebugLogger.warning('Using UTC as timezone', tag: _tag);
         }
-      } catch (e) {
-        tz.setLocalLocation(tz.UTC);
-        debugPrint('⚠️ Timezone error, using UTC: $e');
       }
     } catch (e) {
       tz.setLocalLocation(tz.UTC);
-      debugPrint('❌ Timezone initialization failed, using UTC: $e');
+      DebugLogger.error(
+        'Timezone initialization failed, using UTC',
+        tag: _tag,
+        error: e,
+      );
     }
   }
 
-  /// Fix common timezone name format issues
   String _fixTimezoneName(String original) {
-    // Handle Android timezone names that need conversion
     if (original.startsWith('GMT')) {
       return original.replaceFirst('GMT', 'Etc/GMT');
     }
     return original;
   }
 
-  /// Check and request necessary permissions
   Future<bool> _checkAndRequestPermissions() async {
     try {
       if (Platform.isAndroid) {
         final sdkInt = await _getAndroidSdkInt();
 
-        // Handle notification permission for Android 13+
+        // Android 13+ notification permission
         if (sdkInt >= 33) {
           final status = await Permission.notification.status;
           if (!status.isGranted) {
             if (status.isPermanentlyDenied) {
-              debugPrint('❌ Notification permission permanently denied');
+              DebugLogger.error(
+                'Notification permission permanently denied',
+                tag: _tag,
+              );
               return false;
             }
             final result = await Permission.notification.request();
             if (!result.isGranted) {
-              debugPrint('❌ Notification permission denied');
+              DebugLogger.warning('Notification permission denied', tag: _tag);
               return false;
             }
           }
+          DebugLogger.success('Notification permission granted', tag: _tag);
         }
 
-        // Handle exact alarm permission for Android 12+
+        // Android 12+ exact alarm permission
         if (sdkInt >= 31) {
           await _requestExactAlarmPermission();
         }
       }
 
-      // iOS permissions are handled in initialization settings
       return true;
     } catch (e) {
-      debugPrint('❌ Permission check failed: $e');
+      DebugLogger.error('Permission check failed', tag: _tag, error: e);
       return false;
     }
   }
 
-  /// Request exact alarm permission for Android 12+
   Future<void> _requestExactAlarmPermission() async {
     try {
       final androidPlugin =
@@ -182,39 +189,55 @@ class NotificationService {
         final hasExactAlarm =
             await androidPlugin.canScheduleExactNotifications() ?? false;
         if (!hasExactAlarm) {
-          debugPrint('⚠️ Exact alarm permission not granted');
+          DebugLogger.warning('Exact alarm permission not granted', tag: _tag);
           final granted = await androidPlugin.requestExactAlarmsPermission();
-          if (!granted!) {
-            debugPrint(
-              '⚠️ Exact alarm permission denied, notifications may be delayed',
-            );
+          if (granted == true) {
+            DebugLogger.success('Exact alarm permission granted', tag: _tag);
+          } else {
+            DebugLogger.warning('Exact alarm permission denied', tag: _tag);
           }
         }
       }
     } catch (e) {
-      debugPrint('❌ Failed to request exact alarm permission: $e');
+      DebugLogger.error(
+        'Failed to request exact alarm permission',
+        tag: _tag,
+        error: e,
+      );
     }
   }
 
-  /// Get Android SDK version
   Future<int> _getAndroidSdkInt() async {
+    // Use cached version if available
+    if (_androidSdkVersion != null) {
+      return _androidSdkVersion!;
+    }
+
     try {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.version.sdkInt;
+      _androidSdkVersion = androidInfo.version.sdkInt;
+      DebugLogger.info(
+        'Android SDK version',
+        tag: _tag,
+        data: _androidSdkVersion,
+      );
+      return _androidSdkVersion!;
     } catch (e) {
-      debugPrint('❌ Failed to get Android SDK version: $e');
+      DebugLogger.error(
+        'Failed to get Android SDK version',
+        tag: _tag,
+        error: e,
+      );
       return 29; // Default to Android 10
     }
   }
 
-  /// Initialize notification plugin with platform-specific settings
   Future<void> _initializePlugin() async {
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
 
-    // iOS settings with action categories
     final iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -226,16 +249,12 @@ class NotificationService {
             DarwinNotificationAction.plain(
               'complete',
               'Complete',
-              options: {
-                DarwinNotificationActionOption.destructive, // Red color
-              },
+              options: {DarwinNotificationActionOption.destructive},
             ),
             DarwinNotificationAction.plain(
               'snooze',
               'Snooze 5min',
-              options: {
-                DarwinNotificationActionOption.foreground, // Blue color
-              },
+              options: {DarwinNotificationActionOption.foreground},
             ),
           ],
           options: {DarwinNotificationCategoryOption.hiddenPreviewShowTitle},
@@ -254,9 +273,10 @@ class NotificationService {
       onDidReceiveBackgroundNotificationResponse:
           _onBackgroundNotificationTapped,
     );
+
+    DebugLogger.success('Notification plugin initialized', tag: _tag);
   }
 
-  /// Create notification channels for Android
   Future<void> _createNotificationChannels() async {
     final androidPlugin =
         _notifications
@@ -267,7 +287,6 @@ class NotificationService {
     if (androidPlugin == null) return;
 
     try {
-      // Create all notification channels
       await Future.wait([
         androidPlugin.createNotificationChannel(
           const AndroidNotificationChannel(
@@ -305,13 +324,16 @@ class NotificationService {
         ),
       ]);
 
-      debugPrint('✅ Notification channels created');
+      DebugLogger.success('Notification channels created', tag: _tag);
     } catch (e) {
-      debugPrint('❌ Failed to create notification channels: $e');
+      DebugLogger.error(
+        'Failed to create notification channels',
+        tag: _tag,
+        error: e,
+      );
     }
   }
 
-  /// Verify channels are properly set up
   Future<void> _verifyChannels() async {
     if (!Platform.isAndroid) return;
 
@@ -323,118 +345,126 @@ class NotificationService {
               >();
 
       if (androidPlugin != null) {
-        debugPrint('📱 Notification channels ready');
+        DebugLogger.success('Notification channels verified', tag: _tag);
       }
     } catch (e) {
-      debugPrint('⚠️ Channel verification failed: $e');
+      DebugLogger.warning(
+        'Channel verification failed',
+        tag: _tag,
+        data: e.toString(),
+      );
     }
   }
 
-  /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    debugPrint('👆 Notification tapped:');
-    debugPrint('  - Action: ${response.actionId}');
-    debugPrint('  - Payload: ${response.payload}');
-    debugPrint('  - Input: ${response.input}');
+    DebugLogger.info(
+      'Notification tapped',
+      tag: _tag,
+      data: {
+        'action': response.actionId,
+        'payload': response.payload,
+        'input': response.input,
+      },
+    );
 
-    // Handle different actions
     if (response.actionId == 'complete') {
       _handleCompleteAction(response.payload);
     } else if (response.actionId == 'snooze') {
       _handleSnoozeAction(response.payload);
     } else {
-      // Regular tap - open app or navigate to task
       _handleDefaultTap(response.payload);
     }
   }
 
-  /// Handle complete action
   Future<void> _handleCompleteAction(String? taskId) async {
     if (taskId == null || taskId.isEmpty) return;
 
-    debugPrint('✅ Marking task as complete: $taskId');
+    return DebugLogger.timeOperation(
+      'Complete task from notification',
+      () async {
+        try {
+          final taskRepo = TaskRepository();
+          await taskRepo.toggleTaskComplete(taskId);
+          await cancelTaskNotifications(taskId);
 
-    try {
-      // Get task repository
-      final taskRepo = TaskRepository();
+          await showNotification(
+            title: '✅ Task Completed!',
+            body: 'Great job! Task has been marked as complete.',
+            channelId: _defaultChannel,
+          );
 
-      // Toggle task completion
-      await taskRepo.toggleTaskComplete(taskId);
-
-      // Cancel future notifications for this task
-      await cancelTaskNotifications(taskId);
-
-      // Show success notification
-      await showNotification(
-        title: '✅ Task Completed!',
-        body: 'Great job! Task has been marked as complete.',
-        channelId: _defaultChannel,
-      );
-
-      debugPrint('✅ Task marked as complete successfully');
-    } catch (e) {
-      debugPrint('❌ Failed to complete task: $e');
-    }
+          DebugLogger.success(
+            'Task completed from notification',
+            tag: _tag,
+            data: taskId,
+          );
+        } catch (e) {
+          DebugLogger.error(
+            'Failed to complete task from notification',
+            tag: _tag,
+            error: e,
+          );
+        }
+      },
+    );
   }
 
-  /// Handle snooze action
   Future<void> _handleSnoozeAction(String? taskId) async {
     if (taskId == null || taskId.isEmpty) return;
 
-    debugPrint('⏰ Snoozing task: $taskId');
+    return DebugLogger.timeOperation('Snooze task notification', () async {
+      try {
+        final taskRepo = TaskRepository();
+        final task = taskRepo.getTask(taskId);
 
-    try {
-      // Get task from repository
-      final taskRepo = TaskRepository();
-      final task = taskRepo.getTask(taskId);
+        if (task == null) {
+          DebugLogger.warning(
+            'Task not found for snooze',
+            tag: _tag,
+            data: taskId,
+          );
+          return;
+        }
 
-      if (task == null) {
-        debugPrint('❌ Task not found');
-        return;
+        await cancelTaskNotifications(taskId);
+
+        const snoozeMinutes = 5;
+        final snoozeTime = DateTime.now().add(
+          const Duration(minutes: snoozeMinutes),
+        );
+
+        final snoozedTask = task.copyWith(
+          dueDate: snoozeTime,
+          hasNotification: true,
+          notificationMinutesBefore: 0,
+        );
+
+        final settingsRepo = SettingsRepository();
+        await settingsRepo.init();
+        final settings = settingsRepo.getSettings();
+
+        await scheduleTaskNotification(task: snoozedTask, settings: settings);
+
+        await showNotification(
+          title: '⏰ Reminder Snoozed',
+          body: 'I\'ll remind you again in $snoozeMinutes minutes',
+          channelId: _defaultChannel,
+        );
+
+        DebugLogger.success(
+          'Task snoozed',
+          tag: _tag,
+          data: '$taskId for $snoozeMinutes minutes',
+        );
+      } catch (e) {
+        DebugLogger.error('Failed to snooze task', tag: _tag, error: e);
       }
-
-      // Cancel current notification
-      await cancelTaskNotifications(taskId);
-
-      // Snooze duration (5 minutes default)
-      const snoozeMinutes = 5;
-      final snoozeTime = DateTime.now().add(
-        const Duration(minutes: snoozeMinutes),
-      );
-
-      // Create snoozed task with new time
-      final snoozedTask = task.copyWith(
-        dueDate: snoozeTime,
-        hasNotification: true,
-        notificationMinutesBefore: 0, // At exact time
-      );
-
-      // Get settings
-      final settingsRepo = SettingsRepository();
-      await settingsRepo.init();
-      final settings = settingsRepo.getSettings();
-
-      // Schedule new notification
-      await scheduleTaskNotification(task: snoozedTask, settings: settings);
-
-      // Show confirmation
-      await showNotification(
-        title: '⏰ Reminder Snoozed',
-        body: 'I\'ll remind you again in $snoozeMinutes minutes',
-        channelId: _defaultChannel,
-      );
-
-      debugPrint('✅ Task snoozed for $snoozeMinutes minutes');
-    } catch (e) {
-      debugPrint('❌ Failed to snooze task: $e');
-    }
+    });
   }
 
-  /// Handle default tap (open app)
   void _handleDefaultTap(String? taskId) {
-    debugPrint('📱 Opening task: $taskId');
+    DebugLogger.info('Opening task from notification', tag: _tag, data: taskId);
     // TODO: Navigate to task details
-    // This needs to be connected with your navigation system
   }
 
   /// Handle background notification tap
@@ -443,33 +473,27 @@ class NotificationService {
     NotificationResponse response,
   ) async {
     try {
-      // Remove debug prints in release for background handlers
       if (response.actionId == 'complete') {
-        // Use a simpler approach without full app initialization
         await _handleBackgroundCompleteAction(response.payload);
       } else if (response.actionId == 'snooze') {
         await _handleBackgroundSnoozeAction(response.payload);
       }
-    } catch (e, stackTrace) {
-      // Log errors without crashing
-      debugPrint('❌ Background notification error: $e');
-      debugPrint(stackTrace.toString());
+    } catch (e) {
+      // Silent fail in background
     }
   }
 
-  // Simplified background handlers that don't require full initialization
   static Future<void> _handleBackgroundCompleteAction(String? taskId) async {
     if (taskId == null || taskId.isEmpty) return;
 
     try {
-      // Minimal initialization
       await Hive.initFlutter();
       await Hive.openBox('tasks');
 
       final taskRepo = TaskRepository();
       await taskRepo.toggleTaskComplete(taskId);
-    } catch (e) {
-      debugPrint('❌ Background complete action failed: $e');
+    } catch (_) {
+      // Silent fail in background
     }
   }
 
@@ -477,7 +501,6 @@ class NotificationService {
     if (taskId == null || taskId.isEmpty) return;
 
     try {
-      // Minimal initialization
       await Hive.initFlutter();
       await Hive.openBox('tasks');
       await Hive.openBox('settings');
@@ -486,16 +509,14 @@ class NotificationService {
       final task = taskRepo.getTask(taskId);
       if (task == null) return;
 
-      // Simple snooze logic without full notification rescheduling
       final snoozeTime = DateTime.now().add(const Duration(minutes: 5));
       final snoozedTask = task.copyWith(dueDate: snoozeTime);
       await taskRepo.updateTask(snoozedTask);
-    } catch (e) {
-      debugPrint('❌ Background snooze action failed: $e');
+    } catch (_) {
+      // Silent fail in background
     }
   }
 
-  /// Show immediate notification with improved UI
   Future<bool> showNotification({
     required String title,
     required String body,
@@ -503,12 +524,14 @@ class NotificationService {
     String channelId = _defaultChannel,
   }) async {
     if (!_isInitialized || !_notificationsEnabled) {
-      debugPrint('⚠️ Notifications not initialized or disabled');
+      DebugLogger.warning(
+        'Cannot show notification - not initialized or disabled',
+        tag: _tag,
+      );
       return false;
     }
 
     try {
-      // Enhanced Android notification with system defaults
       final androidDetails = AndroidNotificationDetails(
         channelId,
         _getChannelName(channelId),
@@ -516,7 +539,6 @@ class NotificationService {
         importance: Importance.high,
         priority: Priority.high,
         showWhen: true,
-        // Enhanced UI with expandable content
         styleInformation: BigTextStyleInformation(
           body,
           contentTitle: title,
@@ -525,11 +547,9 @@ class NotificationService {
           htmlFormatContentTitle: true,
           htmlFormatSummaryText: true,
         ),
-        // Visual enhancements using system colors
         color: const Color(0xFF2196F3),
         category: AndroidNotificationCategory.reminder,
         visibility: NotificationVisibility.public,
-        // Use system default sound and vibration
         playSound: true,
         enableVibration: true,
         vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
@@ -542,7 +562,6 @@ class NotificationService {
         setAsGroupSummary: false,
       );
 
-      // iOS notification details
       const iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
@@ -559,94 +578,113 @@ class NotificationService {
 
       final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       await _notifications.show(id, title, body, details, payload: payload);
-      debugPrint('✅ Notification shown with ID: $id');
+
+      DebugLogger.success('Notification shown', tag: _tag, data: 'ID: $id');
       return true;
     } catch (e) {
-      debugPrint('❌ Failed to show notification: $e');
+      DebugLogger.error('Failed to show notification', tag: _tag, error: e);
       return false;
     }
   }
 
-  /// Schedule notification for task
   Future<bool> scheduleTaskNotification({
     required TaskModel task,
     required AppSettings settings,
   }) async {
     if (!_isInitialized || !_notificationsEnabled) {
-      debugPrint('⚠️ Notifications not initialized or disabled');
+      DebugLogger.warning(
+        'Cannot schedule - not initialized or disabled',
+        tag: _tag,
+      );
       return false;
     }
 
-    debugPrint('\n📅 === SCHEDULING TASK NOTIFICATION ===');
-    debugPrint('📋 Task: ${task.title}');
-    debugPrint('📅 Due date: ${task.dueDate}');
+    return DebugLogger.timeOperation('Schedule task notification', () async {
+      try {
+        DebugLogger.info(
+          'Scheduling notification',
+          tag: _tag,
+          data: {
+            'task': task.title,
+            'dueDate': task.dueDate?.toIso8601String(),
+            'hasNotification': task.hasNotification,
+          },
+        );
 
-    try {
-      if (!task.hasNotification || task.dueDate == null) {
-        debugPrint('❌ Task has no notification or due date');
+        if (!task.hasNotification || task.dueDate == null) {
+          DebugLogger.warning(
+            'Task has no notification or due date',
+            tag: _tag,
+          );
+          return false;
+        }
+
+        await cancelTaskNotifications(task.id);
+
+        final minutesBefore = task.notificationMinutesBefore ?? 0;
+        final notificationDateTime = task.dueDate!.subtract(
+          Duration(minutes: minutesBefore),
+        );
+        final scheduledDate = tz.TZDateTime.from(
+          notificationDateTime,
+          tz.local,
+        );
+        final now = tz.TZDateTime.now(tz.local);
+
+        DebugLogger.debug(
+          'Schedule timing',
+          tag: _tag,
+          data: {
+            'now': now.toIso8601String(),
+            'scheduled': scheduledDate.toIso8601String(),
+            'difference': '${scheduledDate.difference(now).inSeconds} seconds',
+          },
+        );
+
+        if (scheduledDate.isBefore(now) ||
+            scheduledDate.difference(now).inSeconds < 10) {
+          DebugLogger.warning(
+            'Time too close/past, showing immediately',
+            tag: _tag,
+          );
+          return await showNotification(
+            title: '📋 ${task.title}',
+            body: task.description ?? 'Task reminder!',
+            payload: task.id,
+            channelId: _reminderChannel,
+          );
+        }
+
+        final id = task.id.hashCode.abs();
+        final notificationDetails = _createTaskNotificationDetails(
+          task,
+          settings,
+        );
+
+        final (scheduled, mode) = await _scheduleWithFallback(
+          id: id,
+          title: '📋 ${task.title}',
+          body: task.description ?? 'Task reminder',
+          scheduledDate: scheduledDate,
+          details: notificationDetails,
+          payload: task.id,
+        );
+
+        final pending = await _notifications.pendingNotificationRequests();
+        final found = pending.any((p) => p.id == id);
+
+        DebugLogger.success(
+          'Notification scheduled',
+          tag: _tag,
+          data: {'verified': found, 'mode': mode, 'id': id},
+        );
+
+        return found;
+      } catch (e) {
+        DebugLogger.error('Error scheduling notification', tag: _tag, error: e);
         return false;
       }
-
-      // Cancel any existing notifications for this task
-      await cancelTaskNotifications(task.id);
-
-      // Calculate notification time
-      final minutesBefore = task.notificationMinutesBefore ?? 0;
-      final notificationDateTime = task.dueDate!.subtract(
-        Duration(minutes: minutesBefore),
-      );
-
-      // Use device's local timezone for scheduling
-      final scheduledDate = tz.TZDateTime.from(notificationDateTime, tz.local);
-      final now = tz.TZDateTime.now(tz.local);
-
-      debugPrint('🕐 Current: $now');
-      debugPrint('🔔 Schedule for: $scheduledDate');
-      debugPrint(
-        '⏱️ Time difference: ${scheduledDate.difference(now).inSeconds} seconds',
-      );
-
-      // Check if scheduled time is in the past or too close
-      if (scheduledDate.isBefore(now) ||
-          scheduledDate.difference(now).inSeconds < 10) {
-        debugPrint('⚠️ Time too close/past, showing immediately');
-        return await showNotification(
-          title: '📋 ${task.title}',
-          body: task.description ?? 'Task reminder!',
-          payload: task.id,
-          channelId: _reminderChannel,
-        );
-      }
-
-      // Generate unique ID and create notification details
-      final id = task.id.hashCode.abs();
-      final notificationDetails = _createTaskNotificationDetails(
-        task,
-        settings,
-      );
-
-      // Schedule notification with fallback mechanisms
-      final (scheduled, mode) = await _scheduleWithFallback(
-        id: id,
-        title: '📋 ${task.title}',
-        body: task.description ?? 'Task reminder',
-        scheduledDate: scheduledDate,
-        details: notificationDetails,
-        payload: task.id,
-      );
-
-      // Verify the notification was scheduled
-      final pending = await _notifications.pendingNotificationRequests();
-      final found = pending.any((p) => p.id == id);
-
-      debugPrint('📬 Verification: ${found ? "✅ Found" : "❌ Not found"}');
-      debugPrint('📱 Mode used: $mode');
-
-      return found;
-    } catch (e) {
-      debugPrint('❌ Error scheduling notification: $e');
-      return false;
-    }
+    });
   }
 
   /// Create enhanced notification details for tasks with better UX

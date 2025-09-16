@@ -28,10 +28,6 @@ class HomeTimeSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final shouldShowIndicator = isCurrentHour && now.hour == hour;
-    final minuteProgress = shouldShowIndicator ? now.minute / 60.0 : 0.0;
-
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -222,60 +218,6 @@ class HomeTimeSlot extends StatelessWidget {
             ),
           ),
         ),
-
-        // Current time indicator
-        if (shouldShowIndicator)
-          Positioned(
-            top:
-                12 +
-                (minuteProgress * 66), // 12 padding + (0-66 based on minutes)
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: SizedBox(
-                height: 20,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 68),
-                    // Animated dot
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withAlpha(200),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accent.withAlpha(50),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    // Line
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.accent.withAlpha(150),
-                              AppColors.accent.withAlpha(100),
-                              AppColors.accent.withAlpha(25),
-                              Colors.transparent,
-                            ],
-                            stops: const [0, 0.2, 0.6, 1],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
