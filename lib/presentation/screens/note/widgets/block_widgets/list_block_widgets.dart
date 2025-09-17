@@ -3,7 +3,7 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/note_block.dart';
 import 'base_block_widget.dart';
 
-// Shared list item widget for better code reuse
+// Shared list item widget for better code reuse with RTL support
 class _ListItemWidget extends StatelessWidget {
   final int index;
   final TextEditingController controller;
@@ -44,83 +44,87 @@ class _ListItemWidget extends StatelessWidget {
           width: 0.5,
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Prefix (bullet, number, or checkbox)
-          Container(
-            width: 36,
-            padding: const EdgeInsets.only(top: 14),
-            alignment: Alignment.topCenter,
-            child: prefix,
-          ),
-
-          // Text field
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              maxLines: null,
-              textDirection: textDirection,
-              textAlign:
-                  textDirection == TextDirection.rtl
-                      ? TextAlign.right
-                      : TextAlign.left,
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: TextStyle(
-                  color: AppColors.textTertiary.withAlpha(100),
-                  fontSize: 16,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.only(
-                  top: 14,
-                  bottom: 14,
-                  right: 8,
-                ),
-                isDense: true,
-              ),
-              style:
-                  textStyle ??
-                  const TextStyle(
-                    fontSize: 16,
-                    height: 1.5,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 0.1,
-                  ),
-              onTap: () => onSelectionChanged(controller.selection),
-            ),
-          ),
-
-          // Remove button
-          if (showRemoveButton)
+      child: Directionality(
+        textDirection: textDirection,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Prefix (bullet, number, or checkbox) - auto positioned by Directionality
             Container(
-              margin: const EdgeInsets.only(top: 8, right: 8),
-              child: InkWell(
-                onTap: onRemove,
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withAlpha(50),
-                    borderRadius: BorderRadius.circular(6),
+              width: 36,
+              padding: const EdgeInsets.only(top: 14),
+              alignment: Alignment.topCenter,
+              child: prefix,
+            ),
+
+            // Text field
+            Expanded(
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                maxLines: null,
+                textDirection: textDirection,
+                textAlign:
+                    textDirection == TextDirection.rtl
+                        ? TextAlign.right
+                        : TextAlign.left,
+                selectionControls: EmptyTextSelectionControls(),
+                decoration: InputDecoration(
+                  hintText: hintText,
+                  hintStyle: TextStyle(
+                    color: AppColors.textTertiary.withAlpha(100),
+                    fontSize: 16,
                   ),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 16,
-                    color: AppColors.textTertiary,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.only(
+                    top: 14,
+                    bottom: 14,
+                    right: 8,
+                  ),
+                  isDense: true,
+                ),
+                style:
+                    textStyle ??
+                    const TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0.1,
+                    ),
+                onTap: () => onSelectionChanged(controller.selection),
+              ),
+            ),
+
+            // Remove button - auto positioned by Directionality
+            if (showRemoveButton)
+              Container(
+                margin: const EdgeInsets.only(top: 8, right: 8),
+                child: InkWell(
+                  onTap: onRemove,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withAlpha(50),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-// Base class for all list widgets
+// Base class for all list widgets with RTL support
 abstract class _BaseListWidget<T extends NoteBlock> extends StatefulWidget {
   final T block;
   final FocusNode focusNode;
@@ -142,6 +146,7 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
   late List<TextDirection> _textDirections;
+  bool _isDisposed = false;
 
   List<String> get items;
 
@@ -167,6 +172,7 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
 
   @override
   void dispose() {
+    _isDisposed = true;
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -176,8 +182,23 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(W oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (items.length != _controllers.length) {
+      // Rebuild controllers if items count changed
+      for (final controller in _controllers) {
+        controller.dispose();
+      }
+      for (final focusNode in _focusNodes) {
+        focusNode.dispose();
+      }
+      _initializeControllers();
+    }
+  }
+
   void _onItemChanged(int index) {
-    if (index >= items.length) return;
+    if (_isDisposed || index >= items.length) return;
 
     final text = _controllers[index].text;
     _updateTextDirection(index, text);
@@ -186,6 +207,8 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
   }
 
   void _updateTextDirection(int index, String text) {
+    if (index >= _textDirections.length) return;
+
     final newDirection = _detectTextDirection(text);
     if (_textDirections[index] != newDirection) {
       setState(() {
@@ -194,29 +217,55 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
     }
   }
 
+  // Detect text direction based on first character
   TextDirection _detectTextDirection(String text) {
     if (text.isEmpty) return TextDirection.ltr;
 
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return TextDirection.ltr;
+    final cleanText = _stripMarkdown(text).trim();
+    if (cleanText.isEmpty) return TextDirection.ltr;
 
-    final firstChar = trimmed.runes.first;
+    final firstChar = cleanText.runes.first;
     return _isRTLCharacter(firstChar) ? TextDirection.rtl : TextDirection.ltr;
   }
 
+  // Strip markdown and formatting for direction detection
+  String _stripMarkdown(String text) {
+    return text
+        .replaceAll(RegExp(r'\*{1,3}'), '')
+        .replaceAll(RegExp(r'`{1,3}'), '')
+        .replaceAll(RegExp(r'~~'), '')
+        .replaceAll(RegExp(r'<[^>]+>'), '');
+  }
+
+  // Check if character belongs to RTL script (Arabic/Persian/Hebrew)
   bool _isRTLCharacter(int char) {
     return (char >= 0x0600 && char <= 0x06FF) || // Arabic
         (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms-B
+        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms A
+        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms B
         (char >= 0x0590 && char <= 0x05FF); // Hebrew
   }
+
+  // Get bilingual hint text based on predominant direction
+  String _getBilingualHintText() {
+    // Check if any item has RTL content
+    final hasRTLContent = _textDirections.any(
+      (dir) => dir == TextDirection.rtl,
+    );
+
+    if (hasRTLContent) {
+      return _getRTLHintText();
+    }
+    return _getLTRHintText();
+  }
+
+  String _getLTRHintText();
+  String _getRTLHintText();
 
   void updateItem(int index, String text);
   void addItem();
   void removeItem(int index);
   Widget buildPrefix(int index);
-  String getHintText();
   TextStyle? getTextStyle(int index) => null;
 
   @override
@@ -226,41 +275,36 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // List type indicator
+          // List type indicator with item count
           Container(
             margin: const EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 6,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.accent.withAlpha(20),
-                        AppColors.accent.withAlpha(10),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
+                    color: _getListColor().withAlpha(20),
+                    borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: AppColors.accent.withAlpha(40),
+                      color: _getListColor().withAlpha(40),
                       width: 0.5,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_getListIcon(), size: 12, color: AppColors.accent),
-                      const SizedBox(width: 4),
+                      Icon(_getListIcon(), size: 10, color: _getListColor()),
+                      const SizedBox(width: 3),
                       Text(
                         _getListTypeName(),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
-                          letterSpacing: 0.3,
+                          color: _getListColor(),
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
@@ -270,7 +314,7 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
                 Text(
                   '${items.length} ${items.length == 1 ? 'item' : 'items'}',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 9,
                     color: AppColors.textSecondary,
                   ),
                 ),
@@ -278,7 +322,7 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
             ),
           ),
 
-          // List items
+          // List items with stable structure
           for (int i = 0; i < items.length; i++)
             _ListItemWidget(
               index: i,
@@ -291,7 +335,7 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
                       ? widget.focusNode
                       : (i < _focusNodes.length ? _focusNodes[i] : null),
               prefix: buildPrefix(i),
-              hintText: getHintText(),
+              hintText: _getBilingualHintText(),
               textStyle: getTextStyle(i),
               onRemove: () => removeItem(i),
               onSelectionChanged: widget.onSelectionChanged,
@@ -346,11 +390,17 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
 
   IconData _getListIcon() {
     if (widget is _BulletListWidget) return Icons.format_list_bulleted_rounded;
-    if (widget is _NumberedListWidget) {
+    if (widget is _NumberedListWidget)
       return Icons.format_list_numbered_rounded;
-    }
     if (widget is _TodoListWidget) return Icons.checklist_rounded;
     return Icons.list;
+  }
+
+  Color _getListColor() {
+    if (widget is _BulletListWidget) return Colors.orange;
+    if (widget is _NumberedListWidget) return Colors.blue;
+    if (widget is _TodoListWidget) return Colors.green;
+    return AppColors.accent;
   }
 
   String _getListTypeName() {
@@ -406,6 +456,12 @@ class _BulletListWidgetState
   List<String> get items => widget.block.items;
 
   @override
+  String _getLTRHintText() => 'List item...';
+
+  @override
+  String _getRTLHintText() => 'مورد فهرست...';
+
+  @override
   void updateItem(int index, String text) {
     final newItems = List<String>.from(widget.block.items);
     newItems[index] = text;
@@ -416,6 +472,13 @@ class _BulletListWidgetState
   void addItem() {
     final newItems = List<String>.from(widget.block.items)..add('');
     widget.onChanged(widget.block.copyWith(items: newItems));
+
+    // Focus new item after rebuild
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _focusNodes.isNotEmpty) {
+        _focusNodes.last.requestFocus();
+      }
+    });
   }
 
   @override
@@ -430,15 +493,12 @@ class _BulletListWidgetState
     return Container(
       width: 6,
       height: 6,
-      decoration: BoxDecoration(
-        color: AppColors.accent,
+      decoration: const BoxDecoration(
+        color: Colors.orange,
         shape: BoxShape.circle,
       ),
     );
   }
-
-  @override
-  String getHintText() => 'List item...';
 }
 
 // Numbered List Implementation
@@ -486,6 +546,12 @@ class _NumberedListWidgetState
   List<String> get items => widget.block.items;
 
   @override
+  String _getLTRHintText() => 'List item...';
+
+  @override
+  String _getRTLHintText() => 'مورد فهرست...';
+
+  @override
   void updateItem(int index, String text) {
     final newItems = List<String>.from(widget.block.items);
     newItems[index] = text;
@@ -496,6 +562,13 @@ class _NumberedListWidgetState
   void addItem() {
     final newItems = List<String>.from(widget.block.items)..add('');
     widget.onChanged(widget.block.copyWith(items: newItems));
+
+    // Focus new item after rebuild
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _focusNodes.isNotEmpty) {
+        _focusNodes.last.requestFocus();
+      }
+    });
   }
 
   @override
@@ -511,25 +584,22 @@ class _NumberedListWidgetState
       width: 24,
       height: 24,
       decoration: BoxDecoration(
-        color: AppColors.accent.withAlpha(15),
+        color: Colors.blue.withAlpha(15),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.accent.withAlpha(40), width: 0.5),
+        border: Border.all(color: Colors.blue.withAlpha(40), width: 0.5),
       ),
       child: Center(
         child: Text(
           '${index + 1}',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppColors.accent,
+            color: Colors.blue,
           ),
         ),
       ),
     );
   }
-
-  @override
-  String getHintText() => 'List item...';
 }
 
 // Todo List Implementation
@@ -573,42 +643,14 @@ class _TodoListWidget extends _BaseListWidget<TodoListBlock> {
 
 class _TodoListWidgetState
     extends _BaseListState<TodoListBlock, _TodoListWidget> {
-  late List<bool> _checked;
-
   @override
   List<String> get items => widget.block.items;
 
   @override
-  void initState() {
-    super.initState();
-    _initializeChecked();
-  }
-
-  void _initializeChecked() {
-    final itemCount = items.length;
-    _checked = List<bool>.filled(itemCount, false);
-
-    // Copy existing checked values
-    for (int i = 0; i < widget.block.checked.length && i < itemCount; i++) {
-      _checked[i] = widget.block.checked[i];
-    }
-
-    // Update block if needed
-    if (widget.block.checked.length != itemCount) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        widget.onChanged(widget.block.copyWith(checked: _checked));
-      });
-    }
-  }
+  String _getLTRHintText() => 'Todo item...';
 
   @override
-  void didUpdateWidget(_TodoListWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.block.items.length != widget.block.items.length ||
-        oldWidget.block.checked.length != widget.block.checked.length) {
-      _initializeChecked();
-    }
-  }
+  String _getRTLHintText() => 'کار انجام دادنی...';
 
   @override
   void updateItem(int index, String text) {
@@ -624,6 +666,13 @@ class _TodoListWidgetState
     widget.onChanged(
       widget.block.copyWith(items: newItems, checked: newChecked),
     );
+
+    // Focus new item after rebuild
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _focusNodes.isNotEmpty) {
+        _focusNodes.last.requestFocus();
+      }
+    });
   }
 
   @override
@@ -666,21 +715,20 @@ class _TodoListWidgetState
                   ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.accent, AppColors.accent.withAlpha(200)],
+                    colors: [Colors.green, Colors.green.withAlpha(200)],
                   )
                   : null,
           color: isChecked ? null : AppColors.surface,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color:
-                isChecked ? AppColors.accent : AppColors.divider.withAlpha(100),
+            color: isChecked ? Colors.green : AppColors.divider.withAlpha(100),
             width: isChecked ? 0 : 1.5,
           ),
           boxShadow:
               isChecked
                   ? [
                     BoxShadow(
-                      color: AppColors.accent.withAlpha(30),
+                      color: Colors.green.withAlpha(30),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -694,9 +742,6 @@ class _TodoListWidgetState
       ),
     );
   }
-
-  @override
-  String getHintText() => 'Todo item...';
 
   @override
   TextStyle? getTextStyle(int index) {

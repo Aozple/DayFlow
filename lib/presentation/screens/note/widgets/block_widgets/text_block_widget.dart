@@ -331,19 +331,23 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
           _textDirection == TextDirection.rtl
               ? TextAlign.right
               : TextAlign.left,
+
+      // Disable native context menu
+      selectionControls: EmptyTextSelectionControls(),
+
       decoration: InputDecoration(
         hintText: _getPlaceholderText(),
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
         isDense: true,
         hintStyle: TextStyle(
-          color: AppColors.textTertiary.withAlpha(100),
+          color: AppColors.textTertiary.withAlpha(150),
           fontSize: 16,
         ),
       ),
       style: const TextStyle(
         fontSize: 16,
-        height: 1.6,
+        height: 1.5,
         color: AppColors.textPrimary,
         letterSpacing: 0.1,
       ),

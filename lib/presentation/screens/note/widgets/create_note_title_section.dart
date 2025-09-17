@@ -1,35 +1,16 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// The section containing the note title input, color picker, date/time, and tags.
-///
-/// This widget provides input fields for the note title and tags, along with
-/// interactive elements for selecting the note color and date/time. It's designed
-/// to be a self-contained component that manages its own layout and interactions.
-class CreateNoteTitleSection extends StatelessWidget {
-  /// Controller for the note title input field.
+class CreateNoteTitleSection extends StatefulWidget {
   final TextEditingController titleController;
-
-  /// Focus node for the note title input field.
   final FocusNode titleFocus;
-
-  /// The currently selected color for the note (in hex format).
   final String selectedColor;
-
-  /// The currently selected time for the note.
   final TimeOfDay selectedTime;
-
-  /// Whether the date was prefilled (affects visual styling).
   final DateTime? prefilledDate;
-
-  /// Callback function when the color indicator is tapped.
   final VoidCallback onColorTap;
-
-  /// Callback function when the date/time button is tapped.
   final VoidCallback onDateTimeTap;
-
-  /// Controller for the tags input field.
   final TextEditingController tagsController;
 
   const CreateNoteTitleSection({
@@ -45,142 +26,285 @@ class CreateNoteTitleSection extends StatelessWidget {
   });
 
   @override
+  State<CreateNoteTitleSection> createState() => _CreateNoteTitleSectionState();
+}
+
+class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection>
+    with SingleTickerProviderStateMixin {
+  // Animation controller
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  // State
+  TextDirection _titleDirection = TextDirection.ltr;
+  TextDirection _tagsDirection = TextDirection.ltr;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+    _setupListeners();
+    _updateTextDirections();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _removeListeners();
+    super.dispose();
+  }
+
+  void _initializeAnimations() {
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _pulseController.repeat(reverse: true);
+  }
+
+  void _setupListeners() {
+    widget.titleController.addListener(_onTitleTextChange);
+    widget.tagsController.addListener(_onTagsTextChange);
+  }
+
+  void _removeListeners() {
+    widget.titleController.removeListener(_onTitleTextChange);
+    widget.tagsController.removeListener(_onTagsTextChange);
+  }
+
+  void _onTitleTextChange() {
+    _updateTextDirection(widget.titleController.text, isTitle: true);
+  }
+
+  void _onTagsTextChange() {
+    _updateTextDirection(widget.tagsController.text, isTitle: false);
+  }
+
+  void _updateTextDirections() {
+    _updateTextDirection(widget.titleController.text, isTitle: true);
+    _updateTextDirection(widget.tagsController.text, isTitle: false);
+  }
+
+  void _updateTextDirection(String text, {required bool isTitle}) {
+    if (text.isEmpty) return;
+
+    final firstChar = text.trim().runes.first;
+    final isRTL = _isRTLCharacter(firstChar);
+    final newDirection = isRTL ? TextDirection.rtl : TextDirection.ltr;
+
+    if (isTitle && _titleDirection != newDirection) {
+      setState(() => _titleDirection = newDirection);
+    } else if (!isTitle && _tagsDirection != newDirection) {
+      setState(() => _tagsDirection = newDirection);
+    }
+  }
+
+  bool _isRTLCharacter(int char) {
+    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
+        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
+        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms A
+        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms B
+        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+  }
+
+  Color get _selectedColor => AppColors.fromHex(widget.selectedColor);
+
+  String get _titlePlaceholder =>
+      _titleDirection == TextDirection.rtl
+          ? 'عنوان یادداشت...'
+          : 'Note title...';
+
+  String get _tagsPlaceholder =>
+      _tagsDirection == TextDirection.rtl
+          ? 'برچسب (با کاما جدا کنید)...'
+          : 'Add tags (comma separated)...';
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface, // Background color for this section.
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        children: [
-          // Row for color indicator, title field, and date/time button.
-          Row(
-            children: [
-              // Circular color indicator, tappable to open color picker.
-              GestureDetector(
-                onTap: onColorTap, // Opens the color selection modal.
-                child: Container(
-                  margin: const EdgeInsets.only(left: 16, top: 16, bottom: 16),
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.fromHex(
-                      selectedColor,
-                    ), // Display selected color.
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.divider, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.fromHex(
-                          selectedColor,
-                        ).withAlpha(50), // Subtle shadow.
-                        blurRadius: 8,
-                        spreadRadius: 0,
-                      ),
-                    ],
+        children: [_buildTitleRow(), _buildDivider(), _buildTagsField()],
+      ),
+    );
+  }
+
+  Widget _buildTitleRow() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _buildColorIndicator(),
+        _buildTitleField(),
+        _buildTimeButton(),
+      ],
+    );
+  }
+
+  Widget _buildColorIndicator() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onColorTap();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(left: 12, top: 12, bottom: 12),
+        child: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: _selectedColor,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: _selectedColor.withAlpha(
+                      (50 * _pulseAnimation.value).round(),
+                    ),
+                    blurRadius: 6,
+                    spreadRadius: 0,
                   ),
-                  child: const Icon(
-                    CupertinoIcons
-                        .doc_text_fill, // Note icon inside the circle.
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
+                ],
               ),
-              // Expanded text field for the note title.
-              Expanded(
-                child: TextField(
-                  controller: titleController,
-                  focusNode: titleFocus,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: 'Note title...', // Placeholder text.
-                    hintStyle: TextStyle(color: AppColors.textTertiary),
-                    border: InputBorder.none, // No border for the input field.
-                    contentPadding: EdgeInsets.all(16),
-                  ),
-                  textCapitalization:
-                      TextCapitalization
-                          .sentences, // Capitalize first letter of sentences.
-                ),
+              child: const Icon(
+                CupertinoIcons.doc_text_fill,
+                color: Colors.white,
+                size: 14,
               ),
-              // Button to select date and time for the note.
-              CupertinoButton(
-                padding: EdgeInsets.zero,
-                minSize: 32,
-                onPressed: onDateTimeTap, // Opens the date/time picker.
-                child: Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withAlpha(
-                      20,
-                    ), // Subtle accent background.
-                    borderRadius: BorderRadius.circular(8),
-                    // Add a border if the date was prefilled.
-                    border:
-                        prefilledDate != null
-                            ? Border.all(
-                              color: AppColors.accent.withAlpha(50),
-                              width: 1,
-                            )
-                            : null,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.clock, // Clock icon.
-                        size: 16,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        selectedTime.format(context), // Display selected time.
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.accent,
-                          fontWeight:
-                              prefilledDate != null
-                                  ? FontWeight
-                                      .w700 // Bolder if prefilled.
-                                  : FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleField() {
+    return Expanded(
+      child: TextField(
+        controller: widget.titleController,
+        focusNode: widget.titleFocus,
+        textDirection: _titleDirection,
+        textAlign:
+            _titleDirection == TextDirection.rtl
+                ? TextAlign.right
+                : TextAlign.left,
+        maxLines: 1,
+        textCapitalization: TextCapitalization.sentences,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+          height: 1.3,
+        ),
+        decoration: InputDecoration(
+          hintText: _titlePlaceholder,
+          hintStyle: TextStyle(
+            color: AppColors.textTertiary.withAlpha(120),
+            fontWeight: FontWeight.w500,
           ),
-          // Divider below the title/date section.
-          Container(
-            height: 0.5,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: AppColors.divider,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
           ),
-          // Text field for adding tags to the note.
-          TextField(
-            controller: tagsController,
-            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-            decoration: const InputDecoration(
-              hintText: 'Add tags (comma separated)...', // Placeholder text.
-              hintStyle: TextStyle(color: AppColors.textTertiary),
-              prefixIcon: Icon(
-                CupertinoIcons.tag, // Tag icon.
-                color: AppColors.textSecondary,
-                size: 18,
+          isDense: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeButton() {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      minSize: 32,
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        widget.onDateTimeTap();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 12, top: 12, bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withAlpha(15),
+          borderRadius: BorderRadius.circular(8),
+          border:
+              widget.prefilledDate != null
+                  ? Border.all(color: AppColors.accent.withAlpha(40), width: 1)
+                  : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.clock, size: 16, color: AppColors.accent),
+            const SizedBox(height: 4),
+            Text(
+              widget.selectedTime.format(context),
+              style: TextStyle(
+                fontSize: 9,
+                color: AppColors.accent,
+                fontWeight:
+                    widget.prefilledDate != null
+                        ? FontWeight.w700
+                        : FontWeight.w600,
               ),
-              border: InputBorder.none, // No border.
-              contentPadding: EdgeInsets.all(16),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 0.5,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      color: AppColors.divider.withAlpha(50),
+    );
+  }
+
+  Widget _buildTagsField() {
+    return TextField(
+      controller: widget.tagsController,
+      textDirection: _tagsDirection,
+      textAlign:
+          _tagsDirection == TextDirection.rtl
+              ? TextAlign.right
+              : TextAlign.left,
+      style: const TextStyle(
+        fontSize: 14,
+        color: AppColors.textPrimary,
+        height: 1.3,
+      ),
+      decoration: InputDecoration(
+        hintText: _tagsPlaceholder,
+        hintStyle: TextStyle(
+          color: AppColors.textTertiary.withAlpha(120),
+          fontSize: 14,
+        ),
+        prefixIcon: const Padding(
+          padding: EdgeInsets.only(left: 12, right: 8),
+          child: Icon(
+            CupertinoIcons.tag,
+            color: AppColors.textSecondary,
+            size: 16,
           ),
-        ],
+        ),
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 12,
+        ),
+        isDense: true,
       ),
     );
   }

@@ -10,8 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/note_block.dart';
 import 'editor_components/formatting_toolbar.dart';
-import 'editor_components/block_type_selector.dart';
-import 'editor_components/block_actions_menu.dart';
 import 'block_widgets/text_block_widget.dart';
 import 'block_widgets/heading_block_widget.dart';
 import 'block_widgets/list_block_widgets.dart';
@@ -42,7 +40,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
 
   // Animation controllers for smooth transitions
   late AnimationController _toolbarAnimationController;
-  late AnimationController _addButtonAnimationController;
 
   // Keyboard height tracking
   double _keyboardHeight = 0;
@@ -54,16 +51,16 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
   Offset _toolbarPosition = Offset.zero;
   String _selectedText = '';
 
-  // Block actions state
-  bool _showBlockActions = false;
-  int _selectedBlockIndex = -1;
+  // Block action menu state
+  int _hoveredInsertIndex = -1;
 
-  late AnimationController _fabRotationController; // Controls icon rotation
-  late AnimationController _fabExpandController; // Controls menu expansion
-  late Animation<double> _fabExpandAnimation; // Curved animation for menu items
-  bool _isFabOpen = false; // Track menu state
-  OverlayEntry? _fabOverlayEntry; // Overlay for menu items
-  final GlobalKey _fabKey = GlobalKey(); // Key to get FAB position
+  // FAB menu state
+  bool _isFabOpen = false;
+  OverlayEntry? _fabOverlayEntry;
+  final GlobalKey _fabKey = GlobalKey();
+  late AnimationController _fabRotationController;
+  late AnimationController _fabExpandController;
+  late Animation<double> _fabExpandAnimation;
 
   @override
   void initState() {
@@ -77,10 +74,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     // Setup animations for UI elements
     _toolbarAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _addButtonAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
@@ -119,13 +112,12 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     _scrollController.dispose();
     _editorFocusNode.dispose();
     _toolbarAnimationController.dispose();
-    _addButtonAnimationController.dispose();
-    for (final node in _blockFocusNodes.values) {
-      node.dispose();
-    }
     _removeFabOverlay();
     _fabRotationController.dispose();
     _fabExpandController.dispose();
+    for (final node in _blockFocusNodes.values) {
+      node.dispose();
+    }
     super.dispose();
   }
 
@@ -154,22 +146,11 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           Expanded(
             child: Stack(
               children: [
-                // List of blocks
+                // List of blocks with insertion points
                 _buildBlocksList(),
 
                 // Formatting toolbar that appears on text selection
                 if (_showFormattingToolbar) _buildAnimatedToolbar(),
-
-                // Block actions menu
-                if (_showBlockActions)
-                  BlockActionsMenu(
-                    onConvert:
-                        (type) => _convertBlock(_selectedBlockIndex, type),
-                    onDuplicate: () => _duplicateBlock(_selectedBlockIndex),
-                    onDelete: () => _deleteBlock(_selectedBlockIndex),
-                    onChangeColor: () => _showColorPicker(_selectedBlockIndex),
-                    onHide: () => setState(() => _showBlockActions = false),
-                  ),
 
                 // Floating add button
                 _buildFloatingAddButton(),
@@ -181,7 +162,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build the main list of blocks with drag and drop
+  // Build the main list of blocks with insertion points
   Widget _buildBlocksList() {
     return Theme(
       data: Theme.of(context).copyWith(
@@ -191,7 +172,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       child: ReorderableListView.builder(
         scrollController: _scrollController,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-        itemCount: _blocks.length,
+        itemCount: _blocks.length + 1, // +1 for final add button
         proxyDecorator: (child, index, animation) {
           return AnimatedBuilder(
             animation: animation,
@@ -207,6 +188,9 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           );
         },
         onReorder: (oldIndex, newIndex) {
+          // Don't allow reordering the add button
+          if (oldIndex >= _blocks.length || newIndex >= _blocks.length) return;
+
           setState(() {
             if (newIndex > oldIndex) {
               newIndex -= 1;
@@ -218,50 +202,68 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           HapticFeedback.mediumImpact();
         },
         itemBuilder: (context, index) {
-          return _buildBlockItem(_blocks[index], index);
+          // Last item is the add button
+          if (index == _blocks.length) {
+            return _buildAddBlockButton();
+          }
+
+          return Column(
+            key: ValueKey('column_${_blocks[index].id}'),
+            children: [
+              // Insertion point above each block (except first)
+              if (index > 0) _buildInsertionPoint(index),
+
+              // The actual block
+              _buildBlockItem(_blocks[index], index),
+            ],
+          );
         },
       ),
     );
   }
 
-  // Build individual block
-  Widget _buildBlockItem(NoteBlock block, int index) {
-    return Container(
-      key: ValueKey(block.id),
-      margin: const EdgeInsets.only(bottom: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            _blockFocusNodes[block.id]?.requestFocus();
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color:
-                  _isBlockFocused(block.id)
-                      ? AppColors.accent.withAlpha(8)
-                      : AppColors.surface.withAlpha(15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color:
-                    _isBlockFocused(block.id)
-                        ? AppColors.accent.withAlpha(50)
-                        : AppColors.divider.withAlpha(50),
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              children: [
-                // Top action bar
-                _buildBlockActionBar(block, index),
+  // Build insertion point between blocks
+  Widget _buildInsertionPoint(int insertIndex) {
+    final isHovered = _hoveredInsertIndex == insertIndex;
 
-                // Main block content with minimal padding
-                Padding(
-                  padding: const EdgeInsets.only(left: 0, right: 0, bottom: 0),
-                  child: _buildBlockContent(block, index),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () => _showInsertBlockMenu(insertIndex),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hoveredInsertIndex = insertIndex),
+        onExit: (_) => setState(() => _hoveredInsertIndex = -1),
+        child: Container(
+          height: 24,
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: isHovered ? 3 : 1,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color:
+                    isHovered
+                        ? AppColors.accent.withAlpha(100)
+                        : AppColors.divider.withAlpha(30),
+                borderRadius: BorderRadius.circular(2),
+              ),
+              child:
+                  isHovered
+                      ? Center(
+                        child: Container(
+                          width: 32,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                      : null,
             ),
           ),
         ),
@@ -269,152 +271,181 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  Widget _buildBlockActionBar(NoteBlock block, int index) {
+  // Build individual block with simplified UI
+  Widget _buildBlockItem(NoteBlock block, int index) {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight.withAlpha(30),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.divider.withAlpha(30),
-            width: 0.5,
-          ),
-        ),
-      ),
-      child: Row(
+      key: ValueKey(block.id),
+      margin: const EdgeInsets.only(bottom: 4),
+      child: Stack(
         children: [
-          // Drag handle with block type indicator
-          ReorderableDragStartListener(
-            index: index,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  // Block type icon
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: _getBlockTypeColor(block.type).withAlpha(20),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: _getBlockTypeColor(block.type).withAlpha(40),
-                        width: 0.5,
+          // Main block content
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                _blockFocusNodes[block.id]?.requestFocus();
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color:
+                      _isBlockFocused(block.id)
+                          ? AppColors.accent.withAlpha(8)
+                          : AppColors.surface.withAlpha(15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        _isBlockFocused(block.id)
+                            ? AppColors.accent.withAlpha(50)
+                            : AppColors.divider.withAlpha(50),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // Simple drag handle - only visible when focused
+                    if (_isBlockFocused(block.id))
+                      Container(
+                        height: 24,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceLight.withAlpha(20),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: Icon(
+                                Icons.drag_indicator,
+                                size: 16,
+                                color: AppColors.textSecondary.withAlpha(150),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getBlockTypeColor(
+                                  block.type,
+                                ).withAlpha(20),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _getBlockTypeName(block.type),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getBlockTypeColor(block.type),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    child: Icon(
-                      _getBlockTypeIcon(block.type),
-                      size: 14,
-                      color: _getBlockTypeColor(block.type),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Drag icon
-                  Icon(
-                    Icons.drag_indicator,
-                    size: 16,
-                    color: AppColors.textSecondary.withAlpha(150),
-                  ),
-                ],
+
+                    // Block content
+                    _buildBlockContent(block, index),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Block type name
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(10),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: AppColors.accent.withAlpha(20),
-                width: 0.5,
-              ),
-            ),
-            child: Text(
-              _getBlockTypeName(block.type),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: AppColors.accent,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-
-          const Spacer(),
-
-          // Action buttons
-          Row(
-            children: [
-              // Convert button
-              _buildActionButton(
-                icon: Icons.transform_rounded,
-                onPressed: () => _showConvertMenu(index),
-                tooltip: 'Convert',
-              ),
-              const SizedBox(width: 4),
-              // More options
-              _buildActionButton(
-                icon: Icons.more_horiz_rounded,
-                onPressed: () => _showBlockActionsMenuAt(index),
-                tooltip: 'More',
-              ),
-            ],
+          // Action menu button - top right corner
+          Positioned(
+            top: 8,
+            right: 8,
+            child: _buildBlockActionButton(block, index),
           ),
         ],
       ),
     );
   }
 
-  // Helper method for action buttons
-  Widget _buildActionButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-    required String tooltip,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: AppColors.surface.withAlpha(50),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: AppColors.divider.withAlpha(30),
-            width: 0.5,
+  // Build simple action button for each block
+  Widget _buildBlockActionButton(NoteBlock block, int index) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showBlockActionMenu(block, index),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.surface.withAlpha(200),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.divider.withAlpha(50),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.more_vert,
+            size: 16,
+            color: AppColors.textSecondary,
           ),
         ),
-        child: Icon(icon, size: 16, color: AppColors.textSecondary),
       ),
     );
   }
 
-  // Animated formatting toolbar
-  Widget _buildAnimatedToolbar() {
-    return AnimatedBuilder(
-      animation: _toolbarAnimationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _toolbarAnimationController.value,
-          child: Opacity(
-            opacity: _toolbarAnimationController.value,
-            child: FormattingToolbar(
-              position: _toolbarPosition,
-              selectedText: _selectedText,
-              onFormat: _applyFormatting,
-              onHide: _hideFormattingToolbar,
+  // Build add block button at the bottom
+  Widget _buildAddBlockButton() {
+    return Container(
+      key: const ValueKey('add_block_button'),
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showInsertBlockMenu(_blocks.length),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.surface.withAlpha(30),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.divider.withAlpha(30),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_circle_outline,
+                  size: 20,
+                  color: AppColors.accent,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Block',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.accent,
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -843,6 +874,211 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     _fabOverlayEntry = null;
   }
 
+  // Show block action menu with simplified options
+  void _showBlockActionMenu(NoteBlock block, int index) {
+    showCupertinoModalPopup(
+      context: context,
+      builder:
+          (context) => CupertinoActionSheet(
+            title: const Text('Block Actions'),
+            actions: [
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showConvertMenu(index);
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.transform, color: AppColors.accent),
+                    const SizedBox(width: 8),
+                    const Text('Convert Type'),
+                  ],
+                ),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _duplicateBlock(index);
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.content_copy, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text('Duplicate'),
+                  ],
+                ),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _deleteBlock(index);
+                },
+                isDestructiveAction: true,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.delete, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete'),
+                  ],
+                ),
+              ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ),
+    );
+  }
+
+  // Show insert block menu at specific position
+  void _showInsertBlockMenu(int insertIndex) {
+    showCupertinoModalPopup(
+      context: context,
+      builder:
+          (context) => DraggableModal(
+            title: 'Add Block',
+            initialHeight: MediaQuery.of(context).size.height * 0.6,
+            minHeight: 300,
+            allowFullScreen: true,
+            child: _buildBlockTypeSelector(insertIndex),
+          ),
+    );
+  }
+
+  // Show block type selector modal
+  void _showBlockTypeSelector() {
+    showCupertinoModalPopup(
+      context: context,
+      builder:
+          (context) => DraggableModal(
+            title: 'Add Block',
+            initialHeight: MediaQuery.of(context).size.height * 0.6,
+            minHeight: 300,
+            allowFullScreen: true,
+            child: _buildBlockTypeSelector(_blocks.length),
+          ),
+    );
+  }
+
+  // Build block type selector for insertion
+  Widget _buildBlockTypeSelector(int insertIndex) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children:
+          BlockType.values.map((type) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _insertBlockAt(insertIndex, type);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight.withAlpha(30),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.divider.withAlpha(30),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Icon with colored background
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _getBlockTypeColor(type).withAlpha(20),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getBlockTypeIcon(type),
+                            size: 20,
+                            color: _getBlockTypeColor(type),
+                          ),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        // Text content
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getBlockTypeName(type),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _getBlockTypeDescription(type),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textTertiary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Arrow icon
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: AppColors.textTertiary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+    );
+  }
+
+  // Animated formatting toolbar
+  Widget _buildAnimatedToolbar() {
+    return Positioned(
+      left: _toolbarPosition.dx.clamp(
+        10.0,
+        MediaQuery.of(context).size.width - 280,
+      ),
+      top: _toolbarPosition.dy - 70,
+      child: AnimatedBuilder(
+        animation: _toolbarAnimationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _toolbarAnimationController.value,
+            child: Opacity(
+              opacity: _toolbarAnimationController.value,
+              child: FormattingToolbar(
+                selectedText: _selectedText,
+                onFormat: _applyFormatting,
+                onHide: _hideFormattingToolbar,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   // Check if a block is currently focused
   bool _isBlockFocused(String blockId) {
     return _blockFocusNodes[blockId]?.hasFocus ?? false;
@@ -994,14 +1230,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
   // Handle text changes
   void _handleTextChange(String text, String blockId) {}
 
-  // Show block actions menu at specific position
-  void _showBlockActionsMenuAt(int index) {
-    setState(() {
-      _selectedBlockIndex = index;
-      _showBlockActions = true;
-    });
-  }
-
   // Show convert block type menu
   void _showConvertMenu(int index) {
     showCupertinoModalPopup(
@@ -1017,7 +1245,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build convert menu with proper sizing to prevent overflow
+  // Build convert menu content
   Widget _buildConvertMenuContent(int index) {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1153,7 +1381,21 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Convert a block from one type to another - Fixed null check error
+  // Insert block at specific position
+  void _insertBlockAt(int index, BlockType type) {
+    final newBlock = EditorUtils.createBlockOfType(type);
+    setState(() {
+      _blocks.insert(index, newBlock);
+      _blockFocusNodes[newBlock.id] = FocusNode();
+    });
+    _notifyBlocksChanged();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _blockFocusNodes[newBlock.id]?.requestFocus();
+    });
+  }
+
+  // Convert a block from one type to another
   void _convertBlock(int index, BlockType newType) {
     if (index < 0 || index >= _blocks.length) return;
 
@@ -1163,7 +1405,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     // Extract text content from current block safely
     String textContent = '';
 
-    // Safe extraction based on block type
     if (currentBlock is TextBlock) {
       textContent = currentBlock.text;
     } else if (currentBlock is HeadingBlock) {
@@ -1236,15 +1477,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         break;
     }
 
-    // Update the block
     _updateBlock(index, newBlock);
     HapticFeedback.lightImpact();
-  }
-
-  // Show color picker for block (placeholder)
-  void _showColorPicker(int index) {
-    // TODO: Implement color picker
-    setState(() => _showBlockActions = false);
   }
 
   // Handle text selection changes
@@ -1292,32 +1526,9 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     return Offset((screenWidth * 0.5) - 125, 150);
   }
 
-  // Show block type selector modal
-  void _showBlockTypeSelector() {
-    showCupertinoModalPopup(
-      context: context,
-      builder:
-          (context) => BlockTypeSelector(
-            onBlockSelected: (type) {
-              _addBlockOfType(type);
-            },
-          ),
-    );
-  }
-
-  // Add new block of specified type
+  // Add new block of specified type at the end
   void _addBlockOfType(BlockType type) {
-    final newBlock = EditorUtils.createBlockOfType(type);
-    setState(() {
-      _blocks.add(newBlock);
-      _blockFocusNodes[newBlock.id] = FocusNode();
-    });
-    _notifyBlocksChanged();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _blockFocusNodes[newBlock.id]?.requestFocus();
-      _scrollToBottom();
-    });
+    _insertBlockAt(_blocks.length, type);
   }
 
   // Add default text block
@@ -1339,7 +1550,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     setState(() {
       _blocks.insert(index + 1, duplicatedBlock);
       _blockFocusNodes[duplicatedBlock.id] = FocusNode();
-      _showBlockActions = false;
     });
     _notifyBlocksChanged();
     HapticFeedback.lightImpact();
@@ -1351,7 +1561,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       _blockFocusNodes[_blocks[index].id]?.dispose();
       _blockFocusNodes.remove(_blocks[index].id);
       _blocks.removeAt(index);
-      _showBlockActions = false;
 
       if (_blocks.isEmpty) {
         _addTextBlock();
@@ -1393,18 +1602,5 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
   // Notify parent about blocks changes
   void _notifyBlocksChanged() {
     widget.onBlocksChanged(_blocks);
-  }
-
-  // Scroll to bottom of the list
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 }
