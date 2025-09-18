@@ -624,14 +624,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.1.8"
-  pro_image_editor:
-    dependency: "direct main"
-    description:
-      name: pro_image_editor
-      sha256: "1b397fc7626cd6d099ac311212667f9177ec9f32a0617dc5a12f79a9cfe0d120"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "11.5.7"
   provider:
     dependency: transitive
     description:
@@ -887,4 +879,4 @@ packages:
     version: "6.5.0"
 sdks:
   dart: ">=3.8.0-0 <4.0.0"
-  flutter: ">=3.35.0"
+  flutter: ">=3.29.0"

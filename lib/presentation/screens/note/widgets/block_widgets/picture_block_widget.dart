@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dayflow/core/utils/debug_logger.dart';
+import 'package:dayflow/presentation/widgets/image_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +10,6 @@ import 'package:dayflow/data/models/note_block.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:pro_image_editor/pro_image_editor.dart';
 import 'base_block_widget.dart';
 
 class PictureBlockWidget extends BaseBlockWidget {
@@ -247,33 +247,26 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
           return;
         }
 
-        // Store navigator reference before async operation
-        final navigator = Navigator.of(context);
-
-        // Open image editor with proper callback handling
-        await Navigator.push<Uint8List?>(
+        // Open simple image editor
+        final result = await Navigator.push<Uint8List?>(
           context,
           MaterialPageRoute(
             builder:
-                (context) => ProImageEditor.memory(
-                  imageBytes,
-                  configs: const ProImageEditorConfigs(),
-                  callbacks: ProImageEditorCallbacks(
-                    onImageEditingComplete: (bytes) async {
-                      DebugLogger.debug(
-                        'Image editing completed',
-                        tag: 'ImageEditor',
-                        data: '${bytes.length} bytes',
-                      );
-                      // Save the edited image when user confirms
-                      await _saveEditedImage(bytes);
-                      // Use stored navigator reference
-                      if (mounted) navigator.pop();
-                    },
-                  ),
+                (context) => ImageEditor(
+                  imageBytes: imageBytes,
+                  onSave: (editedBytes) {
+                    Navigator.of(context).pop(editedBytes);
+                  },
+                  onCancel: () {
+                    Navigator.of(context).pop();
+                  },
                 ),
           ),
         );
+
+        if (result != null && mounted) {
+          await _saveEditedImage(result);
+        }
 
         DebugLogger.success(
           'Image editor completed successfully',
@@ -517,7 +510,7 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 child: Image.file(
                   _imageFile!,
                   fit: BoxFit.cover,
@@ -878,9 +871,9 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Loading indicator or image content
             if (_isLoading)

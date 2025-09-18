@@ -47,7 +47,6 @@ dependencies:
   archive: ^3.4.10
   crypto: ^3.0.3
   image_picker: ^1.2.0
-  pro_image_editor: ^11.5.7
   path: ^1.9.1
 
 dev_dependencies:
