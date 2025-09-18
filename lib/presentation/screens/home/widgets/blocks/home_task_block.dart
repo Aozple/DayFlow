@@ -92,7 +92,7 @@ class _HomeTaskBlockState extends State<HomeTaskBlock>
             // Action button (moved to left)
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 36,
+              minimumSize: const Size(36, 36),
               onPressed: () => widget.onOptions(widget.task),
               child: Container(
                 width: 36,

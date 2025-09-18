@@ -1,11 +1,11 @@
 name: dayflow
 description: "A powerful and customizable task manager app"
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.2
+  sdk: ">=3.7.2 <4.0.0"
 
 dependencies:
   flutter:
@@ -13,27 +13,27 @@ dependencies:
   # State Management - Using BLoC for scalable architecture
   flutter_bloc: ^9.1.1
   equatable: ^2.0.5
-  
+
   # Local Storage - Hive for offline-first approach
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
-  
+
   # Navigation - Official Google solution
   go_router: ^14.2.7
-  
+
   # Date & Time utilities
   intl: ^0.19.0
-  
+
   # Unique ID generation
   uuid: ^4.5.1
-  
+
   # UI Components (we'll add more as we need them)
   flutter_slidable: ^3.1.1
-  
+
   # Icons
   cupertino_icons: ^1.0.8
-  
+
   flutter_markdown: ^0.7.7+1
   shared_preferences: ^2.5.3
   timezone: ^0.9.3
@@ -46,14 +46,16 @@ dependencies:
   package_info_plus: ^8.1.2
   archive: ^3.4.10
   crypto: ^3.0.3
+  image_picker: ^1.2.0
+  pro_image_editor: ^11.5.7
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  
+
   # Code quality
   flutter_lints: ^4.0.0
 
 flutter:
-
   uses-material-design: true

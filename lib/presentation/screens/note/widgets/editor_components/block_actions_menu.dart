@@ -409,6 +409,8 @@ class BlockActionsMenu extends StatelessWidget {
         return Icons.keyboard_arrow_right;
       case BlockType.callout:
         return Icons.info;
+      case BlockType.picture:
+        return Icons.image;
     }
   }
 
@@ -432,6 +434,8 @@ class BlockActionsMenu extends StatelessWidget {
         return Colors.indigo;
       case BlockType.callout:
         return Colors.yellow;
+      case BlockType.picture:
+        return Colors.teal;
     }
   }
 
@@ -455,6 +459,8 @@ class BlockActionsMenu extends StatelessWidget {
         return 'Toggle';
       case BlockType.callout:
         return 'Callout';
+      case BlockType.picture:
+        return 'Picture';
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/callout_block_widget.dart';
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/code_block_widget.dart';
+import 'package:dayflow/presentation/screens/note/widgets/block_widgets/picture_block_widget.dart';
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/quote_block_widget.dart';
 import 'package:dayflow/presentation/screens/note/widgets/block_widgets/toggle_block_widget.dart';
 import 'package:dayflow/presentation/widgets/draggable_modal.dart';
@@ -453,7 +454,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
   Widget _buildFloatingAddButton() {
     return Positioned(
       right: 20,
-      bottom: 20 + _keyboardHeight,
+      bottom: 48 + _keyboardHeight,
       child: FloatingActionButton(
         key: _fabKey,
         heroTag: 'main_add_fab',
@@ -1105,6 +1106,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         return Colors.indigo;
       case BlockType.callout:
         return Colors.yellow;
+      case BlockType.picture:
+        return Colors.teal;
     }
   }
 
@@ -1129,6 +1132,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         return Icons.keyboard_arrow_right;
       case BlockType.callout:
         return Icons.info;
+      case BlockType.picture:
+        return Icons.image;
     }
   }
 
@@ -1218,6 +1223,16 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       case BlockType.callout:
         return CalloutBlockWidget(
           block: block as CalloutBlock,
+          focusNode: _blockFocusNodes[block.id]!,
+          onChanged: (newBlock) => _updateBlock(index, newBlock),
+          onSelectionChanged:
+              (selection) => _handleTextSelectionChanged(selection, block.id),
+          onTextChange: (text, blockId) => _handleTextChange(text, blockId),
+        );
+
+      case BlockType.picture:
+        return PictureBlockWidget(
+          block: block as PictureBlock,
           focusNode: _blockFocusNodes[block.id]!,
           onChanged: (newBlock) => _updateBlock(index, newBlock),
           onSelectionChanged:
@@ -1354,6 +1369,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         return 'Collapsible content section';
       case BlockType.callout:
         return 'Highlighted information box';
+      case BlockType.picture:
+        return 'Image with caption';
     }
   }
 
@@ -1378,6 +1395,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         return 'Toggle';
       case BlockType.callout:
         return 'Callout';
+      case BlockType.picture:
+        return 'Picture';
     }
   }
 
@@ -1474,6 +1493,9 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           text: textContent,
           calloutType: 'info',
         );
+        break;
+      case BlockType.picture:
+        newBlock = PictureBlock(id: currentBlock.id);
         break;
     }
 

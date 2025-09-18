@@ -47,7 +47,7 @@ class CreateTaskNotificationSection extends StatelessWidget {
             ),
             value: hasNotification,
             onChanged: onNotificationToggle,
-            activeColor: AppColors.accent,
+            activeThumbColor: AppColors.accent,
           ),
 
           // Notification settings (only visible when enabled)

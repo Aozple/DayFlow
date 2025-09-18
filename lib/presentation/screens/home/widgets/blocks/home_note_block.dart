@@ -61,7 +61,7 @@ class HomeNoteBlock extends StatelessWidget {
             // Options button
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 36,
+              minimumSize: const Size(36, 36),
               onPressed: () => onOptions(note),
               child: Container(
                 width: 36,

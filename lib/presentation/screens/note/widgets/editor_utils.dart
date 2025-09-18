@@ -30,6 +30,8 @@ class EditorUtils {
         );
       case BlockType.callout:
         return CalloutBlock(id: id, text: '', calloutType: 'info');
+      case BlockType.picture:
+        return PictureBlock(id: id);
     }
   }
 
@@ -55,6 +57,16 @@ class EditorUtils {
       return QuoteBlock(id: newId, text: block.text);
     } else if (block is CodeBlock) {
       return CodeBlock(id: newId, code: block.code, language: block.language);
+    } else if (block is PictureBlock) {
+      return PictureBlock(
+        id: newId,
+        imagePath: block.imagePath,
+        imageUrl: block.imageUrl,
+        caption: block.caption,
+        width: block.width,
+        height: block.height,
+        alignment: block.alignment,
+      );
     } else {
       return TextBlock(id: newId, text: '');
     }

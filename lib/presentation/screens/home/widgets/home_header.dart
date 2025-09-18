@@ -90,7 +90,7 @@ class HomeHeader extends StatelessWidget {
                 // Filter button with active indicator
                 CupertinoButton(
                   padding: const EdgeInsets.all(4),
-                  minSize: 28,
+                  minimumSize: const Size(28, 28),
                   onPressed: onFilterPressed,
                   child: Stack(
                     children: [
@@ -120,7 +120,7 @@ class HomeHeader extends StatelessWidget {
                 // Search button
                 CupertinoButton(
                   padding: const EdgeInsets.all(4),
-                  minSize: 28,
+                  minimumSize: const Size(28, 28),
                   onPressed: onSearchPressed,
                   child: const Icon(
                     CupertinoIcons.search,

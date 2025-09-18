@@ -226,7 +226,7 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection>
   Widget _buildTimeButton() {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      minSize: 32,
+      minimumSize: const Size(32, 32),
       onPressed: () {
         HapticFeedback.lightImpact();
         widget.onDateTimeTap();

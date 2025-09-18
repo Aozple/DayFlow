@@ -45,5 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photo library to add images to notes</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take photos for notes</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photo library to add images to notes</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take photos for notes</string>
 </dict>
 </plist>

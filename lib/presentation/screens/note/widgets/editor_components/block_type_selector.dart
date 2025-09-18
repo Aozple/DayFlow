@@ -25,86 +25,74 @@ class BlockTypeSelector extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         // Text blocks section
-        _buildCategorySection(
-          context,
-          'Text',
-          [
-            const _BlockOption(
-              BlockType.text,
-              Icons.text_fields,
-              'Text',
-              'Plain text paragraph',
-            ),
-            const _BlockOption(
-              BlockType.heading,
-              Icons.title,
-              'Heading',
-              'Large section heading',
-            ),
-          ],
-        ),
+        _buildCategorySection(context, 'Text', [
+          const _BlockOption(
+            BlockType.text,
+            Icons.text_fields,
+            'Text',
+            'Plain text paragraph',
+          ),
+          const _BlockOption(
+            BlockType.heading,
+            Icons.title,
+            'Heading',
+            'Large section heading',
+          ),
+        ]),
 
         const SizedBox(height: 24),
 
         // List blocks section
-        _buildCategorySection(
-          context,
-          'Lists',
-          [
-            const _BlockOption(
-              BlockType.todoList,
-              Icons.checklist,
-              'Todo List',
-              'Checkable task list',
-            ),
-            const _BlockOption(
-              BlockType.bulletList,
-              Icons.format_list_bulleted,
-              'Bullet List',
-              'Unordered list',
-            ),
-            const _BlockOption(
-              BlockType.numberedList,
-              Icons.format_list_numbered,
-              'Numbered List',
-              'Ordered list',
-            ),
-          ],
-        ),
+        _buildCategorySection(context, 'Lists', [
+          const _BlockOption(
+            BlockType.todoList,
+            Icons.checklist,
+            'Todo List',
+            'Checkable task list',
+          ),
+          const _BlockOption(
+            BlockType.bulletList,
+            Icons.format_list_bulleted,
+            'Bullet List',
+            'Unordered list',
+          ),
+          const _BlockOption(
+            BlockType.numberedList,
+            Icons.format_list_numbered,
+            'Numbered List',
+            'Ordered list',
+          ),
+        ]),
 
         const SizedBox(height: 24),
 
         // Special blocks section
-        _buildCategorySection(
-          context,
-          'Special',
-          [
-            const _BlockOption(
-              BlockType.quote,
-              Icons.format_quote,
-              'Quote',
-              'Quotation or citation',
-            ),
-            const _BlockOption(
-              BlockType.code,
-              Icons.code,
-              'Code',
-              'Code snippet',
-            ),
-            const _BlockOption(
-              BlockType.toggle,
-              Icons.keyboard_arrow_right,
-              'Toggle',
-              'Collapsible content',
-            ),
-            const _BlockOption(
-              BlockType.callout,
-              Icons.info,
-              'Callout',
-              'Highlighted information',
-            ),
-          ],
-        ),
+        _buildCategorySection(context, 'Special', [
+          const _BlockOption(
+            BlockType.quote,
+            Icons.format_quote,
+            'Quote',
+            'Quotation or citation',
+          ),
+          const _BlockOption(
+            BlockType.code,
+            Icons.code,
+            'Code',
+            'Code snippet',
+          ),
+          const _BlockOption(
+            BlockType.toggle,
+            Icons.keyboard_arrow_right,
+            'Toggle',
+            'Collapsible content',
+          ),
+          const _BlockOption(
+            BlockType.callout,
+            Icons.info,
+            'Callout',
+            'Highlighted information',
+          ),
+        ]),
 
         // Bottom padding
         SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
@@ -239,6 +227,8 @@ class BlockTypeSelector extends StatelessWidget {
         return Colors.indigo;
       case BlockType.callout:
         return Colors.amber;
+      case BlockType.picture:
+        return Colors.teal;
     }
   }
 }

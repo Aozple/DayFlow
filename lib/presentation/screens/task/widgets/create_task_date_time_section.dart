@@ -132,7 +132,7 @@ class CreateTaskDateTimeSection extends StatelessWidget {
             ),
             value: hasTime,
             onChanged: (value) => onTimeChanged(value, selectedTime),
-            activeColor: AppColors.accent,
+            activeThumbColor: AppColors.accent,
           ),
           // Time picker section, only visible if hasTime is true.
           if (hasTime) ...[

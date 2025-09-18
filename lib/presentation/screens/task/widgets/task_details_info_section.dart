@@ -141,7 +141,7 @@ class TaskDetailsInfoSection extends StatelessWidget {
         ),
         CupertinoButton(
           padding: EdgeInsets.zero,
-          minSize: 32,
+          minimumSize: const Size(32, 32),
           onPressed: onEdit, // Edit button action.
           child: Container(
             padding: const EdgeInsets.all(6),

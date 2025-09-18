@@ -390,8 +390,9 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
 
   IconData _getListIcon() {
     if (widget is _BulletListWidget) return Icons.format_list_bulleted_rounded;
-    if (widget is _NumberedListWidget)
+    if (widget is _NumberedListWidget) {
       return Icons.format_list_numbered_rounded;
+    }
     if (widget is _TodoListWidget) return Icons.checklist_rounded;
     return Icons.list;
   }

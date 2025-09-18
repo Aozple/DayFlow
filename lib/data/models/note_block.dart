@@ -11,6 +11,7 @@ enum BlockType {
   code,
   toggle,
   callout,
+  picture,
 }
 
 /// Base class for all note blocks
@@ -343,6 +344,86 @@ class CalloutBlock extends NoteBlock {
   }
 }
 
+/// Picture block for images
+class PictureBlock extends NoteBlock {
+  final String? imagePath; // Local path
+  final String? imageUrl; // Remote URL
+  final String? caption;
+  final double? width;
+  final double? height;
+  final String? alignment; // 'left', 'center', 'right'
+
+  const PictureBlock({
+    required super.id,
+    this.imagePath,
+    this.imageUrl,
+    this.caption,
+    this.width,
+    this.height,
+    this.alignment = 'center',
+  }) : super(type: BlockType.picture);
+
+  @override
+  List<Object> get props => [
+    ...super.props,
+    imagePath ?? '',
+    imageUrl ?? '',
+    caption ?? '',
+    width ?? 0,
+    height ?? 0,
+    alignment ?? 'center',
+  ];
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.name,
+      'imagePath': imagePath,
+      'imageUrl': imageUrl,
+      'caption': caption,
+      'width': width,
+      'height': height,
+      'alignment': alignment,
+    };
+  }
+
+  factory PictureBlock.fromJson(Map<String, dynamic> json) {
+    return PictureBlock(
+      id: json['id'],
+      imagePath: json['imagePath'],
+      imageUrl: json['imageUrl'],
+      caption: json['caption'],
+      width: json['width']?.toDouble(),
+      height: json['height']?.toDouble(),
+      alignment: json['alignment'] ?? 'center',
+    );
+  }
+
+  @override
+  PictureBlock copyWith({
+    String? id,
+    String? imagePath,
+    String? imageUrl,
+    String? caption,
+    double? width,
+    double? height,
+    String? alignment,
+  }) {
+    return PictureBlock(
+      id: id ?? this.id,
+      imagePath: imagePath ?? this.imagePath,
+      imageUrl: imageUrl ?? this.imageUrl,
+      caption: caption ?? this.caption,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      alignment: alignment ?? this.alignment,
+    );
+  }
+
+  bool get hasImage => imagePath != null || imageUrl != null;
+}
+
 /// Factory to create blocks from JSON
 NoteBlock blockFromJson(Map<String, dynamic> json) {
   final type = BlockType.values.byName(json['type']);
@@ -366,5 +447,7 @@ NoteBlock blockFromJson(Map<String, dynamic> json) {
       return ToggleBlock.fromJson(json);
     case BlockType.callout:
       return CalloutBlock.fromJson(json);
+    case BlockType.picture:
+      return PictureBlock.fromJson(json);
   }
 }

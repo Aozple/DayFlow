@@ -109,7 +109,7 @@ class _HomeTimelineState extends State<HomeTimeline>
           },
           child: ListView.builder(
             controller: widget.scrollController,
-            padding: const EdgeInsets.only(top: 0, bottom: 20),
+            padding: const EdgeInsets.only(top: 0, bottom: 48),
             physics: const AlwaysScrollableScrollPhysics(),
             itemCount: 24,
             itemBuilder: (context, index) {
