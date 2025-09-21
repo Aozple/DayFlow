@@ -2,10 +2,15 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// Compact task display for timeline view
+/// Compact task display widget optimized for timeline view.
+///
+/// Provides an efficient and visually appealing interface for displaying
+/// and interacting with tasks, including completion tracking and metadata
+/// display with minimal space usage.
 class HomeTaskBlock extends StatefulWidget {
   final TaskModel task;
   final Function(TaskModel) onToggleComplete;
@@ -22,30 +27,7 @@ class HomeTaskBlock extends StatefulWidget {
   State<HomeTaskBlock> createState() => _HomeTaskBlockState();
 }
 
-class _HomeTaskBlockState extends State<HomeTaskBlock>
-    with SingleTickerProviderStateMixin {
-  bool _isPressed = false;
-  late AnimationController _scaleController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 100),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _scaleController.dispose();
-    super.dispose();
-  }
-
+class _HomeTaskBlockState extends State<HomeTaskBlock> {
   @override
   Widget build(BuildContext context) {
     // Determine color scheme based on task color
@@ -62,273 +44,313 @@ class _HomeTaskBlockState extends State<HomeTaskBlock>
     }
 
     return GestureDetector(
-      onLongPress: () => widget.onOptions(widget.task),
-      onTap: () {
-        context.push('/task-details', extra: widget.task);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: BoxDecoration(
-          color:
-              widget.task.isCompleted
-                  ? AppColors.surface.withAlpha(75)
-                  : isDefaultColor
-                  ? AppColors.surfaceLight
-                  : taskColor.withAlpha(50),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color:
-                widget.task.isCompleted
-                    ? AppColors.divider.withAlpha(25)
-                    : isDefaultColor
-                    ? AppColors.divider.withAlpha(50)
-                    : taskColor.withAlpha(75),
-            width: 0.5,
-          ),
-        ),
+      onTap: () => context.push('/task-details', extra: widget.task),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: _buildContainerDecoration(taskColor, isDefaultColor),
         child: Row(
           children: [
-            // Action button (moved to left)
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(36, 36),
-              onPressed: () => widget.onOptions(widget.task),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withAlpha(100),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  CupertinoIcons.line_horizontal_3,
-                  size: 18,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
+            // Color indicator
+            _buildColorIndicator(taskColor),
+            const SizedBox(width: 12),
+            // Main content
+            Expanded(child: _buildMainContent(taskColor)),
             const SizedBox(width: 8),
+            // Options button as vertical dots
+            _buildVerticalOptionsButton(taskColor),
+            const SizedBox(width: 8),
+            // Completion checkbox
+            _buildCompletionCheckbox(taskColor),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Task content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Task title
-                  Text(
-                    widget.task.title,
-                    style: TextStyle(
-                      color:
-                          widget.task.isCompleted
-                              ? AppColors.textSecondary.withAlpha(120)
-                              : AppColors.textPrimary,
-                      fontSize: 15,
-                      fontWeight:
-                          widget.task.isCompleted
-                              ? FontWeight.w400
-                              : FontWeight.w600,
-                      decoration:
-                          widget.task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                      decorationColor: AppColors.textTertiary.withAlpha(80),
-                      decorationThickness: 1,
-                      letterSpacing: -0.1,
-                      height: 1.35,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // Metadata row
-                  if (widget.task.dueDate != null ||
-                      widget.task.tags.isNotEmpty) ...[
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        // Simplified time display
-                        if (widget.task.dueDate != null) ...[
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.time,
-                                size: 11,
-                                color:
-                                    widget.task.isCompleted
-                                        ? AppColors.textTertiary
-                                        : AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                DateFormat(
-                                  'HH:mm',
-                                ).format(widget.task.dueDate!),
-                                style: TextStyle(
-                                  color:
-                                      widget.task.isCompleted
-                                          ? AppColors.textTertiary
-                                          : AppColors.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              if (widget.task.hasNotification) ...[
-                                const SizedBox(width: 5),
-                                Icon(
-                                  CupertinoIcons.bell_solid,
-                                  size: 9,
-                                  color: AppColors.accent.withAlpha(150),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ],
-                        // Simplified tags
-                        if (widget.task.tags.isNotEmpty) ...[
-                          const SizedBox(width: 12),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.number,
-                                size: 11,
-                                color:
-                                    widget.task.isCompleted
-                                        ? AppColors.textTertiary
-                                        : AppColors.accent,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.task.tags.first,
-                                style: TextStyle(
-                                  color:
-                                      widget.task.isCompleted
-                                          ? AppColors.textTertiary
-                                          : AppColors.accent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              if (widget.task.tags.length > 1) ...[
-                                Text(
-                                  ' +${widget.task.tags.length - 1}',
-                                  style: const TextStyle(
-                                    color: AppColors.textTertiary,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ],
-              ),
+  /// Build container decoration based on task state
+  BoxDecoration _buildContainerDecoration(
+    Color taskColor,
+    bool isDefaultColor,
+  ) {
+    Color backgroundColor;
+    Color borderColor;
+
+    if (widget.task.isCompleted) {
+      backgroundColor = AppColors.surface.withAlpha(75);
+      borderColor = AppColors.divider.withAlpha(25);
+    } else if (isDefaultColor) {
+      backgroundColor = AppColors.surfaceLight;
+      borderColor = AppColors.divider.withAlpha(50);
+    } else {
+      backgroundColor = taskColor.withAlpha(20);
+      borderColor = taskColor.withAlpha(60);
+    }
+
+    return BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: borderColor, width: 1),
+      boxShadow:
+          widget.task.isCompleted
+              ? [
+                BoxShadow(
+                  color: taskColor.withAlpha(20),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+              : null,
+    );
+  }
+
+  /// Build vertical options button with three dots
+  Widget _buildVerticalOptionsButton(Color taskColor) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onOptions(widget.task);
+      },
+      child: Container(
+        width: 20,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surface.withAlpha(30),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildDot(
+              widget.task.isCompleted
+                  ? AppColors.textTertiary.withAlpha(60)
+                  : taskColor.withAlpha(120),
             ),
-
-            const SizedBox(width: 10),
-
-            // Priority bar (back to right side)
-            Container(
-              width: 3,
-              height: 36,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color:
-                    widget.task.isCompleted
-                        ? AppColors.textTertiary.withAlpha(50)
-                        : AppColors.getPriorityColor(
-                          widget.task.priority,
-                        ).withAlpha(150),
-                borderRadius: BorderRadius.circular(3),
-              ),
+            const SizedBox(height: 4),
+            _buildDot(
+              widget.task.isCompleted
+                  ? AppColors.textTertiary.withAlpha(60)
+                  : taskColor.withAlpha(120),
             ),
-
-            // Modern checkbox design (back to right side)
-            GestureDetector(
-              onTapDown: (_) {
-                setState(() => _isPressed = true);
-                _scaleController.forward();
-              },
-              onTapUp: (_) {
-                setState(() => _isPressed = false);
-                _scaleController.reverse();
-                widget.onToggleComplete(widget.task);
-              },
-              onTapCancel: () {
-                setState(() => _isPressed = false);
-                _scaleController.reverse();
-              },
-              child: AnimatedBuilder(
-                animation: _scaleAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color:
-                            widget.task.isCompleted
-                                ? AppColors.accent
-                                : _isPressed
-                                ? AppColors.accent.withAlpha(30)
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        border:
-                            widget.task.isCompleted
-                                ? null
-                                : Border.all(
-                                  color:
-                                      _isPressed
-                                          ? AppColors.accent
-                                          : AppColors.divider,
-                                  width: 2,
-                                ),
-                        boxShadow:
-                            widget.task.isCompleted
-                                ? [
-                                  BoxShadow(
-                                    color: AppColors.accent.withAlpha(50),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ]
-                                : null,
-                      ),
-                      child:
-                          widget.task.isCompleted
-                              ? const Icon(
-                                Icons.done_rounded,
-                                size: 18,
-                                color: Colors.white,
-                                weight: 700,
-                              )
-                              : _isPressed
-                              ? Center(
-                                child: Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent,
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                              )
-                              : null,
-                    ),
-                  );
-                },
-              ),
+            const SizedBox(height: 4),
+            _buildDot(
+              widget.task.isCompleted
+                  ? AppColors.textTertiary.withAlpha(60)
+                  : taskColor.withAlpha(120),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Build single dot for options button
+  Widget _buildDot(Color color) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
+  /// Build color indicator on the left side with priority gradient
+  Widget _buildColorIndicator(Color taskColor) {
+    final priorityColor = AppColors.getPriorityColor(widget.task.priority);
+
+    return Container(
+      width: 4,
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors:
+              widget.task.isCompleted
+                  ? [
+                    AppColors.textTertiary.withAlpha(50),
+                    AppColors.textTertiary.withAlpha(30),
+                  ]
+                  : [priorityColor, priorityColor.withAlpha(150)],
+        ),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  /// Build main content area with title and metadata
+  Widget _buildMainContent(Color taskColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Title row with priority indicator
+        _buildTitleRow(taskColor),
+        // Metadata row
+        if (_shouldShowMetadata()) ...[
+          const SizedBox(height: 6),
+          _buildMetadataRow(taskColor),
+        ],
+      ],
+    );
+  }
+
+  /// Build title row with priority badge
+  Widget _buildTitleRow(Color taskColor) {
+    final textColor =
+        widget.task.isCompleted
+            ? AppColors.textSecondary.withAlpha(120)
+            : AppColors.textPrimary;
+
+    return Row(
+      children: [
+        // Priority badge
+        _buildPriorityBadge(),
+        const SizedBox(width: 8),
+        // Title
+        Expanded(
+          child: Text(
+            widget.task.title,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 14,
+              fontWeight:
+                  widget.task.isCompleted ? FontWeight.w500 : FontWeight.w600,
+              decoration:
+                  widget.task.isCompleted ? TextDecoration.lineThrough : null,
+              decorationColor: AppColors.textTertiary.withAlpha(80),
+              height: 1.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build priority badge with appropriate icon
+  Widget _buildPriorityBadge() {
+    final priorityColor = AppColors.getPriorityColor(widget.task.priority);
+    final isHighPriority = widget.task.priority >= 4;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color:
+            widget.task.isCompleted
+                ? AppColors.textTertiary.withAlpha(15)
+                : priorityColor.withAlpha(15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(
+        isHighPriority ? CupertinoIcons.exclamationmark : CupertinoIcons.flag,
+        size: 10,
+        color: widget.task.isCompleted ? AppColors.textTertiary : priorityColor,
+      ),
+    );
+  }
+
+  /// Build metadata row with time and tags
+  Widget _buildMetadataRow(Color taskColor) {
+    final metadataColor =
+        widget.task.isCompleted
+            ? AppColors.textTertiary
+            : AppColors.textSecondary;
+
+    return Row(
+      children: [
+        // Time and notification
+        if (widget.task.dueDate != null) ...[
+          Icon(CupertinoIcons.clock, size: 10, color: metadataColor),
+          const SizedBox(width: 4),
+          Text(
+            DateFormat('HH:mm').format(widget.task.dueDate!),
+            style: TextStyle(
+              color: metadataColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (widget.task.hasNotification) ...[
+            const SizedBox(width: 4),
+            Icon(
+              CupertinoIcons.bell_solid,
+              size: 8,
+              color:
+                  widget.task.isCompleted
+                      ? AppColors.textTertiary.withAlpha(100)
+                      : AppColors.accent.withAlpha(150),
+            ),
+          ],
+          if (widget.task.tags.isNotEmpty) const SizedBox(width: 12),
+        ],
+        // Tags count
+        if (widget.task.tags.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color:
+                  widget.task.isCompleted
+                      ? AppColors.textTertiary.withAlpha(10)
+                      : taskColor.withAlpha(10),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '#${widget.task.tags.length}',
+              style: TextStyle(
+                color:
+                    widget.task.isCompleted
+                        ? AppColors.textTertiary
+                        : taskColor,
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Build completion checkbox with visual feedback
+  Widget _buildCompletionCheckbox(Color taskColor) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onToggleComplete(widget.task);
+      },
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color:
+              widget.task.isCompleted ? AppColors.accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color:
+                widget.task.isCompleted ? AppColors.accent : AppColors.divider,
+            width: 2,
+          ),
+          boxShadow:
+              widget.task.isCompleted
+                  ? [
+                    BoxShadow(
+                      color: AppColors.accent.withAlpha(30),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : null,
+        ),
+        child:
+            widget.task.isCompleted
+                ? const Icon(Icons.done_rounded, size: 18, color: Colors.white)
+                : null,
+      ),
+    );
+  }
+
+  /// Check if metadata should be displayed
+  bool _shouldShowMetadata() {
+    return widget.task.dueDate != null || widget.task.tags.isNotEmpty;
   }
 }

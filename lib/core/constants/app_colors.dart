@@ -29,26 +29,28 @@ class AppColors {
   static const Color completedTaskColor = Color(0xFF38383A);
 
   // Timeline colors
-  static const Color currentTimeIndicator = Color(0xFF0A84FF);
   static const Color timelineLineColor = Color(0xFF38383A);
   static const Color hourTextColor = Color(0xFF8E8E93);
 
-  // User-selectable colors for tasks and notes
+  // User-selectable colors for tasks and notes - Refined Premium Collection
   static const List<Color> userColors = [
-    Color(0xFF8E8E93), // Gray
-    Color(0xFF0A84FF), // Blue
-    Color(0xFF32D74B), // Green
-    Color(0xFFFF453A), // Red
-    Color(0xFFFF9F0A), // Orange
-    Color(0xFFFFD60A), // Yellow
-    Color(0xFFBF5AF2), // Purple
-    Color(0xFF5E5CE6), // Indigo
+    Color(0xFFB0B0B5), // Platinum Gray (softer, modern neutral)
+    Color(0xFF4A90E2), // Sapphire Blue (modern crisp blue)
+    Color(0xFF00B894), // Jade Green (balanced minty green)
+    Color(0xFFE74C3C), // Ruby Red (refined red, less harsh)
+    Color(0xFFFFA500), // Amber Orange (warm, rich tone)
+    Color(0xFFF1C40F), // Champagne Gold (soft golden yellow)
+    Color(0xFF9B59B6), // Amethyst Purple (deep, premium purple)
+    Color(0xFF6C5CE7), // Midnight Indigo (luxurious indigo)
+    Color(0xFF1ABC9C), // Turquoise Teal (cool and fresh)
+    Color(0xFFF8A5C2), // Pastel Rose (soft, sophisticated pink)
   ];
 
   // Semantic status colors
   static const Color success = Color(0xFF32D74B);
   static const Color warning = Color(0xFFFF9F0A);
   static const Color error = Color(0xFFFF453A);
+  static const Color info = Color(0xFF5E5CE6);
 
   // Convert hex string to Color
   static Color fromHex(String hexString) {
@@ -83,17 +85,18 @@ class AppColors {
     );
   }
 
-  // Predefined accent color options
+  // Predefined accent color options - Dark UI Friendly (10 colors)
   static const List<Color> accentColors = [
-    Color(0xFF0A84FF), // iOS Blue (default)
-    Color(0xFF32D74B), // Green
-    Color(0xFFFF453A), // Red
-    Color(0xFFFF9F0A), // Orange
-    Color(0xFFFFD60A), // Yellow
-    Color(0xFF5E5CE6), // Indigo
-    Color(0xFFBF5AF2), // Purple
-    Color(0xFF64D2FF), // Cyan
-    Color(0xFFFF375F), // Pink
+    Color(0xFF4A90E2), // Crisp Blue
+    Color(0xFF00B894), // Mint Green
+    Color(0xFFFF7675), // Coral
+    Color(0xFFFFA500), // Amber
+    Color(0xFFFDCB82), // Soft Gold
+    Color(0xFFA29BFE), // Lavender
+    Color(0xFF00CEC9), // Aqua Teal
+    Color(0xFF6C5CE7), // Indigo
+    Color(0xFFF8A5C2), // Pastel Rose
+    Color(0xFFE17055), // Warm Peach
   ];
 
   // Get color based on task priority

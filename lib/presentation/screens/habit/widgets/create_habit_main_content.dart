@@ -3,27 +3,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Main content widget for task creation and editing.
+/// Main content widget for habit creation and editing.
 ///
-/// Provides an intuitive interface for entering task details including title,
-/// description, tags, and scheduling options. Features RTL support and
-/// responsive design for optimal user experience.
-class CreateTaskMainContent extends StatefulWidget {
+/// Provides an intuitive interface for entering habit details including title,
+/// description, tags, start date, and time scheduling options. Features RTL support,
+/// flexible time options, and responsive design for optimal user experience.
+class CreateHabitMainContent extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
   final TextEditingController tagsController;
   final FocusNode titleFocus;
   final FocusNode descriptionFocus;
   final String selectedColor;
-  final DateTime selectedDate;
   final TimeOfDay? selectedTime;
-  final bool hasTime;
+  final bool isFlexibleTime;
   final VoidCallback onChanged;
   final VoidCallback onColorTap;
-  final VoidCallback onDateTap;
-  final VoidCallback onTimeTap;
+  final VoidCallback? onTimeTap;
+  final DateTime? selectedStartDate;
+  final VoidCallback? onStartDateTap;
 
-  const CreateTaskMainContent({
+  const CreateHabitMainContent({
     super.key,
     required this.titleController,
     required this.descriptionController,
@@ -31,20 +31,20 @@ class CreateTaskMainContent extends StatefulWidget {
     required this.titleFocus,
     required this.descriptionFocus,
     required this.selectedColor,
-    required this.selectedDate,
     this.selectedTime,
-    required this.hasTime,
+    this.isFlexibleTime = false,
     required this.onChanged,
     required this.onColorTap,
-    required this.onDateTap,
-    required this.onTimeTap,
+    this.onTimeTap,
+    this.selectedStartDate,
+    this.onStartDateTap,
   });
 
   @override
-  State<CreateTaskMainContent> createState() => _CreateTaskMainContentState();
+  State<CreateHabitMainContent> createState() => _CreateHabitMainContentState();
 }
 
-class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
+class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
   // Text direction state for RTL support
   TextDirection _titleDirection = TextDirection.ltr;
   TextDirection _descriptionDirection = TextDirection.ltr;
@@ -180,7 +180,7 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
 
   /// Get contextual placeholder text for title
   String get _titlePlaceholder =>
-      _titleDirection == TextDirection.rtl ? 'عنوان تسک...' : 'Task title *';
+      _titleDirection == TextDirection.rtl ? 'عنوان عادت...' : 'Habit title *';
 
   /// Get contextual placeholder text for description
   String get _descriptionPlaceholder =>
@@ -194,28 +194,26 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
           ? 'برچسب (با کاما جدا کنید)...'
           : 'Add tags (comma separated)...';
 
+  /// Format time with consistent 24-hour display
+  String _formatTime(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
   /// Format date with intelligent relative formatting
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    final yesterday = today.subtract(const Duration(days: 1));
+    final selectedDay = DateTime(date.year, date.month, date.day);
 
-    if (_isSameDay(date, today)) return 'Today';
-    if (_isSameDay(date, tomorrow)) return 'Tomorrow';
-    if (_isSameDay(date, yesterday)) return 'Yesterday';
-
-    return '${date.day}/${date.month}';
-  }
-
-  /// Check if two dates represent the same day
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  /// Format time with consistent 24-hour display
-  String _formatTime(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    if (selectedDay.isAtSameMomentAs(today)) {
+      return 'Today';
+    } else if (selectedDay.isAtSameMomentAs(
+      today.add(const Duration(days: 1)),
+    )) {
+      return 'Tomorrow';
+    } else {
+      return '${date.month}/${date.day}';
+    }
   }
 
   @override
@@ -266,7 +264,7 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
         children: [
           _buildColorIndicator(),
           _buildTitleField(),
-          _buildDateButton(),
+          _buildStartDateButton(),
           _buildTimeButton(),
         ],
       ),
@@ -300,11 +298,7 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
             ),
           ],
         ),
-        child: const Icon(
-          CupertinoIcons.paintbrush_fill,
-          color: Colors.white,
-          size: 18,
-        ),
+        child: const Icon(CupertinoIcons.repeat, color: Colors.white, size: 18),
       ),
     );
   }
@@ -349,15 +343,20 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
     );
   }
 
-  /// Build date selection button with enhanced styling
-  Widget _buildDateButton() {
+  /// Build start date selection button
+  Widget _buildStartDateButton() {
+    final hasStartDate = widget.selectedStartDate != null;
+
     return CupertinoButton(
       padding: EdgeInsets.zero,
       minimumSize: const Size(48, 48),
-      onPressed: () {
-        HapticFeedback.lightImpact();
-        widget.onDateTap();
-      },
+      onPressed:
+          widget.onStartDateTap != null
+              ? () {
+                HapticFeedback.lightImpact();
+                widget.onStartDateTap!();
+              }
+              : null,
       child: Container(
         margin: const EdgeInsets.only(right: 6),
         width: 48,
@@ -366,32 +365,49 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppColors.accent.withAlpha(25),
-              AppColors.accent.withAlpha(15),
-            ],
+            colors:
+                hasStartDate
+                    ? [
+                      AppColors.accent.withAlpha(25),
+                      AppColors.accent.withAlpha(15),
+                    ]
+                    : [AppColors.surface, AppColors.surface.withAlpha(200)],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accent.withAlpha(60), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withAlpha(25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(
+            color:
+                hasStartDate
+                    ? AppColors.accent.withAlpha(60)
+                    : AppColors.divider.withAlpha(60),
+            width: 1,
+          ),
+          boxShadow:
+              hasStartDate
+                  ? [
+                    BoxShadow(
+                      color: AppColors.accent.withAlpha(25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.calendar, size: 18, color: AppColors.accent),
+            Icon(
+              CupertinoIcons.calendar,
+              size: 18,
+              color: hasStartDate ? AppColors.accent : AppColors.textSecondary,
+            ),
             const SizedBox(height: 3),
             Text(
-              _formatDate(widget.selectedDate),
+              hasStartDate ? _formatDate(widget.selectedStartDate!) : 'Start',
               style: TextStyle(
                 fontSize: 9,
-                color: AppColors.accent,
-                fontWeight: FontWeight.w700,
+                color:
+                    hasStartDate ? AppColors.accent : AppColors.textSecondary,
+                fontWeight: hasStartDate ? FontWeight.w700 : FontWeight.w600,
                 height: 1.0,
               ),
             ),
@@ -401,19 +417,65 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
     );
   }
 
-  /// Build time selection button with state indication
+  /// Build time selection button with flexible time support
   Widget _buildTimeButton() {
-    final isActive = widget.hasTime;
+    if (widget.isFlexibleTime) {
+      return Container(
+        margin: const EdgeInsets.only(right: 8),
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.success.withAlpha(25),
+              AppColors.success.withAlpha(15),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.success.withAlpha(60), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.success.withAlpha(25),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.time, size: 18, color: AppColors.success),
+            SizedBox(height: 3),
+            Text(
+              'Anytime',
+              style: TextStyle(
+                fontSize: 8,
+                color: AppColors.success,
+                fontWeight: FontWeight.w700,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final hasTime = widget.selectedTime != null;
     const activeColor = AppColors.info;
     const inactiveColor = AppColors.textSecondary;
 
     return CupertinoButton(
       padding: EdgeInsets.zero,
       minimumSize: const Size(48, 48),
-      onPressed: () {
-        HapticFeedback.lightImpact();
-        widget.onTimeTap();
-      },
+      onPressed:
+          widget.onTimeTap != null
+              ? () {
+                HapticFeedback.lightImpact();
+                widget.onTimeTap!();
+              }
+              : null,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         width: 48,
@@ -423,20 +485,20 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors:
-                isActive
+                hasTime
                     ? [activeColor.withAlpha(25), activeColor.withAlpha(15)]
                     : [AppColors.surface, AppColors.surface.withAlpha(200)],
           ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                isActive
+                hasTime
                     ? activeColor.withAlpha(60)
                     : AppColors.divider.withAlpha(60),
             width: 1,
           ),
           boxShadow:
-              isActive
+              hasTime
                   ? [
                     BoxShadow(
                       color: activeColor.withAlpha(25),
@@ -452,17 +514,15 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
             Icon(
               CupertinoIcons.clock,
               size: 18,
-              color: isActive ? activeColor : inactiveColor,
+              color: hasTime ? activeColor : inactiveColor,
             ),
             const SizedBox(height: 3),
             Text(
-              widget.hasTime && widget.selectedTime != null
-                  ? _formatTime(widget.selectedTime!)
-                  : '--:--',
+              hasTime ? _formatTime(widget.selectedTime!) : '--:--',
               style: TextStyle(
                 fontSize: 9,
-                color: isActive ? activeColor : inactiveColor,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                color: hasTime ? activeColor : inactiveColor,
+                fontWeight: hasTime ? FontWeight.w700 : FontWeight.w600,
                 height: 1.0,
               ),
             ),

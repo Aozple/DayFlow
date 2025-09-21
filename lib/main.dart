@@ -1,6 +1,8 @@
 import 'package:dayflow/core/services/notification_service.dart';
+import 'package:dayflow/data/repositories/habit_repository.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
+import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/routes/app_router.dart';
@@ -31,6 +33,8 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('tasks');
   await Hive.openBox('settings');
+  await Hive.openBox('habits');
+  await Hive.openBox('habit_instances');
 
   // Setup notifications
   final notificationService = NotificationService();
@@ -65,6 +69,13 @@ class DayFlowApp extends StatelessWidget {
               (context) =>
                   TaskBloc(repository: TaskRepository())
                     ..add(const LoadTasks()),
+        ),
+        // Habit management
+        BlocProvider(
+          create:
+              (context) =>
+                  HabitBloc(repository: HabitRepository())
+                    ..add(const LoadHabits()),
         ),
         // Settings management
         BlocProvider(

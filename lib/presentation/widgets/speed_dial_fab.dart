@@ -7,11 +7,13 @@ import '../../core/constants/app_colors.dart';
 class SpeedDialFab extends StatefulWidget {
   final VoidCallback onCreateTask;
   final VoidCallback onCreateNote;
+  final VoidCallback onCreateHabit; // New parameter
 
   const SpeedDialFab({
     super.key,
     required this.onCreateTask,
     required this.onCreateNote,
+    required this.onCreateHabit, // New required parameter
   });
 
   @override
@@ -20,29 +22,26 @@ class SpeedDialFab extends StatefulWidget {
 
 class _SpeedDialFabState extends State<SpeedDialFab>
     with TickerProviderStateMixin {
-  late AnimationController _animationController; // For icon rotation
-  late AnimationController _expandController; // For menu expansion
-  late Animation<double> _expandAnimation; // Curved animation
+  late AnimationController _animationController;
+  late AnimationController _expandController;
+  late Animation<double> _expandAnimation;
   bool _isOpen = false;
   OverlayEntry? _overlayEntry;
-  final GlobalKey _fabKey = GlobalKey(); // To get FAB position
+  final GlobalKey _fabKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    // Setup rotation animation
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
 
-    // Setup expansion animation
     _expandController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
 
-    // Create smooth easing animation
     _expandAnimation = CurvedAnimation(
       parent: _expandController,
       curve: Curves.easeOutBack,
@@ -58,17 +57,14 @@ class _SpeedDialFabState extends State<SpeedDialFab>
     super.dispose();
   }
 
-  // Toggle menu open/close state
   void _toggle() {
     setState(() {
       _isOpen = !_isOpen;
       if (_isOpen) {
-        // Opening sequence
         _animationController.forward();
         _insertOverlay();
         _expandController.forward();
       } else {
-        // Closing sequence
         _animationController.reverse();
         _expandController.reverse().then((_) {
           _removeOverlay();
@@ -77,9 +73,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
     });
   }
 
-  // Create and insert overlay with menu options
   void _insertOverlay() {
-    // Get FAB position for proper placement
     final RenderBox? renderBox =
         _fabKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
@@ -104,7 +98,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                   ),
                 ),
 
-                // Task button with animation
+                // Task button
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {
@@ -117,7 +111,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -144,8 +137,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                                   ),
                                 ),
                               ),
-
-                            // Task button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -171,7 +162,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                   },
                 ),
 
-                // Note button with animation
+                // Note button
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {
@@ -184,7 +175,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -211,8 +201,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                                   ),
                                 ),
                               ),
-
-                            // Note button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -237,16 +225,78 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                     );
                   },
                 ),
+
+                // Habit button (NEW)
+                AnimatedBuilder(
+                  animation: _expandAnimation,
+                  builder: (context, child) {
+                    final animValue = _expandAnimation.value.clamp(0.0, 1.0);
+                    return Positioned(
+                      right: screenWidth - fabPosition.dx - 54,
+                      top: fabPosition.dy - (210 * animValue),
+                      child: Opacity(
+                        opacity: animValue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (animValue > 0.5)
+                              Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'Habit',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: FloatingActionButton(
+                                heroTag: 'habit_fab_overlay',
+                                onPressed: () {
+                                  _toggle();
+                                  widget.onCreateHabit();
+                                },
+                                backgroundColor: AppColors.info,
+                                elevation: 4,
+                                child: const Icon(
+                                  CupertinoIcons.repeat,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
     );
 
-    // Add overlay to widget tree
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  // Remove overlay from widget tree
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
@@ -254,7 +304,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
 
   @override
   Widget build(BuildContext context) {
-    // Main FAB button
     return FloatingActionButton(
       key: _fabKey,
       heroTag: 'main_fab',
@@ -264,7 +313,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
-          // Rotate + icon to × when opening
           return Transform.rotate(
             angle: _animationController.value * 0.25 * 2 * math.pi,
             child: Icon(

@@ -1,9 +1,10 @@
-import 'package:dayflow/presentation/screens/task/widgets/create_task_date_picker.dart';
+import 'package:dayflow/presentation/screens/home/widgets/blocks/home_task_block.dart';
 import 'package:dayflow/presentation/screens/task/widgets/create_task_notification_section.dart';
-import 'package:dayflow/presentation/screens/task/widgets/create_task_time_picker.dart';
+import 'package:dayflow/presentation/widgets/color_picker_modal.dart';
+import 'package:dayflow/presentation/widgets/date_picker_modal.dart';
 import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
+import 'package:dayflow/presentation/widgets/time_picker_modal.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
@@ -12,10 +13,7 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'widgets/create_task_header.dart';
 import 'widgets/create_task_main_content.dart';
-import 'widgets/create_task_date_time_section.dart';
 import 'widgets/create_task_priority_section.dart';
-import 'widgets/create_task_color_section.dart';
-import 'widgets/create_task_tags_section.dart';
 
 /// Screen for creating a new task or editing an existing one.
 ///
@@ -201,30 +199,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   CreateTaskMainContent(
                     titleController: _titleController,
                     descriptionController: _descriptionController,
+                    tagsController: _tagsController,
                     titleFocus: _titleFocus,
                     descriptionFocus: _descriptionFocus,
-                    onChanged:
-                        () => setState(
-                          () {},
-                        ), // Rebuild to update save button state
-                  ),
-                  const SizedBox(height: 16),
-                  // Section for selecting date and time
-                  CreateTaskDateTimeSection(
+                    selectedColor: _selectedColor,
                     selectedDate: _selectedDate,
                     selectedTime: _selectedTime,
                     hasTime: _hasTime,
-                    isPrefilled: widget.prefilledDate != null,
-                    onDateChanged:
-                        (date) => setState(() => _selectedDate = date),
-                    onTimeChanged: (hasTime, time) {
-                      setState(() {
-                        _hasTime = hasTime;
-                        _selectedTime = time;
-                      });
-                    },
-                    onSelectDate: _selectDate,
-                    onSelectTime: _selectTime,
+                    onChanged: () => setState(() {}),
+                    onColorTap: _showColorSelection,
+                    onDateTap: _showDateSelection,
+                    onTimeTap: _showTimeSelection,
                   ),
                   const SizedBox(height: 16),
                   // Section for choosing task priority
@@ -234,18 +219,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                         (priority) => setState(() => _priority = priority),
                   ),
                   const SizedBox(height: 16),
-                  // Section for selecting a task color
-                  CreateTaskColorSection(
-                    selectedColor: _selectedColor,
-                    onColorChanged:
-                        (color) => setState(() => _selectedColor = color),
-                  ),
-                  const SizedBox(height: 16),
                   // Section for notification settings
                   CreateTaskNotificationSection(
                     hasNotification: _hasNotification,
                     minutesBefore: _notificationMinutesBefore,
-                    hasDate: _hasTime,
+                    hasDate: true,
                     onNotificationToggle:
                         (value) => setState(() => _hasNotification = value),
                     onMinutesChanged:
@@ -253,9 +231,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           () => _notificationMinutesBefore = minutes,
                         ),
                   ),
-                  const SizedBox(height: 16),
-                  // Section for adding tags to the task
-                  CreateTaskTagsSection(tagsController: _tagsController),
                   const SizedBox(height: 100), // Extra space for keyboard
                 ],
               ),
@@ -271,28 +246,41 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     return _titleController.text.trim().isNotEmpty;
   }
 
-  /// Shows a Cupertino-style modal for selecting a date
-  void _selectDate() async {
-    await showCupertinoModalPopup(
+  /// Show time selection for task due time
+  Future<void> _showTimeSelection() async {
+    final selectedTime = await TimePickerModal.show(
       context: context,
-      builder:
-          (context) => CreateTaskDatePicker(
-            selectedDate: _selectedDate,
-            onDateChanged: (date) => setState(() => _selectedDate = date),
-          ),
+      selectedTime: _selectedTime,
+      title: 'Set Due Time',
+      allowClearTime: true,
     );
+
+    if (selectedTime != null) {
+      setState(() {
+        _selectedTime = selectedTime;
+        _hasTime = true;
+      });
+    } else {
+      setState(() {
+        _selectedTime = null;
+        _hasTime = false;
+      });
+    }
   }
 
-  /// Shows a Cupertino-style modal for selecting a time
-  void _selectTime() async {
-    await showCupertinoModalPopup(
+  /// Show date selection modal
+  Future<void> _showDateSelection() async {
+    final selectedDate = await DatePickerModal.show(
       context: context,
-      builder:
-          (context) => CreateTaskTimePicker(
-            selectedTime: _selectedTime,
-            onTimeChanged: (time) => setState(() => _selectedTime = time),
-          ),
+      selectedDate: _selectedDate,
+      title: 'Select Date',
+      minDate: DateTime.now(),
+      maxDate: DateTime.now().add(const Duration(days: 365)),
     );
+
+    if (selectedDate != null) {
+      setState(() => _selectedDate = selectedDate);
+    }
   }
 
   /// Handles saving or updating the task based on the current mode
@@ -431,5 +419,46 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       '  - notificationMinutesBefore: ${newTask.notificationMinutesBefore}',
     );
     debugPrint('  - dueDate: ${newTask.dueDate}');
+  }
+
+  /// Show color selection modal with preview
+  Future<void> _showColorSelection() async {
+    final selectedColor = await ColorPickerModal.show(
+      context: context,
+      selectedColor: _selectedColor,
+      title: 'Choose Task Color',
+      previewBuilder: _buildTaskPreview,
+      showPreview: true,
+    );
+
+    if (selectedColor != null) {
+      setState(() => _selectedColor = selectedColor);
+    }
+  }
+
+  /// Build task preview for color selection
+  Widget _buildTaskPreview(String colorHex) {
+    final sampleTask = TaskModel(
+      title:
+          _titleController.text.isNotEmpty
+              ? _titleController.text
+              : 'Sample Task',
+      description:
+          _descriptionController.text.isNotEmpty
+              ? _descriptionController.text
+              : 'This is how your task will look',
+      dueDate: _hasTime ? _createDueDateTime() : null,
+      priority: _priority,
+      color: colorHex,
+      tags: _parseTags().isNotEmpty ? _parseTags() : ['Work', 'Important'],
+      hasNotification: _hasNotification,
+      notificationMinutesBefore: _notificationMinutesBefore,
+    );
+
+    return HomeTaskBlock(
+      task: sampleTask,
+      onToggleComplete: (_) {},
+      onOptions: (_) {},
+    );
   }
 }

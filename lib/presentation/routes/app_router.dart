@@ -1,3 +1,5 @@
+import 'package:dayflow/data/models/habit_model.dart';
+import 'package:dayflow/presentation/screens/habit/create_habit_screen.dart';
 import 'package:dayflow/presentation/screens/note/create_note_screen.dart';
 import 'package:dayflow/presentation/screens/settings/settings_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -51,6 +53,19 @@ class AppRouter {
             },
           ),
 
+          // Create habit screen with optional prefilled hour
+          GoRoute(
+            path: 'create-habit',
+            name: 'createHabit',
+            builder: (context, state) {
+              // Extract hour from query parameters
+              final hourString = state.uri.queryParameters['hour'];
+              final hour = hourString != null ? int.tryParse(hourString) : null;
+
+              return CreateHabitScreen(prefilledHour: hour);
+            },
+          ),
+
           // Settings screen
           GoRoute(
             path: 'settings',
@@ -85,6 +100,40 @@ class AppRouter {
             builder: (context, state) {
               final note = state.extra as TaskModel;
               return CreateNoteScreen(noteToEdit: note);
+            },
+          ),
+
+          // Edit existing habit
+          GoRoute(
+            path: 'edit-habit',
+            name: 'editHabit',
+            builder: (context, state) {
+              final habit = state.extra as HabitModel;
+              return CreateHabitScreen(habitToEdit: habit);
+            },
+          ),
+
+          // Habit details view (placeholder for future implementation)
+          GoRoute(
+            path: 'habit-details',
+            name: 'habitDetails',
+            builder: (context, state) {
+              final habit = state.extra as HabitModel;
+              // For now, redirect to edit screen
+              // Later you can create a HabitDetailsScreen
+              return CreateHabitScreen(habitToEdit: habit);
+            },
+          ),
+
+          // Habit statistics view (placeholder for future implementation)
+          GoRoute(
+            path: 'habit-stats',
+            name: 'habitStats',
+            builder: (context, state) {
+              final habit = state.extra as HabitModel;
+              // For now, redirect to edit screen
+              // Later you can create a HabitStatsScreen
+              return CreateHabitScreen(habitToEdit: habit);
             },
           ),
         ],

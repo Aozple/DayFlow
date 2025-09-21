@@ -47,7 +47,9 @@ dependencies:
   archive: ^3.4.10
   crypto: ^3.0.3
   image_picker: ^1.2.0
+  pro_image_editor: ^11.5.8
   path: ^1.9.1
+  google_fonts: ^6.3.1
 
 dev_dependencies:
   flutter_test:

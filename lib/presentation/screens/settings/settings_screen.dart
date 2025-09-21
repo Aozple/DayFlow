@@ -5,6 +5,7 @@ import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/screens/settings/widgets/notification_time_picker.dart';
+import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,22 +59,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: BlocBuilder<SettingsBloc, SettingsState>(
-            builder: (context, state) {
-              if (state is SettingsLoading) {
-                return const Center(
-                  child: CupertinoActivityIndicator(radius: 20),
-                );
-              }
+        body: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, state) {
+            if (state is SettingsLoading) {
+              return const Center(
+                child: CupertinoActivityIndicator(radius: 20),
+              );
+            }
 
-              final settings = state is SettingsLoaded ? state.settings : null;
+            final settings = state is SettingsLoaded ? state.settings : null;
 
-              return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  const SettingsHeader(),
-                  SliverToBoxAdapter(
+            return Column(
+              children: [
+                const StatusBarPadding(),
+                // Header section with back button and title
+                const SettingsHeader(),
+                // Main scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
                     child: Column(
                       children: [
                         _buildPersonalizationSection(settings),
@@ -89,10 +93,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
-                ],
-              );
-            },
-          ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -984,15 +988,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Other settings methods
   void _showAccentColorPicker(String currentColor) {
-    showCupertinoModalPopup(
+    AccentColorPicker.show(
       context: context,
-      builder: (BuildContext modalContext) {
-        return AccentColorPicker(
-          currentColor: currentColor,
-          onColorSelected: (colorHex) {
-            context.read<SettingsBloc>().add(UpdateAccentColor(colorHex));
-          },
-        );
+      currentColor: currentColor,
+      onColorSelected: (colorHex) {
+        context.read<SettingsBloc>().add(UpdateAccentColor(colorHex));
       },
     );
   }

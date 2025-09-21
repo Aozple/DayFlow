@@ -1,6 +1,10 @@
 import 'package:dayflow/data/models/note_block.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
+import 'package:dayflow/presentation/screens/home/widgets/blocks/home_note_block.dart';
+import 'package:dayflow/presentation/widgets/color_picker_modal.dart';
+import 'package:dayflow/presentation/widgets/date_picker_modal.dart';
 import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
+import 'package:dayflow/presentation/widgets/time_picker_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,8 +15,6 @@ import '../../../data/models/task_model.dart';
 import 'widgets/create_note_header.dart';
 import 'widgets/create_note_title_section.dart';
 import 'widgets/note_block_editor.dart';
-import 'widgets/create_note_color_picker.dart';
-import 'widgets/create_note_date_time_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:async';
 
@@ -334,6 +336,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
               CupertinoDialogAction(
                 onPressed: () {
                   Navigator.pop(context); // Close dialog
+
+                  if (!_hasTitle) {
+                    _titleController.text = 'Untitled Note';
+                  }
+
                   _saveNote(autoExit: true); // Save and exit
                 },
                 child: const Text('Save & Exit'),
@@ -436,38 +443,111 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   }
 
   // UI Event handlers
-  Future<void> _selectDateTime() async {
-    await showCupertinoModalPopup(
+  Future<void> _selectDate() async {
+    final selectedDate = await DatePickerModal.show(
       context: context,
-      builder:
-          (context) => CreateNoteDateTimePicker(
-            selectedDate: _selectedDate,
-            selectedTime: _selectedTime,
-            onDateTimeChanged: (date) {
-              setState(() {
-                _selectedDate = date;
-                _selectedTime = TimeOfDay.fromDateTime(date);
-              });
-              _onContentChanged();
-            },
-          ),
+      selectedDate: _selectedDate,
+      title: 'Select Date',
+      minDate: DateTime.now().subtract(const Duration(days: 365)),
+      maxDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (selectedDate != null) {
+      setState(() => _selectedDate = selectedDate);
+      _onContentChanged();
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final selectedTime = await TimePickerModal.show(
+      context: context,
+      selectedTime: _selectedTime,
+      title: 'Select Time',
+    );
+
+    if (selectedTime != null) {
+      setState(() => _selectedTime = selectedTime);
+      _onContentChanged();
+    }
+  }
+
+  Future<void> _showColorPicker() async {
+    final selectedColor = await ColorPickerModal.show(
+      context: context,
+      selectedColor: _selectedColor,
+      title: 'Choose Note Color',
+      showPreview: true,
+      previewBuilder: _buildColorPreview,
+    );
+
+    if (selectedColor != null && mounted) {
+      // mounted check اضافه شد
+      setState(() => _selectedColor = selectedColor);
+      _onContentChanged();
+      if (mounted) {
+        // mounted check دوباره
+        CustomSnackBar.success(context, 'Color updated');
+      }
+    }
+  }
+
+  Widget _buildColorPreview(String colorHex) {
+    // Create a sample note for preview
+    final previewNote = TaskModel(
+      title:
+          _titleController.text.isNotEmpty
+              ? _titleController.text
+              : 'Sample Note Title',
+      color: colorHex,
+      tags:
+          _tagsController.text.isNotEmpty
+              ? _tagsController.text
+                  .split(',')
+                  .map((tag) => tag.trim())
+                  .where((tag) => tag.isNotEmpty)
+                  .toList()
+              : ['Sample', 'Preview'],
+      isNote: true,
+      priority: 1,
+      dueDate: DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      ),
+      // Create sample markdown content from blocks
+      markdownContent:
+          _blocks.isNotEmpty && _blocks.any(_blockHasContent)
+              ? _getSampleMarkdownFromBlocks()
+              : 'This is a sample note content to show how your note will look with the selected color.',
+    );
+
+    return HomeNoteBlock(
+      note: previewNote,
+      onOptions: (_) {}, // Empty callback for preview
     );
   }
 
-  void _showColorPicker() {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext modalContext) {
-        return CreateNoteColorPicker(
-          initialColor: _selectedColor,
-          onColorSelected: (colorHex) {
-            setState(() => _selectedColor = colorHex);
-            _onContentChanged();
-            CustomSnackBar.success(context, 'Color updated');
-          },
-        );
-      },
-    );
+  String _getSampleMarkdownFromBlocks() {
+    final contentBlocks = _blocks.where(_blockHasContent).take(2);
+    if (contentBlocks.isEmpty) {
+      return 'This is a sample note content preview.';
+    }
+
+    String content = '';
+    for (final block in contentBlocks) {
+      if (block is TextBlock && block.text.trim().isNotEmpty) {
+        content += '${block.text.trim()} ';
+      } else if (block is HeadingBlock && block.text.trim().isNotEmpty) {
+        content += '${block.text.trim()} ';
+      }
+      // Add other block types as needed
+    }
+
+    return content.trim().isNotEmpty
+        ? content.trim()
+        : 'This is a sample note content preview.';
   }
 
   @override
@@ -495,7 +575,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 isSaving: _isSaving,
                 isDeleting: _isDeleting,
                 onDelete: _showDeleteConfirmation,
-                onSave: () => _saveNote(),
+                onSave: () => _saveNote(autoExit: true),
                 onCancel: _handleCancelNavigation,
               ),
             ),
@@ -511,8 +591,10 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                     selectedColor: _selectedColor,
                     selectedTime: _selectedTime,
                     prefilledDate: widget.prefilledDate,
+                    selectedDate: _selectedDate,
                     onColorTap: _showColorPicker,
-                    onDateTimeTap: _selectDateTime,
+                    onDateTap: _selectDate,
+                    onTimeTap: _selectTime,
                     tagsController: _tagsController,
                   ),
 

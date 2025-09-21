@@ -3,6 +3,7 @@ import 'package:dayflow/presentation/screens/task/widgets/task_details_delete_di
 import 'package:dayflow/presentation/screens/task/widgets/task_details_options_modal.dart';
 import 'package:dayflow/presentation/screens/task/widgets/task_details_priority_modal.dart';
 import 'package:dayflow/presentation/screens/task/widgets/task_details_reschedule_modal.dart';
+import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,18 +12,18 @@ import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/core/utils/custom_snackbar.dart';
 import 'package:dayflow/data/models/task_model.dart';
-import 'widgets/task_details_app_bar.dart';
+import 'widgets/task_details_header.dart';
 import 'widgets/task_details_primary_actions.dart';
 import 'widgets/task_details_info_section.dart';
 import 'widgets/task_details_description.dart';
 import 'widgets/task_details_tags.dart';
 import 'widgets/task_details_metadata.dart';
 
-/// Screen for displaying the detailed information of a single task.
+/// Screen for displaying detailed information of a single task.
 ///
-/// This screen provides a comprehensive view of a task's details, including
-/// its title, description, schedule, priority, color, and tags. It also
-/// provides actions for completing, editing, or deleting the task.
+/// Provides a comprehensive view of task details including title, description,
+/// schedule, priority, color, and tags. Offers actions for completing, editing,
+/// rescheduling, and deleting tasks with real-time updates via BLoC.
 class TaskDetailsScreen extends StatefulWidget {
   /// The task object whose details are to be displayed.
   final TaskModel task;
@@ -33,93 +34,48 @@ class TaskDetailsScreen extends StatefulWidget {
   State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
 }
 
-/// State class for TaskDetailsScreen.
+/// State management for TaskDetailsScreen.
 ///
-/// This class manages the UI state and interactions for the task details screen,
-/// including handling task updates and user actions.
+/// Handles task state synchronization with BLoC, user interactions,
+/// and provides real-time updates for task modifications.
 class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
-  /// Holds the current task data, which might be updated by the BLoC.
+  /// Current task data that may be updated through BLoC operations.
   late TaskModel _currentTask;
+
+  /// Tracks if the task was deleted to prevent unnecessary operations.
+  bool _isTaskDeleted = false;
 
   @override
   void initState() {
     super.initState();
-    _currentTask =
-        widget.task; // Initialize with the task passed to the widget.
+    _initializeTask();
+  }
+
+  /// Initialize the current task from widget parameter.
+  void _initializeTask() {
+    _currentTask = widget.task;
   }
 
   @override
   Widget build(BuildContext context) {
-    // BlocListener listens for changes in the TaskBloc state.
-    // If the task is updated (e.g., marked complete), we update our local state.
     return BlocListener<TaskBloc, TaskState>(
-      listener: (context, state) {
-        if (state is TaskLoaded) {
-          // Find the updated version of our task from the loaded tasks.
-          final updatedTask = state.tasks.firstWhere(
-            (t) => t.id == _currentTask.id,
-            orElse:
-                () => _currentTask, // Fallback to current task if not found.
-          );
-          // If the task has actually changed, update the UI.
-          if (updatedTask != _currentTask) {
-            setState(() {
-              _currentTask = updatedTask;
-            });
-          }
-        }
-      },
+      listener: _handleTaskStateChanges,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(), // iOS-style scroll physics.
-          slivers: [
-            // A custom app bar that expands and collapses.
-            TaskDetailsAppBar(
+        body: Column(
+          children: [
+            const StatusBarPadding(),
+            // Header with navigation and options
+            TaskDetailsHeader(
               task: _currentTask,
-              onBackPressed: () => context.pop(),
+              onBackPressed: _handleBackNavigation,
               onMoreOptions: _showMoreOptions,
             ),
-            // The main content of the task details screen.
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section for primary actions (complete, edit, delete).
-                    TaskDetailsPrimaryActions(
-                      task: _currentTask,
-                      onToggleComplete: _toggleComplete,
-                      onEdit: _editTask,
-                      onDelete: _deleteTask,
-                    ),
-                    const SizedBox(height: 20),
-                    // Section displaying task information (date, priority, color).
-                    TaskDetailsInfoSection(
-                      task: _currentTask,
-                      onReschedule: _quickReschedule,
-                      onChangePriority: _quickChangePriority,
-                      onChangeColor: _quickChangeColor,
-                    ),
-                    // Description section, only shown if a description exists.
-                    if (_currentTask.description?.isNotEmpty == true) ...[
-                      const SizedBox(height: 16),
-                      TaskDetailsDescription(
-                        description: _currentTask.description!,
-                      ),
-                    ],
-                    // Tags section, only shown if tags exist.
-                    if (_currentTask.tags.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      TaskDetailsTags(tags: _currentTask.tags),
-                    ],
-                    const SizedBox(height: 16),
-                    // Metadata section (created at, completed at).
-                    TaskDetailsMetadata(task: _currentTask),
-                    const SizedBox(height: 80), // Extra space at the bottom.
-                  ],
-                ),
+            // Scrollable content area
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: _buildTaskContent(),
               ),
             ),
           ],
@@ -128,140 +84,301 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Toggles the completion status of the current task.
-  void _toggleComplete() {
-    context.read<TaskBloc>().add(
-      ToggleTaskComplete(_currentTask.id),
-    ); // Dispatch event to BLoC.
-    setState(() {
-      _currentTask = _currentTask.copyWith(
-        isCompleted: !_currentTask.isCompleted, // Flip completion status.
-        completedAt:
-            !_currentTask.isCompleted
-                ? DateTime.now()
-                : null, // Set/clear completion timestamp.
+  /// Handle BLoC state changes and update local task state.
+  void _handleTaskStateChanges(BuildContext context, TaskState state) {
+    if (state is TaskLoaded && !_isTaskDeleted) {
+      _updateTaskFromState(state);
+    }
+  }
+
+  /// Update local task state from BLoC state if task exists.
+  void _updateTaskFromState(TaskLoaded state) {
+    try {
+      final updatedTask = state.tasks.firstWhere(
+        (task) => task.id == _currentTask.id,
       );
-    });
-    CustomSnackBar.success(
-      context,
-      _currentTask.isCompleted
-          ? 'Task completed!'
-          : 'Task marked as pending', // Show appropriate message.
+
+      if (updatedTask != _currentTask) {
+        setState(() => _currentTask = updatedTask);
+      }
+    } catch (e) {
+      // Task not found - likely deleted, handle gracefully
+      _handleTaskNotFound();
+    }
+  }
+
+  /// Handle case where task is not found in the state.
+  void _handleTaskNotFound() {
+    if (!_isTaskDeleted && mounted) {
+      _isTaskDeleted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          CustomSnackBar.info(context, 'Task was deleted');
+          context.pop();
+        }
+      });
+    }
+  }
+
+  /// Handle back navigation with potential unsaved changes check.
+  void _handleBackNavigation() {
+    context.pop();
+  }
+
+  /// Build the main task content sections.
+  Widget _buildTaskContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Primary action buttons section
+          _buildPrimaryActionsSection(),
+
+          const SizedBox(height: 20),
+
+          // Task information section
+          _buildTaskInfoSection(),
+
+          // Optional description section
+          _buildDescriptionSection(),
+
+          // Optional tags section
+          _buildTagsSection(),
+
+          const SizedBox(height: 16),
+
+          // Task metadata section
+          _buildMetadataSection(),
+
+          const SizedBox(
+            height: 100,
+          ), // Bottom padding for comfortable scrolling
+        ],
+      ),
     );
   }
 
-  /// Navigates to the edit task screen with the current task data.
-  void _editTask() {
+  /// Build primary actions section (complete, edit, delete).
+  Widget _buildPrimaryActionsSection() {
+    return TaskDetailsPrimaryActions(
+      task: _currentTask,
+      onToggleComplete: _handleToggleComplete,
+      onEdit: _handleEditTask,
+      onDelete: _handleDeleteTask,
+    );
+  }
+
+  /// Build task information section (date, priority, color).
+  Widget _buildTaskInfoSection() {
+    return TaskDetailsInfoSection(
+      task: _currentTask,
+      onReschedule: _handleQuickReschedule,
+      onChangePriority: _handleQuickChangePriority,
+      onChangeColor: _handleQuickChangeColor,
+    );
+  }
+
+  /// Build description section if description exists.
+  Widget _buildDescriptionSection() {
+    if (_currentTask.description?.isNotEmpty != true) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        TaskDetailsDescription(description: _currentTask.description!),
+      ],
+    );
+  }
+
+  /// Build tags section if tags exist.
+  Widget _buildTagsSection() {
+    if (_currentTask.tags.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        TaskDetailsTags(tags: _currentTask.tags),
+      ],
+    );
+  }
+
+  /// Build metadata section (created at, completed at).
+  Widget _buildMetadataSection() {
+    return TaskDetailsMetadata(task: _currentTask);
+  }
+
+  /// Toggle task completion status with optimistic UI updates.
+  void _handleToggleComplete() {
+    final wasCompleted = _currentTask.isCompleted;
+    final newCompletionStatus = !wasCompleted;
+
+    // Optimistic UI update
+    setState(() {
+      _currentTask = _currentTask.copyWith(
+        isCompleted: newCompletionStatus,
+        completedAt: newCompletionStatus ? DateTime.now() : null,
+      );
+    });
+
+    // Dispatch BLoC event
+    context.read<TaskBloc>().add(ToggleTaskComplete(_currentTask.id));
+
+    // Show success feedback
+    _showCompletionFeedback(newCompletionStatus);
+  }
+
+  /// Show appropriate feedback message for completion toggle.
+  void _showCompletionFeedback(bool isCompleted) {
+    final message = isCompleted ? 'Task completed!' : 'Task marked as pending';
+    CustomSnackBar.success(context, message);
+  }
+
+  /// Navigate to edit task screen with current task data.
+  void _handleEditTask() {
     context.push('/edit-task', extra: _currentTask);
   }
 
-  /// Shows a confirmation dialog before deleting the task.
-  void _deleteTask() async {
-    final confirmed = await showCupertinoDialog<bool>(
+  /// Show confirmation dialog and handle task deletion.
+  Future<void> _handleDeleteTask() async {
+    final confirmed = await _showDeleteConfirmation();
+
+    if (confirmed == true && mounted && !_isTaskDeleted) {
+      _executeTaskDeletion();
+    }
+  }
+
+  /// Show delete confirmation dialog.
+  Future<bool?> _showDeleteConfirmation() {
+    return showCupertinoDialog<bool>(
       context: context,
       builder:
           (context) => TaskDetailsDeleteDialog(taskTitle: _currentTask.title),
     );
-
-    // If deletion is confirmed and widget is still mounted, delete the task.
-    if (confirmed == true && mounted) {
-      context.read<TaskBloc>().add(
-        DeleteTask(_currentTask.id),
-      ); // Dispatch delete event.
-      CustomSnackBar.success(context, 'Task deleted'); // Show success message.
-      context.pop(); // Pop the details screen.
-    }
   }
 
-  /// Shows a Cupertino modal for quickly rescheduling a task.
-  void _quickReschedule() async {
-    final DateTime? picked = await showCupertinoModalPopup<DateTime>(
+  /// Execute task deletion and provide feedback.
+  void _executeTaskDeletion() {
+    _isTaskDeleted = true;
+    context.read<TaskBloc>().add(DeleteTask(_currentTask.id));
+    CustomSnackBar.success(context, 'Task deleted');
+    context.pop();
+  }
+
+  /// Show modal for quick task rescheduling.
+  Future<void> _handleQuickReschedule() async {
+    final selectedDate = await showCupertinoModalPopup<DateTime>(
       context: context,
       builder:
           (context) => TaskDetailsRescheduleModal(
             currentTask: _currentTask,
-            onDateChanged: (date) {
-              setState(() {
-                _currentTask = _currentTask.copyWith(dueDate: date);
-              });
-            },
+            onDateChanged: _updateTaskDate,
           ),
     );
 
-    // If a date was picked and the widget is still mounted, update the task.
-    if (picked != null && mounted) {
-      context.read<TaskBloc>().add(
-        UpdateTask(_currentTask),
-      ); // Dispatch update event.
-      CustomSnackBar.success(context, 'Date updated'); // Show success message.
+    if (selectedDate != null && mounted) {
+      _saveTaskUpdate('Date updated');
     }
   }
 
-  /// Shows a Cupertino action sheet for quickly changing task priority.
-  void _quickChangePriority() {
+  /// Update task date and refresh UI.
+  void _updateTaskDate(DateTime date) {
+    setState(() {
+      _currentTask = _currentTask.copyWith(dueDate: date);
+    });
+  }
+
+  /// Show modal for quick priority change.
+  void _handleQuickChangePriority() {
     showCupertinoModalPopup(
       context: context,
       builder:
           (context) => TaskDetailsPriorityModal(
             currentTask: _currentTask,
-            onPriorityChanged: (priority) {
-              setState(() {
-                _currentTask = _currentTask.copyWith(priority: priority);
-              });
-              context.read<TaskBloc>().add(UpdateTask(_currentTask));
-              CustomSnackBar.success(context, 'Priority updated');
-            },
+            onPriorityChanged: _updateTaskPriority,
           ),
     );
   }
 
-  /// Shows a Cupertino modal for quickly changing task color.
-  void _quickChangeColor() {
+  /// Update task priority and save changes.
+  void _updateTaskPriority(int priority) {
+    setState(() {
+      _currentTask = _currentTask.copyWith(priority: priority);
+    });
+    _saveTaskUpdate('Priority updated');
+  }
+
+  /// Show modal for quick color change.
+  void _handleQuickChangeColor() {
     showCupertinoModalPopup(
       context: context,
       builder:
           (context) => TaskDetailsColorModal(
             currentTask: _currentTask,
-            onColorChanged: (color) {
-              setState(() {
-                _currentTask = _currentTask.copyWith(color: color);
-              });
-              context.read<TaskBloc>().add(UpdateTask(_currentTask));
-              CustomSnackBar.success(context, 'Color updated');
-            },
+            onColorChanged: _updateTaskColor,
           ),
     );
   }
 
-  /// Shows an action sheet with more options for the task (duplicate, share).
+  /// Update task color and save changes.
+  void _updateTaskColor(String color) {
+    setState(() {
+      _currentTask = _currentTask.copyWith(color: color);
+    });
+    _saveTaskUpdate('Color updated');
+  }
+
+  /// Save task updates to BLoC and show feedback.
+  void _saveTaskUpdate(String successMessage) {
+    if (mounted && !_isTaskDeleted) {
+      context.read<TaskBloc>().add(UpdateTask(_currentTask));
+      CustomSnackBar.success(context, successMessage);
+    }
+  }
+
+  /// Show options modal with additional task actions.
   void _showMoreOptions() {
     showCupertinoModalPopup(
       context: context,
       builder:
           (context) => TaskDetailsOptionsModal(
-            onDuplicate: _duplicateTask,
-            onShare: () {
-              CustomSnackBar.info(context, 'Share coming soon!');
-            },
+            onDuplicate: _handleDuplicateTask,
+            onShare: _handleShareTask,
           ),
     );
   }
 
-  /// Duplicates the current task and adds it as a new task.
-  void _duplicateTask() {
-    final newTask = TaskModel(
-      title: '${_currentTask.title} (Copy)', // Add "(Copy)" to the title.
+  /// Create a duplicate of the current task.
+  void _handleDuplicateTask() {
+    final duplicatedTask = _createDuplicateTask();
+
+    if (mounted) {
+      context.read<TaskBloc>().add(AddTask(duplicatedTask));
+      CustomSnackBar.success(context, 'Task duplicated!');
+      context.pop(); // Close details screen to show new task
+    }
+  }
+
+  /// Create a new task based on current task with modified title.
+  TaskModel _createDuplicateTask() {
+    return TaskModel(
+      title: '${_currentTask.title} (Copy)',
       description: _currentTask.description,
       dueDate: _currentTask.dueDate,
       priority: _currentTask.priority,
       color: _currentTask.color,
       tags: _currentTask.tags,
+      hasNotification: _currentTask.hasNotification,
+      notificationMinutesBefore: _currentTask.notificationMinutesBefore,
     );
-    context.read<TaskBloc>().add(AddTask(newTask)); // Dispatch add event.
-    CustomSnackBar.success(
-      context,
-      'Task duplicated!',
-    ); // Show success message.
-    context.pop(); // Pop the details screen.
+  }
+
+  /// Handle task sharing (placeholder for future implementation).
+  void _handleShareTask() {
+    CustomSnackBar.info(context, 'Share feature coming soon!');
   }
 }
