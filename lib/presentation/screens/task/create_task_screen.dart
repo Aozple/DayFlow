@@ -211,14 +211,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     onDateTap: _showDateSelection,
                     onTimeTap: _showTimeSelection,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   // Section for choosing task priority
                   CreateTaskPrioritySection(
                     priority: _priority,
                     onPriorityChanged:
                         (priority) => setState(() => _priority = priority),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   // Section for notification settings
                   CreateTaskNotificationSection(
                     hasNotification: _hasNotification,

@@ -3,16 +3,23 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Compact notification settings widget for habit reminders.
-///
-/// Provides a streamlined interface for configuring habit reminder notifications
-/// with minimal space usage while maintaining clear visual feedback about
-/// timing preferences and notification status.
+/// Notification settings widget with scrollable timing options
 class CreateHabitNotificationSection extends StatelessWidget {
   final bool hasNotification;
   final int minutesBefore;
   final Function(bool) onNotificationToggle;
   final Function(int) onMinutesChanged;
+
+  // Predefined timing options
+  static const List<TimingOption> _timings = [
+    TimingOption(0, 'At time'),
+    TimingOption(5, '5 min'),
+    TimingOption(10, '10 min'),
+    TimingOption(15, '15 min'),
+    TimingOption(30, '30 min'),
+    TimingOption(45, '45 min'),
+    TimingOption(60, '1 hour'),
+  ];
 
   const CreateHabitNotificationSection({
     super.key,
@@ -26,313 +33,360 @@ class CreateHabitNotificationSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surface.withAlpha(250)],
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
         border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
       ),
       child: Column(
-        children: [_buildMainRow(), if (hasNotification) _buildTimingRow()],
-      ),
-    );
-  }
-
-  /// Build main row with icon, title, status, and toggle
-  Widget _buildMainRow() {
-    return Row(
-      children: [
-        _buildNotificationIcon(),
-        const SizedBox(width: 12),
-        _buildHeaderInfo(),
-        const Spacer(),
-        _buildToggleSwitch(),
-      ],
-    );
-  }
-
-  /// Build notification icon with current state styling
-  Widget _buildNotificationIcon() {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors:
-              hasNotification
-                  ? [AppColors.accent, AppColors.accent.withAlpha(220)]
-                  : [
-                    AppColors.textSecondary.withAlpha(150),
-                    AppColors.textSecondary.withAlpha(100),
-                  ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow:
-            hasNotification
-                ? [
-                  BoxShadow(
-                    color: AppColors.accent.withAlpha(30),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-                : null,
-      ),
-      child: Icon(
-        hasNotification ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
-        color: Colors.white,
-        size: 18,
-      ),
-    );
-  }
-
-  /// Build header information section
-  Widget _buildHeaderInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Reminder',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-                height: 1.2,
-              ),
-            ),
-            if (hasNotification) ...[
-              const SizedBox(width: 8),
-              _buildTimingBadge(),
-            ],
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _getStatusDescription(),
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
-            height: 1.2,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Build timing badge showing current setting
-  Widget _buildTimingBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.accent.withAlpha(15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.accent.withAlpha(40), width: 1),
-      ),
-      child: Text(
-        _getTimingLabel(minutesBefore),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: AppColors.accent,
-          height: 1.0,
-        ),
-      ),
-    );
-  }
-
-  /// Build toggle switch with enhanced styling
-  Widget _buildToggleSwitch() {
-    return Transform.scale(
-      scale: 0.9,
-      child: CupertinoSwitch(
-        value: hasNotification,
-        onChanged: (value) {
-          HapticFeedback.mediumImpact();
-          onNotificationToggle(value);
-        },
-        activeTrackColor: AppColors.accent,
-        inactiveTrackColor: AppColors.textSecondary.withAlpha(100),
-        thumbColor: Colors.white,
-      ),
-    );
-  }
-
-  /// Build timing options row for notification timing
-  Widget _buildTimingRow() {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.accent.withAlpha(8),
-            AppColors.accent.withAlpha(5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
-      ),
-      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(20),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              CupertinoIcons.clock_fill,
-              size: 16,
-              color: AppColors.accent,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Text(
-            'When:',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-              height: 1.0,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Row(
-              children: [
-                _buildTimingButton(0, 'On time'),
-                const SizedBox(width: 8),
-                _buildTimingButton(5, '5m'),
-                const SizedBox(width: 8),
-                _buildTimingButton(15, '15m'),
-                const SizedBox(width: 8),
-                _buildTimingButton(30, '30m'),
-              ],
-            ),
-          ),
+          _buildToggleSection(),
+          if (hasNotification) _buildTimingSection(),
         ],
       ),
     );
   }
 
-  /// Build individual timing selection button
-  Widget _buildTimingButton(int minutes, String label) {
-    final isSelected = minutesBefore == minutes;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onMinutesChanged(minutes);
-        },
-        child: Container(
-          height: 32,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors:
-                  isSelected
-                      ? [AppColors.accent, AppColors.accent.withAlpha(220)]
-                      : [AppColors.surface, AppColors.surface.withAlpha(200)],
-            ),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
+  Widget _buildToggleSection() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
               color:
-                  isSelected
-                      ? AppColors.accent
-                      : AppColors.divider.withAlpha(50),
-              width: isSelected ? 1.5 : 1,
+                  hasNotification
+                      ? AppColors.accent.withAlpha(20)
+                      : AppColors.textSecondary.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
             ),
-            boxShadow:
-                isSelected
-                    ? [
-                      BoxShadow(
-                        color: AppColors.accent.withAlpha(30),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                    : null,
+            child: Icon(
+              hasNotification ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
+              color:
+                  hasNotification ? AppColors.accent : AppColors.textSecondary,
+              size: 18,
+            ),
           ),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+          const SizedBox(width: 12),
+          // Text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isSelected) ...[
-                  const Icon(
-                    CupertinoIcons.checkmark_alt,
-                    size: 10,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                Text(
-                  label,
+                const Text(
+                  'Reminder',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
-                    height: 1.0,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getStatusText(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
+          // Switch
+          Transform.scale(
+            scale: 0.9,
+            child: CupertinoSwitch(
+              value: hasNotification,
+              onChanged: (value) {
+                HapticFeedback.lightImpact();
+                onNotificationToggle(value);
+              },
+              activeTrackColor: AppColors.accent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimingSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withAlpha(5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Row(
+            children: [
+              Icon(CupertinoIcons.clock, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              const Text(
+                'Notify me',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _formatMinutes(minutesBefore),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Scrollable options
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: _timings.length + 1, // +1 for custom
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                if (index == _timings.length) {
+                  return _buildCustomOption();
+                }
+                final timing = _timings[index];
+                return _buildTimingChip(timing.minutes, timing.label);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimingChip(int minutes, String label) {
+    final isSelected = minutesBefore == minutes;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onMinutesChanged(minutes);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color:
+                isSelected ? AppColors.accent : AppColors.divider.withAlpha(50),
+            width: 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.textPrimary,
+          ),
         ),
       ),
     );
   }
 
-  /// Get status description based on current settings
-  String _getStatusDescription() {
-    if (!hasNotification) {
-      return 'No reminders for this habit';
-    }
-    return 'Remind ${_getTimingDescription(minutesBefore)}';
+  Widget _buildCustomOption() {
+    final isCustom = !_timings.any((t) => t.minutes == minutesBefore);
+
+    return _CustomTimingInput(
+      currentMinutes: minutesBefore,
+      isSelected: isCustom,
+      onChanged: onMinutesChanged,
+    );
   }
 
-  /// Get timing label for badge display
-  String _getTimingLabel(int minutes) {
-    switch (minutes) {
-      case 0:
-        return 'On time';
-      case 5:
-        return '5 min';
-      case 15:
-        return '15 min';
-      case 30:
-        return '30 min';
-      default:
-        return '${minutes}m';
+  String _getStatusText() {
+    if (!hasNotification) return 'Notifications disabled';
+    if (minutesBefore == 0) return 'Notify at scheduled time';
+    return 'Notify ${_formatMinutes(minutesBefore)} before';
+  }
+
+  String _formatMinutes(int minutes) {
+    // Check predefined first
+    for (final t in _timings) {
+      if (t.minutes == minutes) return t.label;
+    }
+    // Format custom
+    if (minutes >= 60) {
+      final h = minutes ~/ 60;
+      final m = minutes % 60;
+      return m == 0 ? '${h}h' : '${h}h ${m}m';
+    }
+    return '${minutes}m';
+  }
+}
+
+// Simple timing data class
+class TimingOption {
+  final int minutes;
+  final String label;
+  const TimingOption(this.minutes, this.label);
+}
+
+/// Inline custom timing input
+class _CustomTimingInput extends StatefulWidget {
+  final int currentMinutes;
+  final bool isSelected;
+  final Function(int) onChanged;
+
+  const _CustomTimingInput({
+    required this.currentMinutes,
+    required this.isSelected,
+    required this.onChanged,
+  });
+
+  @override
+  State<_CustomTimingInput> createState() => _CustomTimingInputState();
+}
+
+class _CustomTimingInputState extends State<_CustomTimingInput> {
+  late TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.isSelected ? widget.currentMinutes.toString() : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _startEditing() {
+    setState(() => _isEditing = true);
+    _focusNode.requestFocus();
+  }
+
+  void _submitValue() {
+    final value = int.tryParse(_controller.text);
+    if (value != null && value >= 0 && value <= 1440) {
+      widget.onChanged(value);
+      _focusNode.unfocus();
+      setState(() => _isEditing = false);
     }
   }
 
-  /// Get timing description for status text
-  String _getTimingDescription(int minutes) {
-    if (minutes == 0) {
-      return 'at scheduled time';
+  @override
+  Widget build(BuildContext context) {
+    if (_isEditing) {
+      // Input mode
+      return Container(
+        width: 80,
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.info.withAlpha(20),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.info, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: CupertinoTextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: const BoxDecoration(),
+                placeholder: 'min',
+                placeholderStyle: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary.withAlpha(150),
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                ],
+                onSubmitted: (_) => _submitValue(),
+              ),
+            ),
+            GestureDetector(
+              onTap: _submitValue,
+              child: const Icon(
+                CupertinoIcons.checkmark,
+                size: 14,
+                color: AppColors.info,
+              ),
+            ),
+          ],
+        ),
+      );
     }
-    return '$minutes minutes before';
+
+    // Display mode
+    return GestureDetector(
+      onTap: _startEditing,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        height: 36,
+        decoration: BoxDecoration(
+          color:
+              widget.isSelected
+                  ? AppColors.info.withAlpha(20)
+                  : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color:
+                widget.isSelected
+                    ? AppColors.info
+                    : AppColors.divider.withAlpha(50),
+            width: 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              CupertinoIcons.pencil,
+              size: 12,
+              color:
+                  widget.isSelected ? AppColors.info : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              widget.isSelected ? '${widget.currentMinutes}m' : 'Custom',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color:
+                    widget.isSelected
+                        ? AppColors.info
+                        : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
