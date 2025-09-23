@@ -119,12 +119,12 @@ class CreateTaskNotificationSection extends StatelessWidget {
 
   Widget _buildTimingSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.accent.withAlpha(5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+        border: Border.all(color: AppColors.accent.withAlpha(30), width: 0.5),
       ),
       child: Column(
         children: [
@@ -184,10 +184,10 @@ class CreateTaskNotificationSection extends StatelessWidget {
         onMinutesChanged(minutes);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent : AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 isSelected ? AppColors.accent : AppColors.divider.withAlpha(50),
@@ -198,7 +198,7 @@ class CreateTaskNotificationSection extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : AppColors.textPrimary,
           ),

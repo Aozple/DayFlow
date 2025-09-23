@@ -114,12 +114,12 @@ class CreateHabitNotificationSection extends StatelessWidget {
 
   Widget _buildTimingSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.accent.withAlpha(5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+        border: Border.all(color: AppColors.accent.withAlpha(30), width: 0.5),
       ),
       child: Column(
         children: [
@@ -179,10 +179,10 @@ class CreateHabitNotificationSection extends StatelessWidget {
         onMinutesChanged(minutes);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.accent : AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 isSelected ? AppColors.accent : AppColors.divider.withAlpha(50),
@@ -193,7 +193,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : AppColors.textPrimary,
           ),
@@ -295,12 +295,12 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
     if (_isEditing) {
       // Input mode
       return Container(
-        width: 80,
+        width: 86,
         height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.info.withAlpha(20),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.info, width: 1.5),
         ),
         child: Row(
@@ -312,14 +312,14 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
                 decoration: const BoxDecoration(),
                 placeholder: 'min',
                 placeholderStyle: TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: AppColors.textSecondary.withAlpha(150),
                 ),
                 inputFormatters: [
@@ -333,7 +333,7 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
               onTap: _submitValue,
               child: const Icon(
                 CupertinoIcons.checkmark,
-                size: 14,
+                size: 15,
                 color: AppColors.info,
               ),
             ),
@@ -346,14 +346,14 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
     return GestureDetector(
       onTap: _startEditing,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         height: 36,
         decoration: BoxDecoration(
           color:
               widget.isSelected
                   ? AppColors.info.withAlpha(20)
                   : AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 widget.isSelected
@@ -368,7 +368,7 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
           children: [
             Icon(
               CupertinoIcons.pencil,
-              size: 12,
+              size: 15,
               color:
                   widget.isSelected ? AppColors.info : AppColors.textSecondary,
             ),
@@ -376,7 +376,7 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
             Text(
               widget.isSelected ? '${widget.currentMinutes}m' : 'Custom',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color:
                     widget.isSelected

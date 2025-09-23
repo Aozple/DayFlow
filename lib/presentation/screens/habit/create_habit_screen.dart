@@ -174,6 +174,11 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                     onStartDateTap: _showStartDatePicker,
                   ),
                   _sectionSpacing,
+                  CreateHabitFlexibleTimeSection(
+                    isFlexibleTime: _isFlexibleTime,
+                    onFlexibleTimeToggle: _handleFlexibleTimeToggle,
+                  ),
+                  _sectionSpacing,
                   CreateHabitTypeSection(
                     habitType: _habitType,
                     targetValue: _targetValue,
@@ -197,11 +202,6 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                     onCustomIntervalChanged:
                         (interval) =>
                             setState(() => _customInterval = interval),
-                  ),
-                  _sectionSpacing,
-                  CreateHabitFlexibleTimeSection(
-                    isFlexibleTime: _isFlexibleTime,
-                    onFlexibleTimeToggle: _handleFlexibleTimeToggle,
                   ),
                   _sectionSpacing,
                   CreateHabitEndConditionSection(

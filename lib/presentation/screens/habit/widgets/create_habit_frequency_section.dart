@@ -4,11 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Compact habit frequency selection widget with minimal space usage.
-///
-/// Provides an efficient interface for selecting habit frequency patterns
-/// including daily, weekly, monthly, and custom intervals with optimized
-/// vertical space consumption while maintaining visual appeal.
 class CreateHabitFrequencySection extends StatefulWidget {
   final HabitFrequency frequency;
   final List<int> selectedWeekdays;
@@ -38,25 +33,23 @@ class CreateHabitFrequencySection extends StatefulWidget {
 
 class _CreateHabitFrequencySectionState
     extends State<CreateHabitFrequencySection> {
-  // Controllers for input fields
   late TextEditingController _monthDayController;
   late TextEditingController _customIntervalController;
+
+  static const List<FrequencyOption> _frequencies = [
+    FrequencyOption(HabitFrequency.daily, 'Daily', CupertinoIcons.sun_max_fill),
+    FrequencyOption(HabitFrequency.weekly, 'Weekly', CupertinoIcons.calendar),
+    FrequencyOption(
+      HabitFrequency.monthly,
+      'Monthly',
+      CupertinoIcons.calendar_circle,
+    ),
+    FrequencyOption(HabitFrequency.custom, 'Custom', CupertinoIcons.gear),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
-  }
-
-  @override
-  void dispose() {
-    _monthDayController.dispose();
-    _customIntervalController.dispose();
-    super.dispose();
-  }
-
-  /// Initialize text controllers with current values
-  void _initializeControllers() {
     _monthDayController = TextEditingController(
       text: widget.monthDay.toString(),
     );
@@ -66,405 +59,379 @@ class _CreateHabitFrequencySectionState
   }
 
   @override
+  void dispose() {
+    _monthDayController.dispose();
+    _customIntervalController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surface.withAlpha(250)],
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
         border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
       ),
       child: Column(
         children: [
-          _buildMainRow(),
-          if (widget.frequency != HabitFrequency.daily) _buildDetailsRow(),
+          _buildMainSection(),
+          if (widget.frequency != HabitFrequency.daily) _buildDetailSection(),
         ],
       ),
     );
   }
 
-  /// Build main row with icon, title, and frequency options
-  Widget _buildMainRow() {
-    return Row(
-      children: [
-        _buildHeaderIcon(),
-        const SizedBox(width: 12),
-        _buildHeaderInfo(),
-        const Spacer(),
-        _buildFrequencyOptions(),
-      ],
+  Widget _buildMainSection() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  CupertinoIcons.repeat,
+                  color: AppColors.accent,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Repeat Pattern',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getDescription(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _buildVisualSummary(),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: _frequencies.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final freq = _frequencies[index];
+                return _buildFrequencyChip(freq);
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  /// Build header icon with current frequency styling
-  Widget _buildHeaderIcon() {
+  Widget _buildVisualSummary() {
     return Container(
-      width: 40,
-      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.accent, AppColors.accent.withAlpha(220)],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accent.withAlpha(30),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
       ),
-      child: const Icon(CupertinoIcons.repeat, color: Colors.white, size: 18),
-    );
-  }
-
-  /// Build header information section
-  Widget _buildHeaderInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Repeat Pattern',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-            height: 1.2,
-          ),
-        ),
-        Text(
-          _getFrequencyDescription(),
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
-            height: 1.2,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Build compact frequency selection options
-  Widget _buildFrequencyOptions() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildFrequencyButton(
-          frequency: HabitFrequency.daily,
-          icon: CupertinoIcons.sun_max_fill,
-          label: 'Daily',
-        ),
-        const SizedBox(width: 8),
-        _buildFrequencyButton(
-          frequency: HabitFrequency.weekly,
-          icon: CupertinoIcons.calendar,
-          label: 'Weekly',
-        ),
-        const SizedBox(width: 8),
-        _buildFrequencyButton(
-          frequency: HabitFrequency.monthly,
-          icon: CupertinoIcons.calendar_circle_fill,
-          label: 'Monthly',
-        ),
-        const SizedBox(width: 8),
-        _buildFrequencyButton(
-          frequency: HabitFrequency.custom,
-          icon: CupertinoIcons.gear_alt_fill,
-          label: 'Custom',
-        ),
-      ],
-    );
-  }
-
-  /// Build individual frequency selection button
-  Widget _buildFrequencyButton({
-    required HabitFrequency frequency,
-    required IconData icon,
-    required String label,
-  }) {
-    final isSelected = widget.frequency == frequency;
-    final color = _getFrequencyColor(frequency);
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        widget.onFrequencyChanged(frequency);
-      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors:
-                    isSelected
-                        ? [color.withAlpha(25), color.withAlpha(15)]
-                        : [
-                          AppColors.background,
-                          AppColors.background.withAlpha(200),
-                        ],
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getFrequencyIcon(), size: 14, color: AppColors.accent),
+              const SizedBox(width: 6),
+              Text(
+                _getSummaryText(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                ),
               ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color:
-                    isSelected
-                        ? color.withAlpha(60)
-                        : AppColors.divider.withAlpha(40),
-                width: isSelected ? 1.5 : 1,
-              ),
-              boxShadow:
-                  isSelected
-                      ? [
-                        BoxShadow(
-                          color: color.withAlpha(20),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                      : null,
-            ),
-            child: Icon(
-              icon,
-              color: isSelected ? color : AppColors.textSecondary,
-              size: 16,
-            ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? color : AppColors.textSecondary,
-              height: 1.0,
-            ),
-          ),
+          if (widget.frequency == HabitFrequency.weekly &&
+              widget.selectedWeekdays.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _buildMiniWeekView(),
+          ],
         ],
       ),
     );
   }
 
-  /// Build details row for specific frequency configurations
-  Widget _buildDetailsRow() {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _getFrequencyColor(widget.frequency).withAlpha(8),
-            _getFrequencyColor(widget.frequency).withAlpha(5),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _getFrequencyColor(widget.frequency).withAlpha(30),
-          width: 1,
-        ),
-      ),
-      child: _buildFrequencySpecificContent(),
+  Widget _buildMiniWeekView() {
+    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(7, (index) {
+        final isSelected = widget.selectedWeekdays.contains(index + 1);
+        return Container(
+          width: 14,
+          height: 14,
+          margin: const EdgeInsets.only(right: 2),
+          decoration: BoxDecoration(
+            color:
+                isSelected
+                    ? AppColors.accent
+                    : AppColors.textTertiary.withAlpha(30),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            days[index],
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : AppColors.textTertiary,
+            ),
+          ),
+        );
+      }),
     );
   }
 
-  /// Build frequency-specific content based on selection
-  Widget _buildFrequencySpecificContent() {
+  IconData _getFrequencyIcon() {
+    switch (widget.frequency) {
+      case HabitFrequency.daily:
+        return CupertinoIcons.sun_max_fill;
+      case HabitFrequency.weekly:
+        return CupertinoIcons.calendar;
+      case HabitFrequency.monthly:
+        return CupertinoIcons.calendar_badge_plus;
+      case HabitFrequency.custom:
+        return CupertinoIcons.timer;
+    }
+  }
+
+  String _getSummaryText() {
+    switch (widget.frequency) {
+      case HabitFrequency.daily:
+        return 'Every day';
+      case HabitFrequency.weekly:
+        final count = widget.selectedWeekdays.length;
+        if (count == 0) return 'Not set';
+        if (count == 7) return 'Every day';
+        return '$count×/week';
+      case HabitFrequency.monthly:
+        return 'Day ${widget.monthDay}';
+      case HabitFrequency.custom:
+        return '${widget.customInterval}d cycle';
+    }
+  }
+
+  Widget _buildFrequencyChip(FrequencyOption option) {
+    final isSelected = widget.frequency == option.frequency;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.onFrequencyChanged(option.frequency);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent : AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color:
+                isSelected ? AppColors.accent : AppColors.divider.withAlpha(50),
+            width: 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              option.icon,
+              size: 15,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              option.label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withAlpha(5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+      ),
+      child: _buildFrequencyDetails(),
+    );
+  }
+
+  Widget _buildFrequencyDetails() {
     switch (widget.frequency) {
       case HabitFrequency.weekly:
         return _buildWeekdaySelector();
       case HabitFrequency.monthly:
-        return _buildMonthDaySelector();
+        return _buildMonthDayInput();
       case HabitFrequency.custom:
-        return _buildCustomIntervalSelector();
-      case HabitFrequency.daily:
+        return _buildCustomIntervalInput();
+      default:
         return const SizedBox.shrink();
     }
   }
 
-  /// Build compact weekday selector
   Widget _buildWeekdaySelector() {
-    final List<Map<String, dynamic>> weekdays = [
-      {'day': 'M', 'value': 1},
-      {'day': 'T', 'value': 2},
-      {'day': 'W', 'value': 3},
-      {'day': 'T', 'value': 4},
-      {'day': 'F', 'value': 5},
-      {'day': 'S', 'value': 6},
-      {'day': 'S', 'value': 7},
-    ];
+    final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-    return Row(
+    return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppColors.success.withAlpha(20),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(
-            CupertinoIcons.calendar_today,
-            size: 16,
-            color: AppColors.success,
-          ),
+        Row(
+          children: [
+            Icon(CupertinoIcons.calendar, size: 16, color: AppColors.accent),
+            const SizedBox(width: 8),
+            const Text(
+              'Select days',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        const Text(
-          'Days:',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-            height: 1.0,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children:
-                weekdays.map((day) {
-                  final isSelected = widget.selectedWeekdays.contains(
-                    day['value'],
-                  );
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      final newWeekdays = List<int>.from(
-                        widget.selectedWeekdays,
-                      );
-                      if (isSelected) {
-                        newWeekdays.remove(day['value']);
-                      } else {
-                        newWeekdays.add(day['value']);
-                      }
-                      widget.onWeekdaysChanged(newWeekdays..sort());
-                    },
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected ? AppColors.success : AppColors.surface,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? AppColors.success
-                                  : AppColors.divider.withAlpha(50),
-                          width: 1,
-                        ),
-                        boxShadow:
-                            isSelected
-                                ? [
-                                  BoxShadow(
-                                    color: AppColors.success.withAlpha(30),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                                : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          day['day'] as String,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color:
-                                isSelected
-                                    ? Colors.white
-                                    : AppColors.textSecondary,
-                            height: 1.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-          ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(7, (index) {
+            final dayValue = index + 1;
+            final isSelected = widget.selectedWeekdays.contains(dayValue);
+
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                final newWeekdays = List<int>.from(widget.selectedWeekdays);
+                if (isSelected) {
+                  newWeekdays.remove(dayValue);
+                } else {
+                  newWeekdays.add(dayValue);
+                }
+                widget.onWeekdaysChanged(newWeekdays..sort());
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.accent : AppColors.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color:
+                        isSelected
+                            ? AppColors.accent
+                            : AppColors.divider.withAlpha(50),
+                    width: 1,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  weekdays[index],
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
       ],
     );
   }
 
-  /// Build compact month day selector
-  Widget _buildMonthDaySelector() {
+  Widget _buildMonthDayInput() {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppColors.info.withAlpha(20),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(
-            CupertinoIcons.calendar_badge_plus,
-            size: 16,
-            color: AppColors.info,
-          ),
+        Icon(
+          CupertinoIcons.calendar_badge_plus,
+          size: 16,
+          color: AppColors.accent,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         const Text(
           'On day',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
-            height: 1.0,
           ),
         ),
         const SizedBox(width: 12),
         Container(
-          width: 50,
-          height: 32,
+          width: 60,
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: AppColors.divider.withAlpha(50),
               width: 1,
             ),
           ),
-          child: TextField(
+          child: CupertinoTextField(
             controller: _monthDayController,
-            textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            decoration: const BoxDecoration(),
+            placeholder: '1-31',
+            placeholderStyle: TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary.withAlpha(150),
+            ),
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              _MonthDayInputFormatter(),
+              LengthLimitingTextInputFormatter(2),
             ],
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              height: 1.0,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              isDense: true,
-            ),
             onChanged: (value) {
               final day = int.tryParse(value) ?? 1;
               widget.onMonthDayChanged(day.clamp(1, 31));
@@ -474,112 +441,81 @@ class _CreateHabitFrequencySectionState
         const SizedBox(width: 8),
         const Text(
           'of each month',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-            height: 1.0,
-          ),
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
         ),
       ],
     );
   }
 
-  /// Build compact custom interval selector
-  Widget _buildCustomIntervalSelector() {
+  Widget _buildCustomIntervalInput() {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AppColors.warning.withAlpha(20),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(
-            CupertinoIcons.timer,
-            size: 16,
-            color: AppColors.warning,
-          ),
-        ),
-        const SizedBox(width: 12),
+        Icon(CupertinoIcons.timer, size: 16, color: AppColors.accent),
+        const SizedBox(width: 8),
         const Text(
           'Every',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
-            height: 1.0,
           ),
         ),
         const SizedBox(width: 12),
         Container(
-          width: 50,
-          height: 32,
+          width: 60,
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: AppColors.divider.withAlpha(50),
               width: 1,
             ),
           ),
-          child: TextField(
+          child: CupertinoTextField(
             controller: _customIntervalController,
-            textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
-              height: 1.0,
             ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              isDense: true,
+            decoration: const BoxDecoration(),
+            placeholder: '2-365',
+            placeholderStyle: TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary.withAlpha(150),
             ),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(3),
+            ],
             onChanged: (value) {
               final interval = int.tryParse(value) ?? 2;
-              widget.onCustomIntervalChanged(interval.clamp(1, 365));
+              widget.onCustomIntervalChanged(interval.clamp(2, 365));
             },
           ),
         ),
         const SizedBox(width: 8),
         const Text(
           'days',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-            height: 1.0,
-          ),
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
         ),
       ],
     );
   }
 
-  /// Get color for specific frequency type
-  Color _getFrequencyColor(HabitFrequency frequency) {
-    switch (frequency) {
-      case HabitFrequency.daily:
-        return AppColors.accent;
-      case HabitFrequency.weekly:
-        return AppColors.success;
-      case HabitFrequency.monthly:
-        return AppColors.info;
-      case HabitFrequency.custom:
-        return AppColors.warning;
-    }
-  }
-
-  /// Get description text for current frequency
-  String _getFrequencyDescription() {
+  String _getDescription() {
     switch (widget.frequency) {
       case HabitFrequency.daily:
         return 'Every day';
       case HabitFrequency.weekly:
-        return '${widget.selectedWeekdays.length} days per week';
+        final count = widget.selectedWeekdays.length;
+        return count == 0
+            ? 'No days selected'
+            : '$count day${count > 1 ? 's' : ''} per week';
       case HabitFrequency.monthly:
         return 'Day ${widget.monthDay} of each month';
       case HabitFrequency.custom:
@@ -588,20 +524,10 @@ class _CreateHabitFrequencySectionState
   }
 }
 
-/// Custom input formatter for month days (1-31)
-class _MonthDayInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (newValue.text.isEmpty) return newValue;
+class FrequencyOption {
+  final HabitFrequency frequency;
+  final String label;
+  final IconData icon;
 
-    final value = int.tryParse(newValue.text);
-    if (value == null) return oldValue;
-
-    if (value < 1 || value > 31) return oldValue;
-
-    return newValue;
-  }
+  const FrequencyOption(this.frequency, this.label, this.icon);
 }
