@@ -50,6 +50,7 @@ dependencies:
   pro_image_editor: ^11.5.8
   path: ^1.9.1
   google_fonts: ^6.3.1
+  get_it: ^7.6.7
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +58,8 @@ dev_dependencies:
 
   # Code quality
   flutter_lints: ^4.0.0
+  test: ^1.25.2  # unit testing
+  mocktail: ^1.0.3  # mocking in tests
 
 flutter:
   uses-material-design: true

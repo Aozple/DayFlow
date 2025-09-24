@@ -1,6 +1,7 @@
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/data/models/habit_instance_model.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
+import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/screens/habit/widgets/create_habit_header.dart';
 import 'package:dayflow/presentation/screens/habit/widgets/create_habit_main_content.dart';
 import 'package:dayflow/presentation/screens/habit/widgets/create_habit_frequency_section.dart';
@@ -93,6 +94,9 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
   void _initializeFormValues() {
     final habit = widget.habitToEdit;
 
+    // Get default settings from BLoC
+    final settingsState = context.read<SettingsBloc>().state;
+
     // Initialize frequency settings
     _frequency = habit?.frequency ?? HabitFrequency.daily;
     _selectedWeekdays = habit?.weekdays ?? _defaultWeekdays;
@@ -111,8 +115,17 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
     _targetValue = habit?.targetValue;
     _unit = habit?.unit;
     _selectedColor = habit?.color ?? AppColors.toHex(AppColors.userColors[0]);
-    _hasNotification = habit?.hasNotification ?? false;
-    _notificationMinutesBefore = habit?.notificationMinutesBefore ?? 0;
+    if (settingsState is SettingsLoaded) {
+      _hasNotification =
+          habit?.hasNotification ??
+          settingsState.settings.defaultNotificationEnabled;
+      _notificationMinutesBefore =
+          habit?.notificationMinutesBefore ??
+          settingsState.settings.defaultNotificationMinutesBefore;
+    } else {
+      _hasNotification = habit?.hasNotification ?? false;
+      _notificationMinutesBefore = habit?.notificationMinutesBefore ?? 0;
+    }
   }
 
   void _initializeTimeSettings(HabitModel? habit) {

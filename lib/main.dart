@@ -1,7 +1,7 @@
-import 'package:dayflow/core/services/notification_service.dart';
-import 'package:dayflow/data/repositories/habit_repository.dart';
+import 'package:dayflow/core/di/service_locator.dart';
+import 'package:dayflow/core/services/notifications/notification_service.dart';
+import 'package:dayflow/core/constants/app_constants.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
-import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
@@ -10,13 +10,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:get_it/get_it.dart';
 import 'core/themes/app_theme.dart';
 
-// App entry point with initialization
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set transparent system bars with light icons
+  // System UI setup
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -26,66 +26,45 @@ void main() async {
     ),
   );
 
-  // Enable edge-to-edge display
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Initialize local storage
+  // Initialize Hive
   await Hive.initFlutter();
-  await Hive.openBox('tasks');
-  await Hive.openBox('settings');
-  await Hive.openBox('habits');
-  await Hive.openBox('habit_instances');
+  await Hive.openBox(AppConstants.tasksBox);
+  await Hive.openBox(AppConstants.settingsBox);
+  await Hive.openBox(AppConstants.habitsBox);
+  await Hive.openBox(AppConstants.habitInstancesBox);
 
-  // Setup notifications
+  // Setup DI
+  await setupServiceLocator();
+
+  // Initialize services
   final notificationService = NotificationService();
   await notificationService.initialize();
 
-  // Initialize settings
-  final settingsRepository = SettingsRepository();
+  final settingsRepository = GetIt.I<SettingsRepository>();
   await settingsRepository.init();
 
-  // Lock to portrait orientation
+  // Lock orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(DayFlowApp(settingsRepository: settingsRepository));
+  runApp(const DayFlowApp());
 }
 
-// Main app widget
 class DayFlowApp extends StatelessWidget {
-  final SettingsRepository settingsRepository;
-  const DayFlowApp({super.key, required this.settingsRepository});
+  const DayFlowApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Setup BLoCs for state management
     return MultiBlocProvider(
       providers: [
-        // Task management
-        BlocProvider(
-          create:
-              (context) =>
-                  TaskBloc(repository: TaskRepository())
-                    ..add(const LoadTasks()),
-        ),
-        // Habit management
-        BlocProvider(
-          create:
-              (context) =>
-                  HabitBloc(repository: HabitRepository())
-                    ..add(const LoadHabits()),
-        ),
-        // Settings management
-        BlocProvider(
-          create:
-              (context) =>
-                  SettingsBloc(repository: settingsRepository)
-                    ..add(const LoadSettings()),
-        ),
+        BlocProvider(create: (_) => TaskBloc()..add(const LoadTasks())),
+        BlocProvider(create: (_) => HabitBloc()..add(const LoadHabits())),
+        BlocProvider(create: (_) => SettingsBloc()..add(const LoadSettings())),
       ],
-      // Update UI based on settings changes
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
           return MaterialApp.router(

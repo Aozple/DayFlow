@@ -276,6 +276,22 @@ class HabitModel {
         return [];
       }
 
+      var endCondition = HabitEndCondition.values.firstWhere(
+        (e) => e.name == map['endCondition'],
+        orElse: () => HabitEndCondition.never,
+      );
+      var endDate = parseDate(map['endDate'] as String?);
+
+      // Fix ANY corrupted end date - be more aggressive
+      if (endDate != null && endDate.isBefore(DateTime.now())) {
+        endCondition = HabitEndCondition.never;
+        endDate = null;
+        DebugLogger.warning(
+          'Fixed corrupted habit with past end date',
+          tag: _tag,
+        );
+      }
+
       final habit = HabitModel(
         id: map['id'] as String? ?? const Uuid().v4(),
         title: (map['title'] as String? ?? 'Untitled Habit').substring(
@@ -305,11 +321,8 @@ class HabitModel {
         monthDay: map['monthDay'] as int?,
         customInterval: map['customInterval'] as int?,
         preferredTime: parseTime(map['preferredTime'] as Map<String, dynamic>?),
-        endCondition: HabitEndCondition.values.firstWhere(
-          (e) => e.name == map['endCondition'],
-          orElse: () => HabitEndCondition.never,
-        ),
-        endDate: parseDate(map['endDate'] as String?),
+        endCondition: endCondition,
+        endDate: endDate,
         targetCount: map['targetCount'] as int?,
         habitType: HabitType.values.firstWhere(
           (t) => t.name == map['habitType'],

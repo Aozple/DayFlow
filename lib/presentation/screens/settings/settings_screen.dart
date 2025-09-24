@@ -1,9 +1,12 @@
 import 'dart:io';
-import 'package:dayflow/core/services/export_import_service.dart';
+import 'package:dayflow/core/services/export_import/export_import_service.dart';
+import 'package:dayflow/core/services/export_import/file_manager.dart';
+import 'package:dayflow/core/services/export_import/models/export_import_models.dart';
 import 'package:dayflow/data/models/app_settings.dart';
-import 'package:dayflow/data/repositories/settings_repository.dart';
-import 'package:dayflow/data/repositories/task_repository.dart';
+import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
+import 'package:dayflow/presentation/screens/settings/widgets/export_selection_dialog.dart';
+import 'package:dayflow/presentation/screens/settings/widgets/import_selection_dialog.dart';
 import 'package:dayflow/presentation/screens/settings/widgets/notification_time_picker.dart';
 import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,19 +35,10 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late final ExportImportService _exportImportService;
+  final ExportImportService _exportImportService = ExportImportService();
   bool _isProcessing = false;
   DateTime? _lastExportTime;
   ExportResult? _lastExportResult;
-
-  @override
-  void initState() {
-    super.initState();
-    _exportImportService = ExportImportService(
-      taskRepository: TaskRepository(),
-      settingsRepository: SettingsRepository(),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             return Column(
               children: [
                 const StatusBarPadding(),
-                // Header section with back button and title
                 const SettingsHeader(),
-                // Main scrollable content
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -335,11 +327,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         SettingsTile(
           title: 'Export Data',
-          subtitle: 'Backup your tasks and notes',
+          subtitle: 'Backup your data',
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // This is the new part that displays the time
               if (_lastExportTime != null)
                 Text(
                   _getTimeSinceExport(),
@@ -352,29 +343,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Icon(CupertinoIcons.share, size: 18, color: AppColors.accent),
             ],
           ),
-          onTap: () => _showExportOptions(),
+          onTap: _showExportOptions,
           icon: CupertinoIcons.arrow_up_doc,
         ),
         SettingsTile(
           title: 'Import Data',
-          subtitle: 'Restore from backup file',
+          subtitle: 'Restore from backup',
           trailing: Icon(
             CupertinoIcons.arrow_down,
             size: 18,
             color: AppColors.accent,
           ),
-          onTap: () => _showImportOptions(),
+          onTap: _showImportOptions,
           icon: CupertinoIcons.arrow_down_doc,
         ),
         SettingsTile(
           title: 'Clear All Data',
-          subtitle: 'Delete all tasks and notes',
+          subtitle: 'Delete all data',
           trailing: const Icon(
             CupertinoIcons.trash,
             size: 18,
             color: AppColors.error,
           ),
-          onTap: () => _showClearDataConfirmation(),
+          onTap: _showClearDataConfirmation,
           icon: CupertinoIcons.trash_fill,
           isDestructive: true,
         ),
@@ -400,7 +391,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             size: 18,
             color: AppColors.accent,
           ),
-          onTap: () => _sendFeedback(),
+          onTap: _sendFeedback,
           icon: CupertinoIcons.chat_bubble_fill,
         ),
         SettingsTile(
@@ -411,87 +402,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             size: 18,
             color: AppColors.warning,
           ),
-          onTap: () => _rateApp(),
+          onTap: _rateApp,
           icon: CupertinoIcons.heart_fill,
         ),
       ],
     );
   }
 
-  // Export Options
+  // Export/Import Methods
   void _showExportOptions() {
     showCupertinoModalPopup(
       context: context,
       builder:
-          (context) => CupertinoActionSheet(
-            title: const Text('Export Data'),
-            message: const Text('Choose export format'),
-            actions: [
-              CupertinoActionSheetAction(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _exportAsJSON();
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(CupertinoIcons.doc_text, size: 18),
-                    SizedBox(width: 8),
-                    Text('JSON (Complete Backup)'),
-                  ],
-                ),
-              ),
-              CupertinoActionSheetAction(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _exportAsCSV();
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(CupertinoIcons.table, size: 18),
-                    SizedBox(width: 8),
-                    Text('CSV (Spreadsheet)'),
-                  ],
-                ),
-              ),
-              CupertinoActionSheetAction(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _exportAsMarkdown();
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(CupertinoIcons.doc_richtext, size: 18),
-                    SizedBox(width: 8),
-                    Text('Markdown (Readable)'),
-                  ],
-                ),
-              ),
-              // This is the new conditional button
-              if (_lastExportResult != null &&
-                  _exportImportService.canQuickExport)
-                CupertinoActionSheetAction(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _quickReExport();
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(CupertinoIcons.arrow_counterclockwise, size: 18),
-                      SizedBox(width: 8),
-                      Text('Re-export Last File'),
-                    ],
-                  ),
-                ),
-            ],
-            cancelButton: CupertinoActionSheetAction(
-              isDefaultAction: true,
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+          (context) => ExportSelectionDialog(
+            onExport: _performExport,
+            canQuickExport: _exportImportService.canQuickExport,
+            lastExportResult: _lastExportResult,
+            onQuickReExport: _quickReExport,
           ),
     );
   }
@@ -499,209 +426,121 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showImportOptions() {
     showCupertinoModalPopup(
       context: context,
-      builder:
-          (context) => CupertinoActionSheet(
-            title: const Text('Import Data'),
-            message: const Text('Choose import source'),
-            actions: [
-              CupertinoActionSheetAction(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _importFromFiles();
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(CupertinoIcons.folder, size: 18),
-                    SizedBox(width: 8),
-                    Text('From Files'),
-                  ],
-                ),
-              ),
-              CupertinoActionSheetAction(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _importFromClipboard();
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(CupertinoIcons.doc_on_clipboard, size: 18),
-                    SizedBox(width: 8),
-                    Text('From Clipboard'),
-                  ],
-                ),
-              ),
-            ],
-            cancelButton: CupertinoActionSheetAction(
-              isDefaultAction: true,
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-          ),
+      builder: (context) => ImportSelectionDialog(onImport: _performImport),
     );
   }
 
-  // Export Methods
-  Future<void> _exportAsJSON() async {
+  Future<void> _performExport(ExportConfig config) async {
     if (_isProcessing) return;
     _isProcessing = true;
 
     try {
       _showLoadingDialog('Preparing export...');
 
-      final result = await _exportImportService.exportToJSON(
-        includeCompleted: true,
-        includeSettings: true,
-      );
+      ExportResult result;
 
-      if (mounted) {
-        Navigator.pop(context);
-
-        if (result.success) {
-          setState(() {
-            _lastExportResult = result;
-            _lastExportTime = DateTime.now();
-          });
-          _showExportOptionsDialog(result);
-        } else {
-          CustomSnackBar.error(context, result.error ?? 'Export failed');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        CustomSnackBar.error(context, 'Export failed: $e');
-      }
-    } finally {
-      _isProcessing = false;
-    }
-  }
-
-  Future<void> _exportAsCSV() async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    try {
-      _showLoadingDialog('Preparing CSV export...');
-
-      final result = await _exportImportService.exportToCSV(
-        includeCompleted: true,
-        includeNotes: true,
-      );
-
-      if (mounted) {
-        Navigator.pop(context);
-
-        if (result.success) {
-          setState(() {
-            _lastExportResult = result;
-            _lastExportTime = DateTime.now();
-          });
-          _showExportOptionsDialog(result);
-        } else {
-          CustomSnackBar.error(context, result.error ?? 'Export failed');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        CustomSnackBar.error(context, 'Export failed: $e');
-      }
-    } finally {
-      _isProcessing = false;
-    }
-  }
-
-  Future<void> _exportAsMarkdown() async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    try {
-      _showLoadingDialog('Preparing Markdown export...');
-
-      final result = await _exportImportService.exportToMarkdown(
-        includeCompleted: true,
-        groupByDate: true,
-      );
-
-      if (mounted) {
-        Navigator.pop(context);
-
-        if (result.success) {
-          setState(() {
-            _lastExportResult = result;
-            _lastExportTime = DateTime.now();
-          });
-          _showExportOptionsDialog(result);
-        } else {
-          CustomSnackBar.error(context, result.error ?? 'Export failed');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        CustomSnackBar.error(context, 'Export failed: $e');
-      }
-    } finally {
-      _isProcessing = false;
-    }
-  }
-
-  // Import Methods
-  Future<void> _importFromFiles() async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    try {
-      final content = await _exportImportService.pickFileForImport();
-
-      if (content != null && mounted) {
-        final validation = await _exportImportService.validateImport(content);
-
-        if (mounted) {
-          if (validation.isValid) {
-            _showImportConfirmDialog(content, validation);
+      switch (config.format) {
+        case ExportFormat.json:
+          result = await _exportImportService.exportAllToJson(
+            includeCompletedTasks: config.includeTasks,
+            includeHabitInstances: config.includeHabits,
+            includeSettings: config.includeSettings,
+          );
+          break;
+        case ExportFormat.csv:
+          if (config.includeTasks && !config.includeHabits) {
+            result = await _exportImportService.exportTasksOnly(
+              ExportFormat.csv,
+            );
+          } else if (config.includeHabits && !config.includeTasks) {
+            result = await _exportImportService.exportHabitsOnly(
+              ExportFormat.csv,
+            );
           } else {
-            CustomSnackBar.error(context, 'Invalid file: ${validation.error}');
+            // For CSV, we need to export separately and combine
+            result = await _exportImportService.exportTasksOnly(
+              ExportFormat.csv,
+            );
           }
+          break;
+        case ExportFormat.markdown:
+          if (config.includeTasks && !config.includeHabits) {
+            result = await _exportImportService.exportTasksOnly(
+              ExportFormat.markdown,
+            );
+          } else if (config.includeHabits && !config.includeTasks) {
+            result = await _exportImportService.exportHabitsOnly(
+              ExportFormat.markdown,
+            );
+          } else {
+            result = await _exportImportService.exportTasksOnly(
+              ExportFormat.markdown,
+            );
+          }
+          break;
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        if (result.success) {
+          setState(() {
+            _lastExportResult = result;
+            _lastExportTime = DateTime.now();
+          });
+          _showExportOptionsDialog(result);
+        } else {
+          CustomSnackBar.error(context, result.error ?? 'Export failed');
         }
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.error(context, 'Failed to read file: $e');
+        Navigator.pop(context);
+        CustomSnackBar.error(context, 'Export failed: $e');
       }
     } finally {
       _isProcessing = false;
     }
   }
 
-  Future<void> _importFromClipboard() async {
+  Future<void> _performImport(ImportConfig config) async {
     if (_isProcessing) return;
     _isProcessing = true;
 
     try {
-      final ClipboardData? data = await Clipboard.getData('text/plain');
+      String? content;
 
-      if (data?.text?.isEmpty ?? true) {
+      if (config.source == ImportSource.file) {
+        content = await FileManager.pickFileForImport();
+      } else {
+        final clipboardData = await Clipboard.getData('text/plain');
+        content = clipboardData?.text;
+      }
+
+      if (content == null || content.isEmpty) {
         if (mounted) {
-          CustomSnackBar.error(context, 'Clipboard is empty');
+          CustomSnackBar.error(
+            context,
+            config.source == ImportSource.file
+                ? 'No file selected'
+                : 'Clipboard is empty',
+          );
         }
         return;
       }
 
-      final validation = await _exportImportService.validateImport(data!.text!);
+      final validation = await _exportImportService.validateImport(content);
 
       if (mounted) {
         if (validation.isValid) {
-          _showImportConfirmDialog(data.text!, validation);
+          _showImportConfirmDialog(content, validation, config);
         } else {
-          CustomSnackBar.error(context, 'Invalid data in clipboard');
+          CustomSnackBar.error(context, 'Invalid data: ${validation.error}');
         }
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.error(context, 'Failed to read clipboard');
+        CustomSnackBar.error(context, 'Import failed: $e');
       }
     } finally {
       _isProcessing = false;
@@ -710,9 +549,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _processImport(
     String data,
-    ImportValidation validation, {
-    bool merge = true,
-  }) async {
+    ImportValidation validation,
+    ImportConfig config,
+  ) async {
     if (_isProcessing) return;
     _isProcessing = true;
 
@@ -722,17 +561,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ImportResult result;
 
       if (validation.format == 'csv') {
-        result = await _exportImportService.importFromCSV(data);
+        // For CSV, determine type based on content or user selection
+        result = await _exportImportService.importFromCsv(
+          data,
+          config.importTasks ? ImportType.tasks : ImportType.habits,
+        );
       } else {
-        result = await _exportImportService.importFromJSON(data, merge: merge);
+        result = await _exportImportService.importFromJson(
+          data,
+          merge: config.mergeData,
+          importTasks: config.importTasks,
+          importHabits: config.importHabits,
+          importSettings: config.importSettings,
+        );
       }
 
       if (mounted) {
         Navigator.pop(context);
 
         if (result.success) {
-          context.read<TaskBloc>().add(const LoadTasks());
-          if (validation.hasSettings) {
+          // Refresh relevant blocs
+          if (config.importTasks) {
+            context.read<TaskBloc>().add(const LoadTasks());
+          }
+          if (config.importHabits) {
+            context.read<HabitBloc>().add(const LoadHabits());
+          }
+          if (config.importSettings) {
             context.read<SettingsBloc>().add(const LoadSettings());
           }
 
@@ -758,15 +613,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       _showLoadingDialog('Creating backup and clearing data...');
 
-      final success = await _exportImportService.clearAllData(
-        createBackup: true,
-      );
+      final success = await _exportImportService.clearAllDataWithBackup();
 
       if (mounted) {
         Navigator.pop(context);
 
         if (success) {
           context.read<TaskBloc>().add(const LoadTasks());
+          context.read<HabitBloc>().add(const LoadHabits());
           context.read<SettingsBloc>().add(const LoadSettings());
 
           CustomSnackBar.success(context, 'All data cleared (backup saved)');
@@ -818,7 +672,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               CupertinoDialogAction(
                 onPressed: () async {
                   Navigator.pop(dialogContext);
-                  final shared = await _exportImportService.shareExport(result);
+                  final shared = await FileManager.shareExport(result);
                   if (!shared && mounted) {
                     CustomSnackBar.error(context, 'Failed to share');
                   }
@@ -828,7 +682,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               CupertinoDialogAction(
                 onPressed: () async {
                   Navigator.pop(dialogContext);
-                  final path = await _exportImportService.saveToDevice(result);
+                  final path = await FileManager.saveToDevice(result);
                   if (mounted) {
                     if (path != null) {
                       CustomSnackBar.success(
@@ -847,7 +701,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showImportConfirmDialog(String data, ImportValidation validation) {
+  void _showImportConfirmDialog(
+    String data,
+    ImportValidation validation,
+    ImportConfig config,
+  ) {
     showCupertinoDialog(
       context: context,
       builder:
@@ -857,12 +715,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Format: ${validation.format?.toUpperCase()}'),
-                Text('Items to import: ${validation.totalItems}'),
-                if (validation.hasSettings)
-                  const Text(
-                    '\nIncludes settings',
-                    style: TextStyle(fontSize: 12),
-                  ),
+                Text('Items: ${validation.totalItems}'),
+                if (validation.hasTasks) const Text('• Contains tasks'),
+                if (validation.hasHabits) const Text('• Contains habits'),
+                if (validation.hasSettings) const Text('• Contains settings'),
               ],
             ),
             actions: [
@@ -874,7 +730,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 isDestructiveAction: true,
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  _processImport(data, validation, merge: true);
+                  _processImport(data, validation, config);
                 },
                 child: const Text('Import'),
               ),
@@ -929,6 +785,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text('This will permanently delete:'),
               SizedBox(height: 8),
               Text('• All tasks and notes'),
+              Text('• All habits and progress'),
               Text('• All settings'),
               SizedBox(height: 12),
               Text(
@@ -953,6 +810,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Helper Methods
   String _getTimeSinceExport() {
     if (_lastExportTime == null) return '';
 
@@ -986,7 +844,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Other settings methods
+  // Settings Methods
   void _showAccentColorPicker(String currentColor) {
     AccentColorPicker.show(
       context: context,
@@ -1094,7 +952,6 @@ Description:
               CupertinoDialogAction(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  // TODO: Open app store
                   CustomSnackBar.info(context, 'Opening app store...');
                 },
                 child: const Text('Rate Now'),

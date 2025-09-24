@@ -9,13 +9,11 @@ class SettingsRepository {
 
   SharedPreferences? _prefs;
   bool _isInitialized = false;
-
-  // Cache for settings
   AppSettings? _cachedSettings;
   DateTime? _lastCacheUpdate;
   static const Duration _cacheDuration = Duration(minutes: 5);
 
-  // Singleton pattern
+  // Singleton
   static final SettingsRepository _instance = SettingsRepository._internal();
   factory SettingsRepository() => _instance;
   SettingsRepository._internal();
@@ -28,21 +26,15 @@ class SettingsRepository {
       return;
     }
 
-    return DebugLogger.timeOperation('Initialize SettingsRepository', () async {
-      try {
-        _prefs = await SharedPreferences.getInstance();
-        _isInitialized = true;
-        DebugLogger.success('Settings repository initialized', tag: _tag);
-      } catch (e) {
-        DebugLogger.error(
-          'Failed to initialize SharedPreferences',
-          tag: _tag,
-          error: e,
-        );
-        _isInitialized = false;
-        rethrow;
-      }
-    });
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _isInitialized = true;
+      DebugLogger.success('Settings repository initialized', tag: _tag);
+    } catch (e) {
+      DebugLogger.error('Failed to initialize', tag: _tag, error: e);
+      _isInitialized = false;
+      rethrow;
+    }
   }
 
   bool _isCacheValid() {
@@ -51,18 +43,19 @@ class SettingsRepository {
     return age < _cacheDuration;
   }
 
+  void _updateCache(AppSettings settings) {
+    _cachedSettings = settings;
+    _lastCacheUpdate = DateTime.now();
+  }
+
   void _invalidateCache() {
     _cachedSettings = null;
     _lastCacheUpdate = null;
-    DebugLogger.verbose('Settings cache invalidated', tag: _tag);
   }
 
   AppSettings getSettings() {
     if (!_isInitialized || _prefs == null) {
-      DebugLogger.warning(
-        'Repository not initialized, returning defaults',
-        tag: _tag,
-      );
+      DebugLogger.warning('Not initialized, returning defaults', tag: _tag);
       return const AppSettings();
     }
 
@@ -76,26 +69,15 @@ class SettingsRepository {
       final settingsJson = _prefs!.getString(_settingsKey);
 
       if (settingsJson != null) {
-        DebugLogger.debug('Loading settings from storage', tag: _tag);
-
         final Map<String, dynamic> settingsMap = jsonDecode(settingsJson);
         final settings = AppSettings.fromMap(settingsMap);
 
-        // Validate and fix if needed
         if (!settings.isValid()) {
-          DebugLogger.warning(
-            'Invalid settings detected, fixing...',
-            tag: _tag,
-          );
-          final fixedSettings = _fixInvalidSettings(settings);
-
-          // Save fixed settings
-          saveSettings(fixedSettings).then((_) {
-            DebugLogger.success('Fixed settings saved', tag: _tag);
-          });
-
-          _updateCache(fixedSettings);
-          return fixedSettings;
+          DebugLogger.warning('Invalid settings, fixing', tag: _tag);
+          final fixed = _fixInvalidSettings(settings);
+          saveSettings(fixed);
+          _updateCache(fixed);
+          return fixed;
         }
 
         _updateCache(settings);
@@ -113,11 +95,6 @@ class SettingsRepository {
       _updateCache(fallback);
       return fallback;
     }
-  }
-
-  void _updateCache(AppSettings settings) {
-    _cachedSettings = settings;
-    _lastCacheUpdate = DateTime.now();
   }
 
   AppSettings _fixInvalidSettings(AppSettings settings) {
@@ -138,206 +115,131 @@ class SettingsRepository {
 
   Future<bool> saveSettings(AppSettings settings) async {
     if (!_isInitialized || _prefs == null) {
-      DebugLogger.warning(
-        'Cannot save - repository not initialized',
-        tag: _tag,
-      );
+      DebugLogger.warning('Cannot save - not initialized', tag: _tag);
       return false;
     }
 
-    return DebugLogger.timeOperation('Save settings', () async {
-      try {
-        // Validate before saving
-        if (!settings.isValid()) {
-          DebugLogger.warning('Attempted to save invalid settings', tag: _tag);
-          return false;
-        }
-
-        final settingsJson = jsonEncode(settings.toMap());
-        final result = await _prefs!.setString(_settingsKey, settingsJson);
-
-        if (result) {
-          _updateCache(settings);
-          DebugLogger.success('Settings saved', tag: _tag);
-        } else {
-          DebugLogger.error('Failed to save settings', tag: _tag);
-        }
-
-        return result;
-      } catch (e) {
-        DebugLogger.error('Error saving settings', tag: _tag, error: e);
+    try {
+      if (!settings.isValid()) {
+        DebugLogger.warning('Invalid settings', tag: _tag);
         return false;
       }
-    });
+
+      final settingsJson = jsonEncode(settings.toMap());
+      final result = await _prefs!.setString(_settingsKey, settingsJson);
+
+      if (result) {
+        _updateCache(settings);
+        DebugLogger.success('Settings saved', tag: _tag);
+      } else {
+        DebugLogger.error('Failed to save settings', tag: _tag);
+      }
+
+      return result;
+    } catch (e) {
+      DebugLogger.error('Error saving settings', tag: _tag, error: e);
+      return false;
+    }
   }
 
   Future<bool> clearSettings() async {
     if (!_isInitialized || _prefs == null) {
-      DebugLogger.warning(
-        'Cannot clear - repository not initialized',
-        tag: _tag,
-      );
+      DebugLogger.warning('Cannot clear - not initialized', tag: _tag);
       return false;
     }
 
-    return DebugLogger.timeOperation('Clear settings', () async {
-      try {
-        final result = await _prefs!.remove(_settingsKey);
+    try {
+      final result = await _prefs!.remove(_settingsKey);
 
-        if (result) {
-          _invalidateCache();
-          DebugLogger.success('Settings cleared', tag: _tag);
-        } else {
-          DebugLogger.warning('Failed to clear settings', tag: _tag);
-        }
-
-        return result;
-      } catch (e) {
-        DebugLogger.error('Error clearing settings', tag: _tag, error: e);
-        return false;
+      if (result) {
+        _invalidateCache();
+        DebugLogger.success('Settings cleared', tag: _tag);
+      } else {
+        DebugLogger.warning('Failed to clear settings', tag: _tag);
       }
-    });
+
+      return result;
+    } catch (e) {
+      DebugLogger.error('Error clearing settings', tag: _tag, error: e);
+      return false;
+    }
   }
 
-  // Batch update for better performance
   Future<bool> updateMultiple(Map<String, dynamic> updates) async {
-    return DebugLogger.timeOperation('Batch update settings', () async {
-      try {
-        var currentSettings = getSettings();
+    try {
+      var currentSettings = getSettings();
 
-        updates.forEach((key, value) {
-          switch (key) {
-            case 'accentColor':
-              currentSettings = currentSettings.copyWith(
-                accentColor: value as String,
-              );
-              break;
-            case 'firstDayOfWeek':
-              currentSettings = currentSettings.copyWith(
-                firstDayOfWeek: value as String,
-              );
-              break;
-            case 'defaultTaskPriority':
-              currentSettings = currentSettings.copyWith(
-                defaultTaskPriority: value as int,
-              );
-              break;
-            case 'defaultNotificationEnabled':
-              currentSettings = currentSettings.copyWith(
-                defaultNotificationEnabled: value as bool,
-              );
-              break;
-            case 'defaultNotificationMinutesBefore':
-              currentSettings = currentSettings.copyWith(
-                defaultNotificationMinutesBefore: value as int,
-              );
-              break;
-            case 'notificationSound':
-              currentSettings = currentSettings.copyWith(
-                notificationSound: value as bool,
-              );
-              break;
-            case 'notificationVibration':
-              currentSettings = currentSettings.copyWith(
-                notificationVibration: value as bool,
-              );
-              break;
-          }
-        });
+      updates.forEach((key, value) {
+        switch (key) {
+          case 'accentColor':
+            currentSettings = currentSettings.copyWith(
+              accentColor: value as String,
+            );
+            break;
+          case 'firstDayOfWeek':
+            currentSettings = currentSettings.copyWith(
+              firstDayOfWeek: value as String,
+            );
+            break;
+          case 'defaultTaskPriority':
+            currentSettings = currentSettings.copyWith(
+              defaultTaskPriority: value as int,
+            );
+            break;
+          case 'defaultNotificationEnabled':
+            currentSettings = currentSettings.copyWith(
+              defaultNotificationEnabled: value as bool,
+            );
+            break;
+          case 'defaultNotificationMinutesBefore':
+            currentSettings = currentSettings.copyWith(
+              defaultNotificationMinutesBefore: value as int,
+            );
+            break;
+          case 'notificationSound':
+            currentSettings = currentSettings.copyWith(
+              notificationSound: value as bool,
+            );
+            break;
+          case 'notificationVibration':
+            currentSettings = currentSettings.copyWith(
+              notificationVibration: value as bool,
+            );
+            break;
+        }
+      });
 
-        final result = await saveSettings(currentSettings);
-        DebugLogger.success(
-          'Batch update completed',
-          tag: _tag,
-          data: '${updates.length} fields',
-        );
-        return result;
-      } catch (e) {
-        DebugLogger.error('Batch update failed', tag: _tag, error: e);
-        return false;
-      }
-    });
+      final result = await saveSettings(currentSettings);
+      DebugLogger.success('Batch update completed', tag: _tag);
+      return result;
+    } catch (e) {
+      DebugLogger.error('Batch update failed', tag: _tag, error: e);
+      return false;
+    }
   }
 
   Future<bool> updateAccentColor(String colorHex) async {
-    try {
-      final validatedColor = AppSettings.validateHexColor(colorHex);
-      final currentSettings = getSettings();
-      final updatedSettings = currentSettings.copyWith(
-        accentColor: validatedColor,
-      );
-
-      DebugLogger.info(
-        'Updating accent color',
-        tag: _tag,
-        data: validatedColor,
-      );
-      return await saveSettings(updatedSettings);
-    } catch (e) {
-      DebugLogger.error('Error updating accent color', tag: _tag, error: e);
-      return false;
-    }
+    final currentSettings = getSettings();
+    final updated = currentSettings.copyWith(accentColor: colorHex);
+    return await saveSettings(updated);
   }
 
   Future<bool> updateFirstDayOfWeek(String day) async {
-    try {
-      final validatedDay = AppSettings.validateFirstDay(day);
-      final currentSettings = getSettings();
-      final updatedSettings = currentSettings.copyWith(
-        firstDayOfWeek: validatedDay,
-      );
-
-      DebugLogger.info(
-        'Updating first day of week',
-        tag: _tag,
-        data: validatedDay,
-      );
-      return await saveSettings(updatedSettings);
-    } catch (e) {
-      DebugLogger.error(
-        'Error updating first day of week',
-        tag: _tag,
-        error: e,
-      );
-      return false;
-    }
+    final currentSettings = getSettings();
+    final updated = currentSettings.copyWith(firstDayOfWeek: day);
+    return await saveSettings(updated);
   }
 
   Future<bool> updateDefaultPriority(int priority) async {
-    try {
-      final validatedPriority = AppSettings.validatePriority(priority);
-      final currentSettings = getSettings();
-      final updatedSettings = currentSettings.copyWith(
-        defaultTaskPriority: validatedPriority,
-      );
-
-      DebugLogger.info(
-        'Updating default priority',
-        tag: _tag,
-        data: validatedPriority,
-      );
-      return await saveSettings(updatedSettings);
-    } catch (e) {
-      DebugLogger.error('Error updating default priority', tag: _tag, error: e);
-      return false;
-    }
+    final currentSettings = getSettings();
+    final updated = currentSettings.copyWith(defaultTaskPriority: priority);
+    return await saveSettings(updated);
   }
 
   String exportSettings() {
     try {
       final settings = getSettings();
-      if (!settings.isValid()) {
-        DebugLogger.warning('Cannot export invalid settings', tag: _tag);
-        return '{}';
-      }
-
-      final json = jsonEncode(settings.toMap());
-      DebugLogger.success(
-        'Settings exported',
-        tag: _tag,
-        data: '${json.length} chars',
-      );
-      return json;
+      return jsonEncode(settings.toMap());
     } catch (e) {
       DebugLogger.error('Error exporting settings', tag: _tag, error: e);
       return '{}';
@@ -345,29 +247,22 @@ class SettingsRepository {
   }
 
   Future<bool> importSettings(String jsonString) async {
-    return DebugLogger.timeOperation('Import settings', () async {
-      try {
-        final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
-        final settings = AppSettings.fromMap(settingsMap);
+    try {
+      final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
+      final settings = AppSettings.fromMap(settingsMap);
 
-        if (!settings.isValid()) {
-          DebugLogger.warning('Imported settings are invalid', tag: _tag);
-          return false;
-        }
-
-        final result = await saveSettings(settings);
-        if (result) {
-          DebugLogger.success('Settings imported', tag: _tag);
-        }
-        return result;
-      } catch (e) {
-        DebugLogger.error('Error importing settings', tag: _tag, error: e);
+      if (!settings.isValid()) {
+        DebugLogger.warning('Imported settings invalid', tag: _tag);
         return false;
       }
-    });
+
+      return await saveSettings(settings);
+    } catch (e) {
+      DebugLogger.error('Error importing settings', tag: _tag, error: e);
+      return false;
+    }
   }
 
-  // Get service status for debugging
   Map<String, dynamic> getStatus() {
     return {
       'initialized': _isInitialized,
