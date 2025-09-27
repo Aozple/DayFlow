@@ -9,7 +9,8 @@ abstract class BaseRepository<T> {
   // Cache management
   List<T>? _cachedItems;
   DateTime? _lastCacheUpdate;
-  static const Duration cacheDuration = Duration(seconds: 30);
+  static const Duration cacheDuration = Duration(minutes: 5);
+  static const Duration quickCacheDuration = Duration(seconds: 10);
 
   BaseRepository({required String boxName, required this.tag})
     : _box = Hive.box(boxName);
@@ -55,6 +56,27 @@ abstract class BaseRepository<T> {
   void updateCache(List<T> items) {
     _cachedItems = items;
     _lastCacheUpdate = DateTime.now();
+  }
+
+  // Smart cache validation based on operation type
+  bool isCacheValidForOperation(String operationType) {
+    if (_cachedItems == null || _lastCacheUpdate == null) return false;
+
+    final age = DateTime.now().difference(_lastCacheUpdate!);
+
+    // Use different durations for different operations
+    switch (operationType) {
+      case 'read':
+      case 'filter':
+      case 'search':
+        return age < cacheDuration; // 5 minutes for read operations
+      case 'write':
+      case 'update':
+      case 'delete':
+        return age < quickCacheDuration; // 10 seconds after write operations
+      default:
+        return age < cacheDuration;
+    }
   }
 
   // Type conversion helpers
@@ -127,21 +149,33 @@ abstract class BaseRepository<T> {
     }
   }
 
-  List<T> getAll({bool includeDeleted = false, bool forceRefresh = false}) {
+  List<T> getAll({
+    bool includeDeleted = false,
+    bool forceRefresh = false,
+    String operationType = 'read',
+  }) {
     try {
-      // Force refresh if background data changed or explicitly requested
-      final shouldRefresh = forceRefresh || shouldRefreshFromBackground();
+      // Use operation-based cache validation
+      final shouldRefresh =
+          forceRefresh ||
+          shouldRefreshFromBackground() ||
+          !isCacheValidForOperation(operationType);
 
-      // Return cached if valid and no background changes
-      if (isCacheValid() &&
-          _cachedItems != null &&
-          !includeDeleted &&
-          !shouldRefresh) {
+      // Return cached if valid
+      if (!shouldRefresh && _cachedItems != null && !includeDeleted) {
+        DebugLogger.verbose(
+          'Cache hit',
+          tag: tag,
+          data: '${_cachedItems!.length} items',
+        );
         return _cachedItems!;
       }
 
+      // Load from storage
       final items = <T>[];
-      for (final key in _box.keys) {
+      final keys = _box.keys.toList(); // Convert to list once
+
+      for (final key in keys) {
         try {
           final data = _box.get(key);
           if (data != null) {
@@ -153,25 +187,39 @@ abstract class BaseRepository<T> {
             }
           }
         } catch (e) {
-          DebugLogger.warning('Skipping corrupted item', tag: tag, data: key);
+          DebugLogger.warning(
+            'Skipping corrupted item',
+            tag: tag,
+            data: '$key: $e',
+          );
           continue;
         }
       }
 
+      // Update cache only for non-deleted items
       if (!includeDeleted) {
         updateCache(items);
-        _clearBackgroundChangeFlag(); // Clear the flag after refresh
+        _clearBackgroundChangeFlag();
       }
 
       DebugLogger.success(
         'Items loaded',
         tag: tag,
-        data: '${items.length} items, refreshed: $shouldRefresh',
+        data:
+            '${items.length} items, cache: ${shouldRefresh ? "refreshed" : "hit"}',
       );
+
       return items;
     } catch (e) {
       DebugLogger.error('Failed to get all items', tag: tag, error: e);
-      return _cachedItems ?? [];
+
+      // Fallback to cache if available
+      if (_cachedItems != null && !includeDeleted) {
+        DebugLogger.warning('Returning stale cache due to error', tag: tag);
+        return _cachedItems!;
+      }
+
+      return [];
     }
   }
 
@@ -234,6 +282,74 @@ abstract class BaseRepository<T> {
       settingsBox.delete('_background_data_changed');
     } catch (e) {
       // Ignore error
+    }
+  }
+
+  // Batch operations for better performance
+  Future<List<String>> addBatch(List<T> items) async {
+    try {
+      final ids = <String>[];
+
+      // Prepare all data first
+      final dataMap = <String, Map<String, dynamic>>{};
+      for (final item in items) {
+        final id = getId(item);
+        dataMap[id] = toMap(item);
+        ids.add(id);
+      }
+
+      // Write in batch
+      await _box.putAll(dataMap);
+
+      invalidateCache();
+      DebugLogger.success(
+        'Batch add completed',
+        tag: tag,
+        data: '${ids.length} items',
+      );
+
+      return ids;
+    } catch (e) {
+      DebugLogger.error('Failed to add batch', tag: tag, error: e);
+      throw Exception('Failed to add batch: $e');
+    }
+  }
+
+  Future<void> updateBatch(List<T> items) async {
+    try {
+      final dataMap = <String, Map<String, dynamic>>{};
+      for (final item in items) {
+        final id = getId(item);
+        dataMap[id] = toMap(item);
+      }
+
+      await _box.putAll(dataMap);
+      invalidateCache();
+
+      DebugLogger.success(
+        'Batch update completed',
+        tag: tag,
+        data: '${items.length} items',
+      );
+    } catch (e) {
+      DebugLogger.error('Failed to update batch', tag: tag, error: e);
+      throw Exception('Failed to update batch: $e');
+    }
+  }
+
+  Future<void> deleteBatch(List<String> ids) async {
+    try {
+      await _box.deleteAll(ids);
+      invalidateCache();
+
+      DebugLogger.success(
+        'Batch delete completed',
+        tag: tag,
+        data: '${ids.length} items',
+      );
+    } catch (e) {
+      DebugLogger.error('Failed to delete batch', tag: tag, error: e);
+      throw Exception('Failed to delete batch: $e');
     }
   }
 }

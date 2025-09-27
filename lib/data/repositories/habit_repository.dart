@@ -10,6 +10,11 @@ class HabitRepository extends BaseRepository<HabitModel>
     implements IHabitRepository {
   static const String _tag = 'HabitRepo';
 
+  // Cache for statistics
+  Map<String, dynamic>? _cachedStats;
+  DateTime? _lastStatsUpdate;
+  static const Duration _statsCacheDuration = Duration(minutes: 2);
+
   // Instance management
   late final BaseRepository<HabitInstanceModel> _instanceRepo;
 
@@ -86,10 +91,35 @@ class HabitRepository extends BaseRepository<HabitModel>
 
   @override
   List<HabitInstanceModel> getInstancesByDate(DateTime date) {
-    return _instanceRepo
-        .getAll()
-        .where((i) => _isSameDay(i.date, date))
-        .toList();
+    try {
+      final targetYear = date.year;
+      final targetMonth = date.month;
+      final targetDay = date.day;
+
+      final instances =
+          _instanceRepo.getAll(operationType: 'filter').where((instance) {
+            if (instance.isDeleted) return false;
+
+            final instanceDate = instance.date;
+            return instanceDate.year == targetYear &&
+                instanceDate.month == targetMonth &&
+                instanceDate.day == targetDay;
+          }).toList();
+
+      // Sort by habit creation order for consistent UI
+      instances.sort((a, b) => a.date.compareTo(b.date));
+
+      DebugLogger.verbose(
+        'Instances loaded for date',
+        tag: tag,
+        data: '${instances.length} instances',
+      );
+
+      return instances;
+    } catch (e) {
+      DebugLogger.error('Failed to get instances by date', tag: tag, error: e);
+      return [];
+    }
   }
 
   @override
@@ -304,23 +334,74 @@ class HabitRepository extends BaseRepository<HabitModel>
   }
 
   @override
-  Map<String, dynamic> getStatistics() {
-    final habits = getAllHabits();
-    final today = DateTime.now();
-    final todayInstances = getInstancesByDate(today);
+  void invalidateCache() {
+    super.invalidateCache();
+    _cachedStats = null;
+    _lastStatsUpdate = null;
+    DebugLogger.verbose('Habit statistics cache invalidated', tag: tag);
+  }
 
-    return {
-      'totalHabits': habits.length,
-      'activeHabits': habits.where((h) => h.isActive).length,
-      'todayTotal': todayInstances.length,
-      'todayCompleted': todayInstances.where((i) => i.isCompleted).length,
-      'todayPending': todayInstances.where((i) => i.isPending).length,
-      'completionRate':
-          todayInstances.isEmpty
-              ? 0.0
-              : todayInstances.where((i) => i.isCompleted).length /
-                  todayInstances.length,
-    };
+  @override
+  Map<String, dynamic> getStatistics({bool forceRefresh = false}) {
+    try {
+      // Return cached stats if valid
+      if (!forceRefresh &&
+          _cachedStats != null &&
+          _lastStatsUpdate != null &&
+          DateTime.now().difference(_lastStatsUpdate!).inSeconds <
+              _statsCacheDuration.inSeconds) {
+        DebugLogger.verbose('Habit statistics cache hit', tag: tag);
+        return _cachedStats!;
+      }
+
+      final habits = getAll(operationType: 'read');
+      final today = DateTime.now();
+      final todayInstances = getInstancesByDate(today);
+
+      int activeHabits = 0;
+      int completedToday = 0;
+      int pendingToday = 0;
+
+      // Calculate habit stats
+      for (final habit in habits) {
+        if (habit.isActive) {
+          activeHabits++;
+        }
+      }
+
+      // Calculate today's stats
+      for (final instance in todayInstances) {
+        if (instance.isCompleted) {
+          completedToday++;
+        } else if (instance.isPending) {
+          pendingToday++;
+        }
+      }
+
+      final todayTotal = todayInstances.length;
+      final completionRate = todayTotal > 0 ? completedToday / todayTotal : 0.0;
+
+      _cachedStats = {
+        'totalHabits': habits.length,
+        'activeHabits': activeHabits,
+        'todayTotal': todayTotal,
+        'todayCompleted': completedToday,
+        'todayPending': pendingToday,
+        'completionRate': completionRate,
+      };
+
+      _lastStatsUpdate = DateTime.now();
+
+      DebugLogger.success(
+        'Habit statistics calculated and cached',
+        tag: tag,
+        data: _cachedStats,
+      );
+      return _cachedStats!;
+    } catch (e) {
+      DebugLogger.error('Failed to get habit statistics', tag: tag, error: e);
+      return _cachedStats ?? {};
+    }
   }
 }
 

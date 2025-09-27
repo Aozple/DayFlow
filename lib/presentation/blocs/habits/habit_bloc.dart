@@ -15,6 +15,9 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
   final NotificationService _notificationService =
       GetIt.I<NotificationService>();
 
+  // Last processed values to avoid duplicate processing
+  String? _lastSearchQuery;
+
   HabitBloc() : super(tag: 'HabitBloc', initialState: const HabitInitial()) {
     on<LoadHabits>(_onLoadHabits);
     on<LoadHabitInstances>(_onLoadHabitInstances);
@@ -33,13 +36,17 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
   }
 
   Future<HabitLoaded> _refreshHabitsState({DateTime? selectedDate}) async {
-    final habits = _repository.getAllHabits();
+    // Use operation-aware repository calls
+    final habits = _repository.getAll(operationType: 'read');
+
     final currentState = state is HabitLoaded ? state as HabitLoaded : null;
     final date = selectedDate ?? currentState?.selectedDate ?? DateTime.now();
+
+    // Use cached instances when possible
     final instances = _repository.getInstancesByDate(date);
     final statistics = HabitStatistics.fromHabits(habits, instances);
 
-    return HabitLoaded(
+    return HabitLoaded.create(
       habits: habits,
       todayInstances: instances,
       selectedDate: date,
@@ -57,7 +64,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
         final todayInstances = _repository.getInstancesByDate(DateTime.now());
         final statistics = HabitStatistics.fromHabits(habits, todayInstances);
 
-        return HabitLoaded(
+        return HabitLoaded.create(
           habits: habits,
           todayInstances: todayInstances,
           selectedDate: DateTime.now(),
@@ -71,7 +78,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
       fallbackState:
           state is HabitLoaded
               ? state
-              : HabitLoaded(
+              : HabitLoaded.create(
                 habits: const [],
                 todayInstances: const [],
                 selectedDate: DateTime.now(),
@@ -90,7 +97,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
         final instances = _repository.getInstancesByDate(event.date);
         final statistics = HabitStatistics.fromHabits(habits, instances);
 
-        return HabitLoaded(
+        return HabitLoaded.create(
           habits: habits,
           todayInstances: instances,
           selectedDate: event.date,
@@ -191,7 +198,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
             currentState.selectedDate,
           );
 
-          return HabitLoaded(
+          return HabitLoaded.create(
             habits: habits,
             todayInstances: instances,
             selectedDate: currentState.selectedDate,
@@ -231,7 +238,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
           );
           final statistics = HabitStatistics.fromHabits(habits, instances);
 
-          return HabitLoaded(
+          return HabitLoaded.create(
             habits: habits,
             todayInstances: instances,
             selectedDate: currentState.selectedDate,
@@ -373,16 +380,22 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     Emitter<HabitState> emit,
   ) async {
     try {
+      // Skip if same query (simple debouncing)
+      if (_lastSearchQuery == event.query) {
+        logVerbose('Skipping duplicate search query');
+        return;
+      }
+
       logInfo('Searching habits: "${event.query}"');
+      _lastSearchQuery = event.query;
 
       if (state is HabitLoaded) {
         final currentState = state as HabitLoaded;
 
         // Create proper search filter
         final searchFilter =
-            event.query.isNotEmpty
+            event.query.trim().isNotEmpty
                 ? HabitFilter(
-                  // We can search in tags, but also should allow title/description search
                   tags:
                       currentState.habitsByTag.keys
                           .where(
@@ -394,13 +407,28 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
                 )
                 : null;
 
-        emit(currentState.copyWith(activeFilter: searchFilter));
-
-        logSuccess('Search filter applied');
+        // Only emit if filter actually changed
+        if (_filterActuallyChanged(currentState.activeFilter, searchFilter)) {
+          emit(currentState.copyWith(activeFilter: searchFilter));
+          logSuccess('Search filter applied');
+        } else {
+          logVerbose('Search filter unchanged, skipping emit');
+        }
       }
     } catch (e) {
       logError('Search failed', error: e);
     }
+  }
+
+  // Helper to check if filter actually changed
+  bool _filterActuallyChanged(HabitFilter? oldFilter, HabitFilter? newFilter) {
+    if (oldFilter == null && newFilter == null) return false;
+    if (oldFilter == null || newFilter == null) return true;
+
+    return oldFilter.frequencies != newFilter.frequencies ||
+        oldFilter.types != newFilter.types ||
+        oldFilter.isActive != newFilter.isActive ||
+        oldFilter.tags != newFilter.tags;
   }
 
   Future<void> _onClearError(ClearError event, Emitter<HabitState> emit) async {

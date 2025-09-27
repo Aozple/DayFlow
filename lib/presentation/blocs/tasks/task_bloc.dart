@@ -15,6 +15,9 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
   final NotificationService _notificationService =
       GetIt.I<NotificationService>();
 
+  // Last processed values to avoid duplicate processing
+  String? _lastSearchQuery;
+
   TaskBloc() : super(tag: 'TaskBloc', initialState: const TaskInitial()) {
     on<LoadTasks>(_onLoadTasks);
     on<LoadTasksByDate>(_onLoadTasksByDate);
@@ -27,13 +30,18 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     on<FilterTasks>(_onFilterTasks);
   }
 
+  // Refresh current state with optimized repository calls
   Future<TaskLoaded> _refreshTasksState({DateTime? selectedDate}) async {
-    final tasks = _repository.getAllTasks();
-    final currentState = state is TaskLoaded ? state as TaskLoaded : null;
+    final tasks = _repository.getAll(operationType: 'read');
 
-    return TaskLoaded(
+    DateTime? currentSelectedDate;
+    if (state is TaskLoaded) {
+      currentSelectedDate = (state as TaskLoaded).selectedDate;
+    }
+
+    return TaskLoaded.create(
       tasks: tasks,
-      selectedDate: selectedDate ?? currentState?.selectedDate,
+      selectedDate: selectedDate ?? currentSelectedDate,
     );
   }
 
@@ -43,18 +51,19 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     await performOperation(
       operationName: 'Load Tasks',
       operation: () async {
-        final tasks = _repository.getAllTasks();
+        final tasks = _repository.getAll(operationType: 'read');
         DateTime? selectedDate;
         if (state is TaskLoaded) {
           selectedDate = (state as TaskLoaded).selectedDate;
         }
-        return TaskLoaded(tasks: tasks, selectedDate: selectedDate);
+        return TaskLoaded.create(tasks: tasks, selectedDate: selectedDate);
       },
       emit: emit,
       loadingState: state is! TaskLoaded ? const TaskLoading() : null,
       successState: (result) => result,
-      errorState: (error) => TaskError(error),
-      fallbackState: state is TaskLoaded ? state : TaskLoaded(tasks: const []),
+      errorState: (error) => const TaskError('Failed to load tasks'),
+      fallbackState:
+          state is TaskLoaded ? state : TaskLoaded.create(tasks: const []),
     );
   }
 
@@ -65,8 +74,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     try {
       logInfo('Loading by date: ${event.date.toString().split(' ')[0]}');
 
-      // Always load all tasks, but change selectedDate
-      // UI will use getTasksForDate() to show filtered tasks
+      // Load all tasks with new selected date
       final refreshedState = await _refreshTasksState(selectedDate: event.date);
 
       emit(refreshedState);
@@ -84,7 +92,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
         final currentState = state as TaskLoaded;
         emit(currentState.copyWith(selectedDate: event.date));
       } else {
-        emit(TaskLoaded(tasks: const [], selectedDate: event.date));
+        emit(TaskLoaded.create(tasks: const [], selectedDate: event.date));
       }
     }
   }
@@ -157,29 +165,35 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     );
   }
 
-  Future<void> _onClearError(ClearError event, Emitter<TaskState> emit) async {
-    logInfo('Clearing error');
-    add(const LoadTasks());
-  }
-
   Future<void> _onSearchTasks(
     SearchTasks event,
     Emitter<TaskState> emit,
   ) async {
+    // Skip if same query
+    if (_lastSearchQuery == event.query) {
+      logVerbose('Skipping duplicate search query');
+      return;
+    }
     try {
-      logInfo('Searching tasks: "${event.query}"');
+      logInfo('Processing search: "${event.query}"');
+      _lastSearchQuery = event.query;
 
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
 
-        // Create search filter
-        final searchFilter = TaskFilter(
-          searchQuery: event.query.isNotEmpty ? event.query : null,
-        );
+        // Create search filter efficiently
+        final searchFilter =
+            event.query.trim().isNotEmpty
+                ? TaskFilter(searchQuery: event.query.trim())
+                : null;
 
-        emit(currentState.copyWith(activeFilter: searchFilter));
-
-        logSuccess('Search filter applied');
+        // Only emit if filter actually changed
+        if (_filterActuallyChanged(currentState.activeFilter, searchFilter)) {
+          emit(currentState.copyWith(activeFilter: searchFilter));
+          logSuccess('Search filter applied');
+        } else {
+          logVerbose('Search filter unchanged, skipping emit');
+        }
       }
     } catch (e) {
       logError('Search failed', error: e);
@@ -191,16 +205,38 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     Emitter<TaskState> emit,
   ) async {
     try {
-      logInfo('Applying task filter');
+      logInfo('Processing filter');
 
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
-        emit(currentState.copyWith(activeFilter: event.filter));
 
-        logSuccess('Filter applied');
+        // Only emit if filter actually changed
+        if (_filterActuallyChanged(currentState.activeFilter, event.filter)) {
+          emit(currentState.copyWith(activeFilter: event.filter));
+          logSuccess('Filter applied');
+        } else {
+          logVerbose('Filter unchanged, skipping emit');
+        }
       }
     } catch (e) {
       logError('Filter failed', error: e);
     }
+  }
+
+  Future<void> _onClearError(ClearError event, Emitter<TaskState> emit) async {
+    logInfo('Clearing error');
+    add(const LoadTasks());
+  }
+
+  // Helper to check if filter actually changed
+  bool _filterActuallyChanged(TaskFilter? oldFilter, TaskFilter? newFilter) {
+    if (oldFilter == null && newFilter == null) return false;
+    if (oldFilter == null || newFilter == null) return true;
+
+    return oldFilter.searchQuery != newFilter.searchQuery ||
+        oldFilter.priorities != newFilter.priorities ||
+        oldFilter.isCompleted != newFilter.isCompleted ||
+        oldFilter.hasNotification != newFilter.hasNotification ||
+        oldFilter.tags != newFilter.tags;
   }
 }

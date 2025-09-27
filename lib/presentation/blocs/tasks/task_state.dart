@@ -27,7 +27,16 @@ class TaskLoaded extends TaskState {
   final TaskStatistics? statistics;
   final DateTime lastUpdated;
 
-  TaskLoaded({
+  const TaskLoaded({
+    required this.tasks,
+    this.selectedDate,
+    this.activeFilter,
+    this.statistics,
+    required this.lastUpdated,
+  });
+
+  // Main constructor for runtime use
+  TaskLoaded.create({
     required this.tasks,
     this.selectedDate,
     this.activeFilter,
@@ -37,40 +46,109 @@ class TaskLoaded extends TaskState {
 
   @override
   List<Object?> get props => [
-    tasks,
+    tasks.length,
+    _generateTasksSignature(),
     selectedDate,
     activeFilter,
     statistics,
-    lastUpdated,
+    lastUpdated.millisecondsSinceEpoch ~/ 1000, // Round to seconds
   ];
 
-  // Computed properties
+  @override
+  int get hashCode => Object.hash(
+    tasks.length,
+    _generateTasksSignature(),
+    selectedDate,
+    activeFilter,
+    statistics,
+    lastUpdated.millisecondsSinceEpoch ~/ 1000,
+  );
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is TaskLoaded &&
+        tasks.length == other.tasks.length &&
+        selectedDate == other.selectedDate &&
+        activeFilter == other.activeFilter &&
+        _tasksContentEqual(other.tasks) &&
+        ((lastUpdated.difference(other.lastUpdated).abs().inSeconds) < 2);
+  }
+
+  // Generate efficient signature for tasks content
+  String _generateTasksSignature() {
+    if (tasks.isEmpty) return 'empty';
+
+    final buffer = StringBuffer();
+    for (final task in tasks) {
+      buffer.write('${task.id}_${task.isCompleted}_${task.title.hashCode}');
+      if (buffer.length > 200) break; // Limit signature length
+    }
+    return buffer.toString();
+  }
+
+  // Efficient task content comparison
+  bool _tasksContentEqual(List<TaskModel> otherTasks) {
+    if (tasks.length != otherTasks.length) return false;
+
+    for (int i = 0; i < tasks.length; i++) {
+      final a = tasks[i];
+      final b = otherTasks[i];
+      if (a.id != b.id ||
+          a.isCompleted != b.isCompleted ||
+          a.title != b.title ||
+          a.createdAt != b.createdAt) {
+        // Use createdAt instead of lastUpdated
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Computed properties - optimized but not cached (for immutability)
   List<TaskModel> get activeTasks =>
-      tasks.where((task) => !task.isCompleted && !task.isDeleted).toList();
+      _filterTasks(predicate: (task) => !task.isCompleted && !task.isDeleted);
 
   List<TaskModel> get completedTasks =>
-      tasks.where((task) => task.isCompleted && !task.isDeleted).toList();
+      _filterTasks(predicate: (task) => task.isCompleted && !task.isDeleted);
 
   List<TaskModel> get deletedTasks =>
-      tasks.where((task) => task.isDeleted).toList();
+      _filterTasks(predicate: (task) => task.isDeleted);
 
-  List<TaskModel> get overdueTasks =>
-      activeTasks.where((task) => task.isOverdue).toList();
+  List<TaskModel> get overdueTasks => _filterTasks(
+    predicate: (task) => !task.isCompleted && !task.isDeleted && task.isOverdue,
+  );
 
   List<TaskModel> get todayTasks =>
-      tasks.where((task) => task.isDueToday && !task.isDeleted).toList();
+      _filterTasks(predicate: (task) => !task.isDeleted && task.isDueToday);
 
-  List<TaskModel> get upcomingTasks =>
-      activeTasks
-          .where(
-            (task) =>
-                task.dueDate != null && task.dueDate!.isAfter(DateTime.now()),
-          )
-          .toList();
+  List<TaskModel> get upcomingTasks => _filterTasks(
+    predicate:
+        (task) =>
+            !task.isCompleted &&
+            !task.isDeleted &&
+            task.dueDate != null &&
+            task.dueDate!.isAfter(DateTime.now()),
+  );
 
+  // Optimized filter helper
+  List<TaskModel> _filterTasks({required bool Function(TaskModel) predicate}) {
+    final result = <TaskModel>[];
+    for (final task in tasks) {
+      if (predicate(task)) {
+        result.add(task);
+      }
+    }
+    return result;
+  }
+
+  // Computed maps and counts
   Map<String, List<TaskModel>> get tasksByTag {
     final Map<String, List<TaskModel>> grouped = {};
-    for (final task in activeTasks) {
+    final active = activeTasks;
+
+    for (final task in active) {
       for (final tag in task.tags) {
         grouped.putIfAbsent(tag, () => []).add(task);
       }
@@ -80,46 +158,67 @@ class TaskLoaded extends TaskState {
 
   Map<int, List<TaskModel>> get tasksByPriority {
     final Map<int, List<TaskModel>> grouped = {};
-    for (final task in activeTasks) {
+    final active = activeTasks;
+
+    for (final task in active) {
       grouped.putIfAbsent(task.priority, () => []).add(task);
     }
     return grouped;
   }
 
-  int get activeCount => activeTasks.length;
-  int get completedCount => completedTasks.length;
-  int get overdueCount => overdueTasks.length;
-  int get todayCount => todayTasks.length;
+  // Efficient counts
+  int get activeCount =>
+      _countTasks((task) => !task.isCompleted && !task.isDeleted);
+  int get completedCount =>
+      _countTasks((task) => task.isCompleted && !task.isDeleted);
+  int get overdueCount => _countTasks(
+    (task) => !task.isCompleted && !task.isDeleted && task.isOverdue,
+  );
+  int get todayCount =>
+      _countTasks((task) => !task.isDeleted && task.isDueToday);
+
+  // Optimized count helper
+  int _countTasks(bool Function(TaskModel) predicate) {
+    int count = 0;
+    for (final task in tasks) {
+      if (predicate(task)) count++;
+    }
+    return count;
+  }
 
   double get completionRate {
-    final total = tasks.where((t) => !t.isDeleted).length;
+    final total = _countTasks((task) => !task.isDeleted);
     if (total == 0) return 0.0;
     return completedCount / total;
   }
 
   // Helper methods
   List<TaskModel> getTasksForDate(DateTime date) {
-    return tasks.where((task) {
-      if (task.dueDate == null || task.isDeleted) return false;
-      return task.dueDate!.year == date.year &&
-          task.dueDate!.month == date.month &&
-          task.dueDate!.day == date.day;
-    }).toList();
+    return _filterTasks(
+      predicate: (task) {
+        if (task.dueDate == null || task.isDeleted) return false;
+        final dueDate = task.dueDate!;
+        return dueDate.year == date.year &&
+            dueDate.month == date.month &&
+            dueDate.day == date.day;
+      },
+    );
   }
 
   List<TaskModel> getFilteredTasks([TaskFilter? filter]) {
     final f = filter ?? activeFilter;
-    if (f == null) return tasks;
+    if (f == null) return tasks.where((task) => !task.isDeleted).toList();
 
+    // Start with non-deleted tasks
     var filtered = tasks.where((task) => !task.isDeleted).toList();
 
-    // Apply filters
-    if (f.priorities != null && f.priorities!.isNotEmpty) {
+    // Apply filters efficiently
+    if (f.priorities?.isNotEmpty == true) {
       filtered =
           filtered.where((t) => f.priorities!.contains(t.priority)).toList();
     }
 
-    if (f.tags != null && f.tags!.isNotEmpty) {
+    if (f.tags?.isNotEmpty == true) {
       filtered =
           filtered
               .where((t) => t.tags.any((tag) => f.tags!.contains(tag)))
@@ -156,7 +255,7 @@ class TaskLoaded extends TaskState {
               .toList();
     }
 
-    if (f.searchQuery != null && f.searchQuery!.isNotEmpty) {
+    if (f.searchQuery?.isNotEmpty == true) {
       final query = f.searchQuery!.toLowerCase();
       filtered =
           filtered
@@ -170,17 +269,15 @@ class TaskLoaded extends TaskState {
     }
 
     // Apply sorting
-    filtered = _sortTasks(filtered, f.sortBy, f.sortAscending);
-
-    return filtered;
+    return _sortTasks(filtered, f.sortBy, f.sortAscending);
   }
 
   List<TaskModel> _sortTasks(
-    List<TaskModel> tasks,
+    List<TaskModel> tasksToSort,
     TaskSortOption sortBy,
     bool ascending,
   ) {
-    final sorted = List<TaskModel>.from(tasks);
+    final sorted = List<TaskModel>.from(tasksToSort);
 
     switch (sortBy) {
       case TaskSortOption.dueDate:
@@ -215,7 +312,7 @@ class TaskLoaded extends TaskState {
     TaskStatistics? statistics,
     DateTime? lastUpdated,
   }) {
-    return TaskLoaded(
+    return TaskLoaded.create(
       tasks: tasks ?? this.tasks,
       selectedDate: selectedDate ?? this.selectedDate,
       activeFilter: activeFilter ?? this.activeFilter,
@@ -229,7 +326,7 @@ class TaskError extends TaskState {
   final String message;
   final dynamic error;
   final StackTrace? stackTrace;
-  final List<TaskModel>? previousTasks; // Preserve previous state
+  final List<TaskModel>? previousTasks;
 
   const TaskError(
     this.message, {

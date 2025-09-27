@@ -28,7 +28,17 @@ class HabitLoaded extends HabitState {
   final HabitStatistics? statistics;
   final DateTime lastUpdated;
 
-  HabitLoaded({
+  const HabitLoaded({
+    required this.habits,
+    required this.todayInstances,
+    required this.selectedDate,
+    this.activeFilter,
+    this.statistics,
+    required this.lastUpdated,
+  });
+
+  // Runtime constructor
+  HabitLoaded.create({
     required this.habits,
     required this.todayInstances,
     required this.selectedDate,
@@ -39,26 +49,78 @@ class HabitLoaded extends HabitState {
 
   @override
   List<Object?> get props => [
-    habits,
-    todayInstances,
+    habits.length,
+    _generateHabitsSignature(),
+    todayInstances.length,
+    _generateInstancesSignature(),
     selectedDate,
     activeFilter,
     statistics,
-    lastUpdated,
+    lastUpdated.millisecondsSinceEpoch ~/ 1000,
   ];
+
+  @override
+  int get hashCode => Object.hash(
+    habits.length,
+    _generateHabitsSignature(),
+    todayInstances.length,
+    selectedDate,
+    activeFilter,
+    statistics,
+    lastUpdated.millisecondsSinceEpoch ~/ 1000,
+  );
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is HabitLoaded &&
+        habits.length == other.habits.length &&
+        todayInstances.length == other.todayInstances.length &&
+        selectedDate == other.selectedDate &&
+        activeFilter == other.activeFilter &&
+        _habitsContentEqual(other.habits) &&
+        _instancesContentEqual(other.todayInstances) &&
+        ((lastUpdated.difference(other.lastUpdated).abs().inSeconds) < 2);
+  }
 
   // Computed properties
   List<HabitModel> get activeHabits =>
-      habits.where((habit) => habit.isActive).toList();
+      _filterHabits(predicate: (habit) => habit.isActive);
 
   List<HabitModel> get inactiveHabits =>
-      habits.where((habit) => !habit.isActive).toList();
+      _filterHabits(predicate: (habit) => !habit.isActive);
 
   List<HabitInstanceModel> get completedToday =>
-      todayInstances.where((instance) => instance.isCompleted).toList();
+      _filterInstances(predicate: (instance) => instance.isCompleted);
 
   List<HabitInstanceModel> get pendingToday =>
-      todayInstances.where((instance) => instance.isPending).toList();
+      _filterInstances(predicate: (instance) => instance.isPending);
+
+  // Optimized filter helpers
+  List<HabitModel> _filterHabits({
+    required bool Function(HabitModel) predicate,
+  }) {
+    final result = <HabitModel>[];
+    for (final habit in habits) {
+      if (predicate(habit)) {
+        result.add(habit);
+      }
+    }
+    return result;
+  }
+
+  List<HabitInstanceModel> _filterInstances({
+    required bool Function(HabitInstanceModel) predicate,
+  }) {
+    final result = <HabitInstanceModel>[];
+    for (final instance in todayInstances) {
+      if (predicate(instance)) {
+        result.add(instance);
+      }
+    }
+    return result;
+  }
 
   double get todayCompletionRate {
     if (todayInstances.isEmpty) return 0.0;
@@ -172,6 +234,61 @@ class HabitLoaded extends HabitState {
       statistics: statistics ?? this.statistics,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
+  }
+
+  // Generate efficient signature for habits content
+  String _generateHabitsSignature() {
+    if (habits.isEmpty) return 'empty';
+
+    final buffer = StringBuffer();
+    for (final habit in habits) {
+      buffer.write('${habit.id}_${habit.isActive}_${habit.currentStreak}');
+      if (buffer.length > 200) break;
+    }
+    return buffer.toString();
+  }
+
+  // Generate efficient signature for instances content
+  String _generateInstancesSignature() {
+    if (todayInstances.isEmpty) return 'empty';
+
+    final buffer = StringBuffer();
+    for (final instance in todayInstances) {
+      buffer.write('${instance.id}_${instance.status.name}');
+      if (buffer.length > 200) break;
+    }
+    return buffer.toString();
+  }
+
+  // Efficient habit content comparison
+  bool _habitsContentEqual(List<HabitModel> otherHabits) {
+    if (habits.length != otherHabits.length) return false;
+
+    for (int i = 0; i < habits.length; i++) {
+      final a = habits[i];
+      final b = otherHabits[i];
+      if (a.id != b.id ||
+          a.isActive != b.isActive ||
+          a.title != b.title ||
+          a.currentStreak != b.currentStreak) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Efficient instance content comparison
+  bool _instancesContentEqual(List<HabitInstanceModel> otherInstances) {
+    if (todayInstances.length != otherInstances.length) return false;
+
+    for (int i = 0; i < todayInstances.length; i++) {
+      final a = todayInstances[i];
+      final b = otherInstances[i];
+      if (a.id != b.id || a.status != b.status || a.habitId != b.habitId) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
