@@ -84,15 +84,6 @@ class UncompleteHabitInstance extends HabitEvent {
   List<Object?> get props => [instanceId];
 }
 
-class SkipHabitInstance extends HabitEvent {
-  final String instanceId;
-
-  const SkipHabitInstance(this.instanceId);
-
-  @override
-  List<Object?> get props => [instanceId];
-}
-
 class UpdateHabitInstance extends HabitEvent {
   final HabitInstanceModel instance;
 

@@ -1,3 +1,4 @@
+import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/core/di/service_locator.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
 import 'package:dayflow/core/constants/app_constants.dart';
@@ -39,7 +40,7 @@ void main() async {
   await setupServiceLocator();
 
   // Initialize services
-  final notificationService = NotificationService();
+  final notificationService = GetIt.I<NotificationService>();
   await notificationService.initialize();
 
   final settingsRepository = GetIt.I<SettingsRepository>();
@@ -65,17 +66,25 @@ class DayFlowApp extends StatelessWidget {
         BlocProvider(create: (_) => HabitBloc()..add(const LoadHabits())),
         BlocProvider(create: (_) => SettingsBloc()..add(const LoadSettings())),
       ],
-      child: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settingsState) {
-          return MaterialApp.router(
-            title: 'DayFlow',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.dark,
-            routerConfig: AppRouter.router,
-          );
+      child: BlocListener<SettingsBloc, SettingsState>(
+        listener: (context, state) {
+          // Handle AppColors side effect here
+          if (state is SettingsLoaded) {
+            AppColors.setAccentColor(state.accentColor);
+          }
         },
+        child: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settingsState) {
+            return MaterialApp.router(
+              title: 'DayFlow',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: ThemeMode.dark,
+              routerConfig: AppRouter.router,
+            );
+          },
+        ),
       ),
     );
   }

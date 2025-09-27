@@ -14,13 +14,14 @@ Future<void> setupServiceLocator() async {
   );
 
   // Register notification service
-  sl.registerLazySingleton<NotificationService>(
-    () => NotificationService(),
-    instanceName: 'NotificationService',
-  );
+  sl.registerLazySingleton<NotificationService>(() => NotificationService());
 
   // Register repositories as singletons
   sl.registerLazySingleton<TaskRepository>(() => TaskRepository());
   sl.registerLazySingleton<HabitRepository>(() => HabitRepository());
   sl.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
+
+  sl.registerLazySingleton<HabitInstanceRepository>(
+    () => HabitInstanceRepository(),
+  );
 }

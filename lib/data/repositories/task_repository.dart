@@ -2,8 +2,10 @@ import 'package:dayflow/core/constants/app_constants.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/base/base_repository.dart';
+import 'package:dayflow/data/repositories/interfaces/task_repository_interface.dart';
 
-class TaskRepository extends BaseRepository<TaskModel> {
+class TaskRepository extends BaseRepository<TaskModel>
+    implements ITaskRepository {
   static const String _tag = 'TaskRepo';
 
   TaskRepository() : super(boxName: AppConstants.tasksBox, tag: _tag);
@@ -21,20 +23,24 @@ class TaskRepository extends BaseRepository<TaskModel> {
   bool isDeleted(TaskModel item) => item.isDeleted;
 
   // Task-specific methods
+  @override
   Future<String> addTask(TaskModel task) async {
     return await add(task);
   }
 
+  @override
   TaskModel? getTask(String id) {
     return get(id);
   }
 
+  @override
   List<TaskModel> getAllTasks() {
     final tasks = getAll();
     tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return tasks;
   }
 
+  @override
   List<TaskModel> getTasksByDate(DateTime date) {
     try {
       DebugLogger.info('Getting tasks for date', tag: tag, data: date);
@@ -60,10 +66,12 @@ class TaskRepository extends BaseRepository<TaskModel> {
     }
   }
 
+  @override
   Future<void> updateTask(TaskModel task) async {
     await update(task);
   }
 
+  @override
   Future<void> deleteTask(String id) async {
     try {
       final task = getTask(id);
@@ -81,6 +89,7 @@ class TaskRepository extends BaseRepository<TaskModel> {
     }
   }
 
+  @override
   Future<void> toggleTaskComplete(String id) async {
     try {
       final task = getTask(id);
@@ -98,10 +107,12 @@ class TaskRepository extends BaseRepository<TaskModel> {
     }
   }
 
+  @override
   Future<void> clearAllTasks() async {
     await clearAll();
   }
 
+  @override
   Map<String, dynamic> getStatistics() {
     try {
       final allTasks = getAllTasks();

@@ -45,7 +45,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
             : AppColors.fromHex(widget.habit.color);
 
     final isCompleted = widget.instance?.isCompleted ?? false;
-    final isSkipped = widget.instance?.isSkipped ?? false;
     final isForToday = _isForToday();
     final isToday = _isToday();
     final canInteract = isToday && isForToday && widget.instance != null;
@@ -57,7 +56,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
         decoration: _buildContainerDecoration(
           habitColor,
           isCompleted,
-          isSkipped,
           isDefaultColor,
           canInteract,
         ),
@@ -68,12 +66,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
             const SizedBox(width: 12),
             // Main content
             Expanded(
-              child: _buildMainContent(
-                habitColor,
-                isCompleted,
-                isSkipped,
-                canInteract,
-              ),
+              child: _buildMainContent(habitColor, isCompleted, canInteract),
             ),
             const SizedBox(width: 8),
             // Options button as vertical dots
@@ -120,10 +113,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     return Container(
       width: 4,
       height: 4,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 
@@ -166,7 +156,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
   BoxDecoration _buildContainerDecoration(
     Color habitColor,
     bool isCompleted,
-    bool isSkipped,
     bool isDefaultColor,
     bool canInteract,
   ) {
@@ -179,9 +168,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     } else if (isCompleted) {
       backgroundColor = habitColor.withAlpha(15);
       borderColor = habitColor.withAlpha(50);
-    } else if (isSkipped) {
-      backgroundColor = AppColors.surface.withAlpha(75);
-      borderColor = AppColors.divider.withAlpha(25);
     } else if (isDefaultColor) {
       backgroundColor = AppColors.surfaceLight;
       borderColor = AppColors.divider.withAlpha(50);
@@ -239,7 +225,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
   Widget _buildMainContent(
     Color habitColor,
     bool isCompleted,
-    bool isSkipped,
     bool canInteract,
   ) {
     return Column(
@@ -247,38 +232,23 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Title row
-        _buildTitleRow(habitColor, isCompleted, isSkipped, canInteract),
+        _buildTitleRow(habitColor, isCompleted, canInteract),
         // Metadata or progress bar
         if (_shouldShowProgressBar()) ...[
           const SizedBox(height: 8),
-          _buildProgressBar(habitColor, isCompleted, isSkipped, canInteract),
+          _buildProgressBar(habitColor, isCompleted, canInteract),
         ] else if (_shouldShowMetadata()) ...[
           const SizedBox(height: 6),
-          _buildCompactMetadata(
-            habitColor,
-            isCompleted,
-            isSkipped,
-            canInteract,
-          ),
+          _buildCompactMetadata(habitColor, isCompleted, canInteract),
         ],
       ],
     );
   }
 
   /// Build title row with frequency icon and streak
-  Widget _buildTitleRow(
-    Color habitColor,
-    bool isCompleted,
-    bool isSkipped,
-    bool canInteract,
-  ) {
-    final textColor = _getTextColor(isCompleted, isSkipped, canInteract);
-    final iconColor = _getIconColor(
-      habitColor,
-      isCompleted,
-      isSkipped,
-      canInteract,
-    );
+  Widget _buildTitleRow(Color habitColor, bool isCompleted, bool canInteract) {
+    final textColor = _getTextColor(isCompleted, canInteract);
+    final iconColor = _getIconColor(habitColor, isCompleted, canInteract);
 
     return Row(
       children: [
@@ -299,9 +269,8 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
             style: TextStyle(
               color: textColor,
               fontSize: 14,
-              fontWeight:
-                  isCompleted || isSkipped ? FontWeight.w500 : FontWeight.w600,
-              decoration: isSkipped ? TextDecoration.lineThrough : null,
+              fontWeight: isCompleted ? FontWeight.w500 : FontWeight.w600,
+              decoration: null,
               decorationColor: AppColors.textTertiary.withAlpha(80),
               height: 1.2,
             ),
@@ -356,10 +325,9 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
   Widget _buildCompactMetadata(
     Color habitColor,
     bool isCompleted,
-    bool isSkipped,
     bool canInteract,
   ) {
-    final color = _getSecondaryTextColor(isCompleted, isSkipped, canInteract);
+    final color = _getSecondaryTextColor(isCompleted, canInteract);
 
     return Row(
       children: [
@@ -425,7 +393,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
   Widget _buildProgressBar(
     Color habitColor,
     bool isCompleted,
-    bool isSkipped,
     bool canInteract,
   ) {
     final currentValue = widget.instance?.value ?? 0;
@@ -435,7 +402,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     final progressColor =
         !canInteract
             ? AppColors.textTertiary.withAlpha(60)
-            : isCompleted || isSkipped
+            : isCompleted
             ? habitColor.withAlpha(150)
             : habitColor;
 
@@ -719,39 +686,30 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
   }
 
   /// Helper methods for colors and states
-  Color _getTextColor(bool isCompleted, bool isSkipped, bool canInteract) {
+  Color _getTextColor(bool isCompleted, bool canInteract) {
     if (!canInteract) {
       return AppColors.textSecondary.withAlpha(140);
-    } else if (isCompleted || isSkipped) {
+    } else if (isCompleted) {
       return AppColors.textSecondary;
     } else {
       return AppColors.textPrimary;
     }
   }
 
-  Color _getSecondaryTextColor(
-    bool isCompleted,
-    bool isSkipped,
-    bool canInteract,
-  ) {
+  Color _getSecondaryTextColor(bool isCompleted, bool canInteract) {
     if (!canInteract) {
       return AppColors.textTertiary.withAlpha(120);
-    } else if (isCompleted || isSkipped) {
+    } else if (isCompleted) {
       return AppColors.textTertiary;
     } else {
       return AppColors.textSecondary;
     }
   }
 
-  Color _getIconColor(
-    Color habitColor,
-    bool isCompleted,
-    bool isSkipped,
-    bool canInteract,
-  ) {
+  Color _getIconColor(Color habitColor, bool isCompleted, bool canInteract) {
     if (!canInteract) {
       return AppColors.textTertiary.withAlpha(100);
-    } else if (isCompleted || isSkipped) {
+    } else if (isCompleted) {
       return habitColor.withAlpha(150);
     } else {
       return habitColor;

@@ -48,20 +48,17 @@ class HabitLoaded extends HabitState {
   ];
 
   // Computed properties
-  List<HabitModel> get activeHabits => 
+  List<HabitModel> get activeHabits =>
       habits.where((habit) => habit.isActive).toList();
 
-  List<HabitModel> get inactiveHabits => 
+  List<HabitModel> get inactiveHabits =>
       habits.where((habit) => !habit.isActive).toList();
 
-  List<HabitInstanceModel> get completedToday => 
+  List<HabitInstanceModel> get completedToday =>
       todayInstances.where((instance) => instance.isCompleted).toList();
 
-  List<HabitInstanceModel> get pendingToday => 
+  List<HabitInstanceModel> get pendingToday =>
       todayInstances.where((instance) => instance.isPending).toList();
-
-  List<HabitInstanceModel> get skippedToday => 
-      todayInstances.where((instance) => instance.isSkipped).toList();
 
   double get todayCompletionRate {
     if (todayInstances.isEmpty) return 0.0;
@@ -106,7 +103,8 @@ class HabitLoaded extends HabitState {
 
     // Apply filters
     if (f.frequencies != null && f.frequencies!.isNotEmpty) {
-      filtered = filtered.where((h) => f.frequencies!.contains(h.frequency)).toList();
+      filtered =
+          filtered.where((h) => f.frequencies!.contains(h.frequency)).toList();
     }
 
     if (f.types != null && f.types!.isNotEmpty) {
@@ -118,7 +116,10 @@ class HabitLoaded extends HabitState {
     }
 
     if (f.tags != null && f.tags!.isNotEmpty) {
-      filtered = filtered.where((h) => h.tags.any((tag) => f.tags!.contains(tag))).toList();
+      filtered =
+          filtered
+              .where((h) => h.tags.any((tag) => f.tags!.contains(tag)))
+              .toList();
     }
 
     // Apply sorting
@@ -179,11 +180,7 @@ class HabitError extends HabitState {
   final dynamic error;
   final StackTrace? stackTrace;
 
-  const HabitError(
-    this.message, {
-    this.error,
-    this.stackTrace,
-  });
+  const HabitError(this.message, {this.error, this.stackTrace});
 
   @override
   List<Object?> get props => [message, error, stackTrace];
@@ -241,9 +238,14 @@ class HabitStatistics {
     double avgStreak = 0;
     int maxStreak = 0;
     if (activeHabits.isNotEmpty) {
-      final totalStreak = activeHabits.fold(0, (sum, habit) => sum + habit.currentStreak);
+      final totalStreak = activeHabits.fold(
+        0,
+        (sum, habit) => sum + habit.currentStreak,
+      );
       avgStreak = totalStreak / activeHabits.length;
-      maxStreak = activeHabits.map((h) => h.longestStreak).reduce((a, b) => a > b ? a : b);
+      maxStreak = activeHabits
+          .map((h) => h.longestStreak)
+          .reduce((a, b) => a > b ? a : b);
     }
 
     // Group by frequency
@@ -265,7 +267,8 @@ class HabitStatistics {
       activeHabits: activeHabits.length,
       completedToday: completed,
       pendingToday: pending,
-      todayCompletionRate: todayInstances.isEmpty ? 0 : completed / todayInstances.length,
+      todayCompletionRate:
+          todayInstances.isEmpty ? 0 : completed / todayInstances.length,
       averageStreak: avgStreak,
       longestStreak: maxStreak,
       habitsByFrequency: byFrequency,

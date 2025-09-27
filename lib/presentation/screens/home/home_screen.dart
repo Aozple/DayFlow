@@ -3,7 +3,7 @@ import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
-import 'package:dayflow/presentation/screens/search/task_search_delegate.dart';
+import 'package:dayflow/presentation/screens/search/universal_search_delegate.dart';
 import 'package:dayflow/presentation/widgets/speed_dial_fab.dart';
 import 'package:dayflow/presentation/widgets/task_filter_modal.dart';
 import 'package:flutter/material.dart';
@@ -81,14 +81,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // === Navigation & UI Actions ===
 
   Future<void> _openSearch() async {
-    final selectedTask = await showSearch<TaskModel?>(
+    await showSearch<void>(
       context: context,
-      delegate: TaskSearchDelegate(),
+      delegate: UniversalSearchDelegate(),
     );
-
-    if (selectedTask != null && mounted) {
-      context.push('/task-details', extra: selectedTask);
-    }
+    // Navigation is handled inside the search delegate
   }
 
   bool _hasActiveFilters() {

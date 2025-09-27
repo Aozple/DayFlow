@@ -3,15 +3,18 @@ import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/data/models/habit_instance_model.dart';
 import 'package:dayflow/data/repositories/base/base_repository.dart';
+import 'package:dayflow/data/repositories/interfaces/habit_repository_interface.dart';
+import 'package:get_it/get_it.dart';
 
-class HabitRepository extends BaseRepository<HabitModel> {
+class HabitRepository extends BaseRepository<HabitModel>
+    implements IHabitRepository {
   static const String _tag = 'HabitRepo';
 
   // Instance management
   late final BaseRepository<HabitInstanceModel> _instanceRepo;
 
   HabitRepository() : super(boxName: AppConstants.habitsBox, tag: _tag) {
-    _instanceRepo = HabitInstanceRepository();
+    _instanceRepo = GetIt.I<HabitInstanceRepository>();
   }
 
   @override
@@ -27,27 +30,32 @@ class HabitRepository extends BaseRepository<HabitModel> {
   bool isDeleted(HabitModel item) => item.isDeleted;
 
   // Habit methods
+  @override
   Future<String> addHabit(HabitModel habit) async {
     final id = await add(habit);
     await generateInstances(habit);
     return id;
   }
 
+  @override
   HabitModel? getHabit(String id) {
     return get(id);
   }
 
+  @override
   List<HabitModel> getAllHabits() {
     final habits = getAll();
     habits.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return habits;
   }
 
+  @override
   Future<void> updateHabit(HabitModel habit) async {
     await update(habit);
     await _regenerateInstances(habit);
   }
 
+  @override
   Future<void> deleteHabit(String id) async {
     final habit = getHabit(id);
     if (habit != null) {
@@ -58,14 +66,17 @@ class HabitRepository extends BaseRepository<HabitModel> {
   }
 
   // Instance methods
+  @override
   Future<void> addInstance(HabitInstanceModel instance) async {
     await _instanceRepo.add(instance);
   }
 
+  @override
   HabitInstanceModel? getInstance(String id) {
     return _instanceRepo.get(id);
   }
 
+  @override
   List<HabitInstanceModel> getInstancesByHabitId(String habitId) {
     final instances =
         _instanceRepo.getAll().where((i) => i.habitId == habitId).toList();
@@ -73,6 +84,7 @@ class HabitRepository extends BaseRepository<HabitModel> {
     return instances;
   }
 
+  @override
   List<HabitInstanceModel> getInstancesByDate(DateTime date) {
     return _instanceRepo
         .getAll()
@@ -80,6 +92,7 @@ class HabitRepository extends BaseRepository<HabitModel> {
         .toList();
   }
 
+  @override
   Future<void> updateInstance(HabitInstanceModel instance) async {
     await _instanceRepo.update(instance);
 
@@ -88,6 +101,7 @@ class HabitRepository extends BaseRepository<HabitModel> {
     }
   }
 
+  @override
   Future<void> completeInstance(String instanceId, {int? value}) async {
     final instance = getInstance(instanceId);
     if (instance != null) {
@@ -101,6 +115,7 @@ class HabitRepository extends BaseRepository<HabitModel> {
   }
 
   // Instance generation
+  @override
   Future<void> generateInstances(
     HabitModel habit, {
     int daysAhead = AppConstants.defaultDaysAhead,
@@ -282,11 +297,13 @@ class HabitRepository extends BaseRepository<HabitModel> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  @override
   Future<void> clearAllHabits() async {
     await clearAll();
     await _instanceRepo.clearAll();
   }
 
+  @override
   Map<String, dynamic> getStatistics() {
     final habits = getAllHabits();
     final today = DateTime.now();

@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:dayflow/core/utils/debug_logger.dart';
+import 'package:dayflow/data/repositories/interfaces/settings_repository_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
 
-class SettingsRepository {
+class SettingsRepository implements ISettingsRepository {
   static const String _tag = 'SettingsRepo';
   static const String _settingsKey = 'app_settings';
 
@@ -13,13 +14,12 @@ class SettingsRepository {
   DateTime? _lastCacheUpdate;
   static const Duration _cacheDuration = Duration(minutes: 5);
 
-  // Singleton
-  static final SettingsRepository _instance = SettingsRepository._internal();
-  factory SettingsRepository() => _instance;
-  SettingsRepository._internal();
+  SettingsRepository();
 
+  @override
   bool get isInitialized => _isInitialized;
 
+  @override
   Future<void> init() async {
     if (_isInitialized && _prefs != null) {
       DebugLogger.verbose('Already initialized', tag: _tag);
@@ -53,6 +53,7 @@ class SettingsRepository {
     _lastCacheUpdate = null;
   }
 
+  @override
   AppSettings getSettings() {
     if (!_isInitialized || _prefs == null) {
       DebugLogger.warning('Not initialized, returning defaults', tag: _tag);
@@ -113,6 +114,7 @@ class SettingsRepository {
     );
   }
 
+  @override
   Future<bool> saveSettings(AppSettings settings) async {
     if (!_isInitialized || _prefs == null) {
       DebugLogger.warning('Cannot save - not initialized', tag: _tag);
@@ -142,6 +144,7 @@ class SettingsRepository {
     }
   }
 
+  @override
   Future<bool> clearSettings() async {
     if (!_isInitialized || _prefs == null) {
       DebugLogger.warning('Cannot clear - not initialized', tag: _tag);
@@ -165,6 +168,7 @@ class SettingsRepository {
     }
   }
 
+  @override
   Future<bool> updateMultiple(Map<String, dynamic> updates) async {
     try {
       var currentSettings = getSettings();
@@ -218,24 +222,28 @@ class SettingsRepository {
     }
   }
 
+  @override
   Future<bool> updateAccentColor(String colorHex) async {
     final currentSettings = getSettings();
     final updated = currentSettings.copyWith(accentColor: colorHex);
     return await saveSettings(updated);
   }
 
+  @override
   Future<bool> updateFirstDayOfWeek(String day) async {
     final currentSettings = getSettings();
     final updated = currentSettings.copyWith(firstDayOfWeek: day);
     return await saveSettings(updated);
   }
 
+  @override
   Future<bool> updateDefaultPriority(int priority) async {
     final currentSettings = getSettings();
     final updated = currentSettings.copyWith(defaultTaskPriority: priority);
     return await saveSettings(updated);
   }
 
+  @override
   String exportSettings() {
     try {
       final settings = getSettings();
@@ -246,6 +254,7 @@ class SettingsRepository {
     }
   }
 
+  @override
   Future<bool> importSettings(String jsonString) async {
     try {
       final Map<String, dynamic> settingsMap = jsonDecode(jsonString);
@@ -263,6 +272,7 @@ class SettingsRepository {
     }
   }
 
+  @override
   Map<String, dynamic> getStatus() {
     return {
       'initialized': _isInitialized,

@@ -1,77 +1,74 @@
-import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:dayflow/core/constants/app_colors.dart';
+import '../models/search_result.dart';
 
-/// A single task item for display in the search results.
-///
-/// This widget represents a single task in the search results list, showing
-/// the task title with search term highlighting, along with metadata like
-/// due date, priority, and tags. It handles tap gestures to navigate to
-/// the task details screen.
+/// Widget for displaying task search results
 class SearchTaskItem extends StatelessWidget {
-  /// The task to display.
-  final TaskModel task;
-
-  /// Callback function when the task is tapped.
-  final VoidCallback onTap;
-
-  /// The current search query for highlighting matching text.
+  final TaskSearchResult result;
   final String searchQuery;
+  final VoidCallback onTap;
 
   const SearchTaskItem({
     super.key,
-    required this.task,
-    required this.onTap,
+    required this.result,
     required this.searchQuery,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final taskColor = AppColors.fromHex(
-      task.color,
-    ); // Get the color from the task's hex string.
+    final taskColor = AppColors.fromHex(result.color);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: Colors.transparent, // Transparent for InkWell's splash effect.
+        color: Colors.transparent,
         child: InkWell(
-          onTap: onTap, // Handle tap to navigate to task details.
-          borderRadius: BorderRadius.circular(12), // Rounded corners.
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface, // Background color.
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border(
-                left: BorderSide(
-                  color: taskColor,
-                  width: 3,
-                ), // Left border with task's color.
-              ),
+              border: Border(left: BorderSide(color: taskColor, width: 3)),
             ),
             child: Row(
               children: [
-                // Expanded widget to take available space for task info.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Display the task title, highlighting the search term.
+                      // Task title with search highlighting
                       RichText(
-                        text: _highlightSearchTerm(task.title, searchQuery),
+                        text: _highlightSearchTerm(result.title, searchQuery),
                         maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis, // Truncate if too long.
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      // Row for task metadata like date, priority, and tags.
+
+                      // Task description if available
+                      if (result.description?.isNotEmpty == true) ...[
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: _highlightSearchTerm(
+                            result.description!,
+                            searchQuery,
+                            isSecondary: true,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+
+                      const SizedBox(height: 8),
+
+                      // Task metadata
                       Row(
                         children: [
-                          // Show due date if available.
-                          if (task.dueDate != null) ...[
+                          // Due date
+                          if (result.dueDate != null) ...[
                             const Icon(
                               CupertinoIcons.calendar,
                               size: 12,
@@ -79,9 +76,7 @@ class SearchTaskItem extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              DateFormat(
-                                'MMM d',
-                              ).format(task.dueDate!), // Format the date.
+                              DateFormat('MMM d').format(result.dueDate!),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textTertiary,
@@ -89,7 +84,8 @@ class SearchTaskItem extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                           ],
-                          // Display task priority.
+
+                          // Priority
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -97,25 +93,24 @@ class SearchTaskItem extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.getPriorityColor(
-                                task.priority,
-                              ).withAlpha(
-                                30,
-                              ), // Background color based on priority.
+                                result.priority,
+                              ).withAlpha(30),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'P${task.priority}', // "P1", "P2", etc.
+                              'P${result.priority}',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.getPriorityColor(
-                                  task.priority,
-                                ), // Text color based on priority.
+                                  result.priority,
+                                ),
                               ),
                             ),
                           ),
-                          // Show the first tag if tags exist.
-                          if (task.tags.isNotEmpty) ...[
+
+                          // First tag
+                          if (result.tags.isNotEmpty) ...[
                             const SizedBox(width: 8),
                             const Icon(
                               CupertinoIcons.tag,
@@ -124,7 +119,7 @@ class SearchTaskItem extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              task.tags.first, // Display only the first tag.
+                              result.tags.first,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textTertiary,
@@ -136,8 +131,9 @@ class SearchTaskItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Show a checkmark if the task is completed.
-                if (task.isCompleted)
+
+                // Completion status
+                if (result.isCompleted)
                   const Icon(
                     CupertinoIcons.checkmark_circle_fill,
                     color: AppColors.success,
@@ -151,60 +147,44 @@ class SearchTaskItem extends StatelessWidget {
     );
   }
 
-  /// Highlights the search term within a given text string.
-  TextSpan _highlightSearchTerm(String text, String query) {
-    // If no search query, just return the text without highlighting.
+  /// Highlight search terms in text
+  TextSpan _highlightSearchTerm(
+    String text,
+    String query, {
+    bool isSecondary = false,
+  }) {
+    final baseStyle = TextStyle(
+      fontSize: isSecondary ? 14 : 16,
+      fontWeight: isSecondary ? FontWeight.w400 : FontWeight.w600,
+      color: isSecondary ? AppColors.textSecondary : AppColors.textPrimary,
+    );
+
     if (query.isEmpty) {
-      return TextSpan(
-        text: text,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-      );
+      return TextSpan(text: text, style: baseStyle);
     }
 
-    final matches = query.toLowerCase(); // The search term in lowercase.
-    final textLower =
-        text.toLowerCase(); // The text to search within, in lowercase.
+    final matches = query.toLowerCase();
+    final textLower = text.toLowerCase();
 
     if (!textLower.contains(matches)) {
-      // If the text doesn't contain the search term, return it unhighlighted.
-      return TextSpan(
-        text: text,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-      );
+      return TextSpan(text: text, style: baseStyle);
     }
 
-    // Find the start and end indices of the search term in the original text.
     final startIndex = textLower.indexOf(matches);
-    final endIndex =
-        startIndex + matches.length; // Fixed: was incorrectly using 'endtask'
+    final endIndex = startIndex + matches.length;
 
-    // Return a RichText with the matching part highlighted.
     return TextSpan(
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-      ),
+      style: baseStyle,
       children: [
-        TextSpan(text: text.substring(0, startIndex)), // Text before the match.
+        TextSpan(text: text.substring(0, startIndex)),
         TextSpan(
-          text: text.substring(startIndex, endIndex), // The matched text.
+          text: text.substring(startIndex, endIndex),
           style: TextStyle(
-            backgroundColor: AppColors.accent.withAlpha(
-              50,
-            ), // Highlight background.
-            color: AppColors.accent, // Highlight text color.
+            backgroundColor: AppColors.accent.withAlpha(50),
+            color: AppColors.accent,
           ),
         ),
-        TextSpan(text: text.substring(endIndex)), // Text after the match.
+        TextSpan(text: text.substring(endIndex)),
       ],
     );
   }

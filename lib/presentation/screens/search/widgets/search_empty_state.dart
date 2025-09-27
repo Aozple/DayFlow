@@ -1,40 +1,48 @@
-import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:dayflow/core/constants/app_colors.dart';
 
-/// Widget to display when no search results are found.
-///
-/// This widget shows a centered message with an icon to indicate that
-/// no tasks match the current search query, along with a helpful
-/// suggestion for the user.
+/// Widget to display when no search results are found
 class SearchEmptyState extends StatelessWidget {
-  const SearchEmptyState({super.key});
+  final String? customMessage;
+
+  const SearchEmptyState({super.key, this.customMessage});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            CupertinoIcons.search,
-            size: 64,
-            color: AppColors.textTertiary,
-          ), // Search icon.
-          SizedBox(height: 16),
-          Text(
-            'No tasks found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Search icon
+            const Icon(
+              CupertinoIcons.search,
+              size: 64,
+              color: AppColors.textTertiary,
             ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Try searching with different keywords',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-          ),
-        ],
+            const SizedBox(height: 16),
+
+            // Main message
+            Text(
+              customMessage ?? 'No results found',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+
+            // Help text
+            const Text(
+              'Try searching for:\n• Task or note titles\n• Habit names\n• Tags and descriptions',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

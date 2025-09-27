@@ -135,7 +135,6 @@ class HabitInstanceModel {
 
   // Computed properties
   bool get isCompleted => status == HabitInstanceStatus.completed;
-  bool get isSkipped => status == HabitInstanceStatus.skipped;
   bool get isPending => status == HabitInstanceStatus.pending;
   bool get isToday => _isSameDay(date, DateTime.now());
   bool get isPast => date.isBefore(DateTime.now()) && !isToday;
@@ -160,4 +159,4 @@ class HabitInstanceModel {
   int get hashCode => id.hashCode;
 }
 
-enum HabitInstanceStatus { pending, completed, skipped }
+enum HabitInstanceStatus { pending, completed }

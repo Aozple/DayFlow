@@ -12,7 +12,8 @@ part 'habit_state.dart';
 
 class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
   final HabitRepository _repository = GetIt.I<HabitRepository>();
-  final NotificationService _notificationService = NotificationService();
+  final NotificationService _notificationService =
+      GetIt.I<NotificationService>();
 
   HabitBloc() : super(tag: 'HabitBloc', initialState: const HabitInitial()) {
     on<LoadHabits>(_onLoadHabits);
@@ -29,6 +30,21 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     on<FilterHabits>(_onFilterHabits);
     on<SearchHabits>(_onSearchHabits);
     on<ClearError>(_onClearError);
+  }
+
+  Future<HabitLoaded> _refreshHabitsState({DateTime? selectedDate}) async {
+    final habits = _repository.getAllHabits();
+    final currentState = state is HabitLoaded ? state as HabitLoaded : null;
+    final date = selectedDate ?? currentState?.selectedDate ?? DateTime.now();
+    final instances = _repository.getInstancesByDate(date);
+    final statistics = HabitStatistics.fromHabits(habits, instances);
+
+    return HabitLoaded(
+      habits: habits,
+      todayInstances: instances,
+      selectedDate: date,
+      statistics: statistics,
+    );
   }
 
   Future<void> _onLoadHabits(LoadHabits event, Emitter<HabitState> emit) async {
@@ -91,126 +107,71 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     LoadHabitDetails event,
     Emitter<HabitState> emit,
   ) async {
-    try {
-      logInfo('Loading habit details: ${event.habitId}');
+    await performOperation(
+      operationName: 'Load Habit Details',
+      operation: () async {
+        final habit = _repository.getHabit(event.habitId);
+        if (habit == null) {
+          throw Exception('Habit not found');
+        }
 
-      final habit = _repository.getHabit(event.habitId);
-      if (habit == null) {
-        throw Exception('Habit not found');
-      }
+        final instances = _repository.getInstancesByHabitId(event.habitId);
 
-      final instances = _repository.getInstancesByHabitId(event.habitId);
-
-      logSuccess('Details loaded', data: '${instances.length} instances');
-    } catch (e) {
-      await handleError(
-        e,
-        emit,
-        (error) => const HabitError('Failed to load habit details'),
-        state,
-      );
-    }
+        return {'habit': habit, 'instances': instances};
+      },
+      emit: emit,
+      successState: (result) {
+        // Details loaded successfully, but keep current state
+        // Just log the success - this event is for loading data, not changing state
+        logSuccess(
+          'Details loaded',
+          data: '${(result['instances'] as List).length} instances',
+        );
+        return state;
+      },
+      errorState: (error) => const HabitError('Failed to load habit details'),
+    );
   }
 
   Future<void> _onAddHabit(AddHabit event, Emitter<HabitState> emit) async {
-    try {
-      logInfo('Adding habit: ${event.habit.title}');
+    await performOperation(
+      operationName: 'Add Habit',
+      operation: () async {
+        await _repository.addHabit(event.habit);
 
-      await _repository.addHabit(event.habit);
+        if (event.habit.hasNotification && event.habit.preferredTime != null) {
+          await _notificationService.scheduleHabitNotification(event.habit);
+        }
 
-      if (event.habit.hasNotification && event.habit.preferredTime != null) {
-        await _notificationService.scheduleHabitNotification(event.habit);
-      }
-
-      if (state is HabitLoaded) {
-        final currentState = state as HabitLoaded;
-        final habits = _repository.getAllHabits();
-        final instances = _repository.getInstancesByDate(
-          currentState.selectedDate,
-        );
-        final statistics = HabitStatistics.fromHabits(habits, instances);
-
-        emit(
-          HabitLoaded(
-            habits: habits,
-            todayInstances: instances,
-            selectedDate: currentState.selectedDate,
-            statistics: statistics,
-          ),
-        );
-      } else {
-        final habits = _repository.getAllHabits();
-        final todayInstances = _repository.getInstancesByDate(DateTime.now());
-        final statistics = HabitStatistics.fromHabits(habits, todayInstances);
-
-        emit(
-          HabitLoaded(
-            habits: habits,
-            todayInstances: todayInstances,
-            selectedDate: DateTime.now(),
-            statistics: statistics,
-          ),
-        );
-      }
-
-      logSuccess('Habit added and UI updated');
-    } catch (e) {
-      logError('Add failed', error: e);
-      emit(const HabitError('Failed to add habit'));
-    }
+        return await _refreshHabitsState();
+      },
+      emit: emit,
+      successState: (result) => result,
+      errorState: (error) => const HabitError('Failed to add habit'),
+    );
   }
 
   Future<void> _onUpdateHabit(
     UpdateHabit event,
     Emitter<HabitState> emit,
   ) async {
-    try {
-      logInfo('Updating habit: ${event.habit.title}');
+    await performOperation(
+      operationName: 'Update Habit',
+      operation: () async {
+        await _repository.updateHabit(event.habit);
 
-      await _repository.updateHabit(event.habit);
+        if (event.habit.hasNotification && event.habit.preferredTime != null) {
+          await _notificationService.scheduleHabitNotification(event.habit);
+        } else {
+          await _notificationService.cancelHabitNotification(event.habit.id);
+        }
 
-      if (event.habit.hasNotification && event.habit.preferredTime != null) {
-        await _notificationService.scheduleHabitNotification(event.habit);
-      } else {
-        await _notificationService.cancelHabitNotification(event.habit.id);
-      }
-
-      if (state is HabitLoaded) {
-        final currentState = state as HabitLoaded;
-        final habits = _repository.getAllHabits();
-        final instances = _repository.getInstancesByDate(
-          currentState.selectedDate,
-        );
-        final statistics = HabitStatistics.fromHabits(habits, instances);
-
-        emit(
-          HabitLoaded(
-            habits: habits,
-            todayInstances: instances,
-            selectedDate: currentState.selectedDate,
-            statistics: statistics,
-          ),
-        );
-      } else {
-        final habits = _repository.getAllHabits();
-        final todayInstances = _repository.getInstancesByDate(DateTime.now());
-        final statistics = HabitStatistics.fromHabits(habits, todayInstances);
-
-        emit(
-          HabitLoaded(
-            habits: habits,
-            todayInstances: todayInstances,
-            selectedDate: DateTime.now(),
-            statistics: statistics,
-          ),
-        );
-      }
-
-      logSuccess('Habit updated');
-    } catch (e) {
-      logError('Update failed', error: e);
-      emit(const HabitError('Failed to update habit'));
-    }
+        return await _refreshHabitsState();
+      },
+      emit: emit,
+      successState: (result) => result,
+      errorState: (error) => const HabitError('Failed to update habit'),
+    );
   }
 
   Future<void> _onDeleteHabit(
@@ -295,44 +256,25 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     UncompleteHabitInstance event,
     Emitter<HabitState> emit,
   ) async {
-    try {
-      logInfo('Uncompleting instance: ${event.instanceId}');
+    await performOperation(
+      operationName: 'Uncomplete Instance',
+      operation: () async {
+        final instance = _repository.getInstance(event.instanceId);
+        if (instance != null) {
+          final updatedInstance = instance.copyWith(
+            status: HabitInstanceStatus.pending,
+            completedAt: null,
+            value: null,
+          );
+          await _repository.updateInstance(updatedInstance);
+        }
 
-      final instance = _repository.getInstance(event.instanceId);
-      if (instance != null) {
-        final updatedInstance = instance.copyWith(
-          status: HabitInstanceStatus.pending,
-          completedAt: null,
-          value: null,
-        );
-        await _repository.updateInstance(updatedInstance);
-      }
-
-      if (state is HabitLoaded) {
-        final currentState = state as HabitLoaded;
-        final habits = _repository.getAllHabits();
-        final instances = _repository.getInstancesByDate(
-          currentState.selectedDate,
-        );
-
-        emit(
-          HabitLoaded(
-            habits: habits,
-            todayInstances: instances,
-            selectedDate: currentState.selectedDate,
-          ),
-        );
-      }
-
-      logSuccess('Instance uncompleted');
-    } catch (e) {
-      await handleError(
-        e,
-        emit,
-        (error) => const HabitError('Failed to uncomplete habit'),
-        state,
-      );
-    }
+        return await _refreshHabitsState();
+      },
+      emit: emit,
+      successState: (result) => result,
+      errorState: (error) => const HabitError('Failed to uncomplete habit'),
+    );
   }
 
   Future<void> _onUpdateHabitInstance(
@@ -431,27 +373,30 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     Emitter<HabitState> emit,
   ) async {
     try {
-      logInfo('Searching habits: ${event.query}');
+      logInfo('Searching habits: "${event.query}"');
 
       if (state is HabitLoaded) {
         final currentState = state as HabitLoaded;
-        final query = event.query.toLowerCase();
 
-        final filteredHabits =
-            currentState.habits.where((habit) {
-              return habit.title.toLowerCase().contains(query) ||
-                  (habit.description?.toLowerCase().contains(query) ?? false) ||
-                  habit.tags.any((tag) => tag.toLowerCase().contains(query));
-            }).toList();
+        // Create proper search filter
+        final searchFilter =
+            event.query.isNotEmpty
+                ? HabitFilter(
+                  // We can search in tags, but also should allow title/description search
+                  tags:
+                      currentState.habitsByTag.keys
+                          .where(
+                            (tag) => tag.toLowerCase().contains(
+                              event.query.toLowerCase(),
+                            ),
+                          )
+                          .toList(),
+                )
+                : null;
 
-        final searchFilter = HabitFilter(tags: [event.query]);
+        emit(currentState.copyWith(activeFilter: searchFilter));
 
-        emit(
-          currentState.copyWith(
-            habits: filteredHabits,
-            activeFilter: searchFilter,
-          ),
-        );
+        logSuccess('Search filter applied');
       }
     } catch (e) {
       logError('Search failed', error: e);

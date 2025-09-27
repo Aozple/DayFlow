@@ -3,7 +3,6 @@ import 'package:dayflow/data/models/app_settings.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/presentation/blocs/base/base_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
@@ -52,7 +51,7 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
       emit: emit,
       loadingState: const SettingsLoading(),
       successState: (settings) => SettingsLoaded(settings),
-      errorState: (error) => const SettingsError('Failed to load settings'),
+      errorState: (error) => const SettingsLoaded(AppSettings()),
       fallbackState: const SettingsLoaded(AppSettings()),
     );
   }
@@ -65,8 +64,6 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
       logVerbose('Debouncing accent color update');
       return;
     }
-
-    AppColors.setAccentColor(event.colorHex);
 
     await _updateSingleSetting(
       emit,
@@ -158,10 +155,6 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
   ) async {
     if (!canProcess()) return;
 
-    if (event.updates.containsKey('accentColor')) {
-      AppColors.setAccentColor(event.updates['accentColor']!);
-    }
-
     await performOperation(
       operationName: 'Batch Update Settings',
       operation: () async {
@@ -199,7 +192,6 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
         }
 
         _cachedSettings = defaultSettings;
-        AppColors.setAccentColor(defaultSettings.accentColor);
 
         return defaultSettings;
       },
