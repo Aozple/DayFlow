@@ -31,12 +31,14 @@ class NotificationService {
   bool get isInitialized => _isInitialized;
   bool get hasPermission => _hasPermission;
 
-  /// Set app context for navigation handling
+  /// Sets the app context for navigation handling.
   void setContext(BuildContext context) {
     _context = context;
   }
 
-  /// Initialize notification service with timezone and permissions
+  // MARK: - Initialization
+
+  /// Initializes the notification service with timezone and permissions.
   Future<bool> initialize() async {
     if (_isInitialized) return true;
 
@@ -64,7 +66,7 @@ class NotificationService {
     }
   }
 
-  /// Setup timezone for accurate scheduling
+  /// Sets up timezone for accurate scheduling.
   Future<void> _initializeTimezone() async {
     try {
       tz.initializeTimeZones();
@@ -76,7 +78,7 @@ class NotificationService {
     }
   }
 
-  /// Request notification permissions (Android only)
+  /// Requests notification permissions (Android only).
   Future<bool> _requestPermissions() async {
     if (Platform.isAndroid) {
       final status = await Permission.notification.request();
@@ -85,7 +87,7 @@ class NotificationService {
     return true;
   }
 
-  /// Initialize notification plugin with response handlers
+  /// Initializes the notification plugin with response handlers.
   Future<void> _initializePlugin() async {
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
@@ -102,7 +104,7 @@ class NotificationService {
     );
   }
 
-  /// Create notification channels for Android
+  /// Creates notification channels for Android.
   Future<void> _createChannels() async {
     final androidPlugin =
         _plugin
@@ -129,7 +131,9 @@ class NotificationService {
     }
   }
 
-  /// Handle notification tap events
+  // MARK: - Notification Handling
+
+  /// Handles notification tap events.
   void _handleNotificationResponse(NotificationResponse response) {
     DebugLogger.info('Notification tapped', tag: _tag, data: response.payload);
 
@@ -159,7 +163,7 @@ class NotificationService {
     }
   }
 
-  /// Navigate to home and highlight task
+  /// Navigates to the task details page.
   void _navigateToTask(String taskId) {
     if (_context == null) return;
 
@@ -167,7 +171,7 @@ class NotificationService {
     DebugLogger.info('Navigated to task', tag: _tag, data: taskId);
   }
 
-  /// Navigate to home and highlight habit
+  /// Navigates to the habit details page.
   void _navigateToHabit(String habitId) {
     if (_context == null) return;
 
@@ -175,13 +179,15 @@ class NotificationService {
     DebugLogger.info('Navigated to habit', tag: _tag, data: habitId);
   }
 
-  /// Schedule notification for task
+  // MARK: - Scheduling & Cancellation
+
+  /// Schedules a notification for a task.
   Future<bool> scheduleTaskNotification(TaskModel task) async {
     if (!_canSchedule()) return false;
     return await _scheduler.scheduleTaskNotification(task);
   }
 
-  /// Schedule notification for habit
+  /// Schedules a notification for a habit.
   Future<bool> scheduleHabitNotification(
     HabitModel habit, {
     DateTime? specificDate,
@@ -193,19 +199,19 @@ class NotificationService {
     );
   }
 
-  /// Cancel task notification
+  /// Cancels a task notification.
   Future<void> cancelTaskNotification(String taskId) async {
     if (!_isInitialized) return;
     await _scheduler.cancelNotification(taskId, NotificationTypes.task);
   }
 
-  /// Cancel habit notification
+  /// Cancels a habit notification.
   Future<void> cancelHabitNotification(String habitId) async {
     if (!_isInitialized) return;
     await _scheduler.cancelNotification(habitId, NotificationTypes.habit);
   }
 
-  /// Show immediate notification
+  /// Shows an immediate notification.
   Future<bool> showNotification({
     required String title,
     required String body,
@@ -243,7 +249,7 @@ class NotificationService {
     }
   }
 
-  /// Get all pending notifications
+  /// Retrieves all pending notification requests.
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     if (!_isInitialized) return [];
     try {
@@ -258,7 +264,7 @@ class NotificationService {
     }
   }
 
-  /// Cancel all notifications
+  /// Cancels all scheduled notifications.
   Future<void> cancelAll() async {
     if (!_isInitialized) return;
     try {
@@ -272,7 +278,7 @@ class NotificationService {
     }
   }
 
-  /// Test notification functionality
+  /// Tests the notification functionality by showing a test notification.
   Future<bool> testNotification() async {
     if (!_canSchedule()) return false;
 
@@ -312,10 +318,12 @@ class NotificationService {
     }
   }
 
-  /// Check if notifications can be scheduled
+  // MARK: - Helper Methods
+
+  /// Checks if notifications can be scheduled (initialized and has permission).
   bool _canSchedule() => _isInitialized && _hasPermission;
 
-  /// Map importance level to Flutter importance
+  /// Maps an integer importance level to an Android Importance enum.
   Importance _mapImportance(int level) {
     return switch (level) {
       5 => Importance.max,

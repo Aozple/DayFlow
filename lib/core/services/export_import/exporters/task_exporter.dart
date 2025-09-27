@@ -10,7 +10,9 @@ class TaskExporter extends BaseExporter {
 
   TaskExporter({required this.repository}) : super(tag: 'TaskExporter');
 
-  // Export to JSON
+  // MARK: - Export Methods
+
+  /// Exports tasks to a JSON map.
   Future<Map<String, dynamic>> exportToJsonMap({
     bool includeCompleted = true,
   }) async {
@@ -33,7 +35,7 @@ class TaskExporter extends BaseExporter {
     }
   }
 
-  // Export to CSV
+  /// Exports tasks to a CSV string.
   Future<ExportResult> exportToCsv({
     bool includeCompleted = true,
     bool includeNotes = true,
@@ -54,12 +56,10 @@ class TaskExporter extends BaseExporter {
       final csv = StringBuffer();
       csv.write('\uFEFF'); // UTF-8 BOM
 
-      // Header
       csv.writeln(
         'Title,Description,Type,Priority,Status,Due Date,Created Date,Tags,Has Reminder',
       );
 
-      // Data
       for (final task in tasks) {
         csv.writeln(_taskToCsvRow(task));
       }
@@ -81,7 +81,7 @@ class TaskExporter extends BaseExporter {
     }
   }
 
-  // Export to Markdown
+  /// Exports tasks to a Markdown string.
   Future<ExportResult> exportToMarkdown({
     bool includeCompleted = true,
     bool groupByDate = true,
@@ -127,7 +127,9 @@ class TaskExporter extends BaseExporter {
     }
   }
 
-  // Helper methods
+  // MARK: - Helper Methods
+
+  /// Converts a TaskModel to a JSON map.
   Map<String, dynamic> _taskToJson(TaskModel task) {
     return {
       'id': task.id,
@@ -151,6 +153,7 @@ class TaskExporter extends BaseExporter {
     };
   }
 
+  /// Converts a TaskModel to a CSV row string.
   String _taskToCsvRow(TaskModel task) {
     return [
       escapeCsv(task.title),
@@ -165,6 +168,7 @@ class TaskExporter extends BaseExporter {
     ].join(',');
   }
 
+  /// Writes tasks to a Markdown buffer, grouped by date.
   void _writeGroupedMarkdown(StringBuffer md, List<TaskModel> tasks) {
     final tasksByDate = <String, List<TaskModel>>{};
 
@@ -187,12 +191,14 @@ class TaskExporter extends BaseExporter {
     }
   }
 
+  /// Writes tasks to a Markdown buffer in a simple list.
   void _writeSimpleMarkdown(StringBuffer md, List<TaskModel> tasks) {
     for (final task in tasks) {
       _writeTaskMarkdown(md, task);
     }
   }
 
+  /// Writes a single task's details to a Markdown buffer.
   void _writeTaskMarkdown(StringBuffer md, TaskModel task) {
     md.write(task.isCompleted ? '- [x] ' : '- [ ] ');
     md.write('**${task.title}**');

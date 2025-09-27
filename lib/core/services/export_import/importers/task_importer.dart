@@ -9,7 +9,9 @@ class TaskImporter extends BaseImporter {
 
   TaskImporter({required this.repository}) : super(tag: 'TaskImporter');
 
-  // Import from JSON data
+  // MARK: - Import Methods
+
+  /// Imports tasks from JSON data.
   Future<ImportResult> importFromJson(
     List<dynamic> tasksData, {
     bool merge = true,
@@ -60,12 +62,11 @@ class TaskImporter extends BaseImporter {
     }
   }
 
-  // Import from CSV
+  /// Imports tasks from a CSV string.
   Future<ImportResult> importFromCsv(String csvString) async {
     try {
       logInfo('Starting CSV import');
 
-      // Remove BOM if present
       if (csvString.startsWith('\uFEFF')) {
         csvString = csvString.substring(1);
       }
@@ -141,6 +142,9 @@ class TaskImporter extends BaseImporter {
     }
   }
 
+  // MARK: - Helper Methods
+
+  /// Converts a JSON map to a TaskModel.
   TaskModel _taskFromJson(Map<String, dynamic> json) {
     return TaskModel(
       id: json['id'] ?? '',

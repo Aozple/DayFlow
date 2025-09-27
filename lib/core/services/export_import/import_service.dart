@@ -27,10 +27,11 @@ class ImportService {
     _settingsImporter = SettingsImporter(repository: _settingsRepository);
   }
 
-  // Validate import data
+  // MARK: - Validation
+
+  /// Validates the format and content of import data.
   Future<ImportValidation> validateImport(String data) async {
     try {
-      // Check if JSON
       if (data.trim().startsWith('{')) {
         final Map<String, dynamic> jsonData = jsonDecode(data);
 
@@ -49,7 +50,6 @@ class ImportService {
         );
       }
 
-      // Check if CSV
       if (data.contains(',') && data.contains('\n')) {
         final lines = data.split('\n');
         final dataLines =
@@ -68,7 +68,9 @@ class ImportService {
     }
   }
 
-  // Import from JSON
+  // MARK: - Import Methods
+
+  /// Imports data from a JSON string.
   Future<ImportResult> importFromJson(
     String jsonString, {
     bool merge = true,
@@ -81,7 +83,6 @@ class ImportService {
 
       final Map<String, dynamic> data = jsonDecode(jsonString);
 
-      // Check version
       final version = data['version'] ?? 0;
       if (version > AppConstants.currentDataVersion) {
         DebugLogger.warning(
@@ -95,7 +96,6 @@ class ImportService {
       int totalFailed = 0;
       final errors = <String>[];
 
-      // Import tasks
       if (importTasks && data['tasks'] != null) {
         final tasksResult = await _taskImporter.importFromJson(
           data['tasks'] as List,
@@ -106,7 +106,6 @@ class ImportService {
         if (tasksResult.errors != null) errors.addAll(tasksResult.errors!);
       }
 
-      // Import habits
       if (importHabits && data['habits'] != null) {
         final habitsResult = await _habitImporter.importFromJson(
           data['habits'] as List,
@@ -118,7 +117,6 @@ class ImportService {
         if (habitsResult.errors != null) errors.addAll(habitsResult.errors!);
       }
 
-      // Import settings
       if (importSettings && data['settings'] != null) {
         final settingsSuccess = await _settingsImporter.importFromJson(
           data['settings'],
@@ -151,7 +149,7 @@ class ImportService {
     }
   }
 
-  // Import from CSV (tasks or habits)
+  /// Imports data from a CSV string based on the specified type.
   Future<ImportResult> importFromCsv(String csvString, ImportType type) async {
     switch (type) {
       case ImportType.tasks:
@@ -167,6 +165,9 @@ class ImportService {
     }
   }
 
+  // MARK: - Helper Methods
+
+  /// Counts the total number of items (tasks and habits) in the import data.
   int _countItems(Map<String, dynamic> data) {
     int count = 0;
     if (data['tasks'] != null) {

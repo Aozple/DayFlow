@@ -10,12 +10,12 @@ class HabitRepository extends BaseRepository<HabitModel>
     implements IHabitRepository {
   static const String _tag = 'HabitRepo';
 
-  // Cache for statistics
+  // MARK: - Cache
   Map<String, dynamic>? _cachedStats;
   DateTime? _lastStatsUpdate;
   static const Duration _statsCacheDuration = Duration(minutes: 2);
 
-  // Instance management
+  // MARK: - Instance Management
   late final BaseRepository<HabitInstanceModel> _instanceRepo;
 
   HabitRepository() : super(boxName: AppConstants.habitsBox, tag: _tag) {
@@ -34,7 +34,9 @@ class HabitRepository extends BaseRepository<HabitModel>
   @override
   bool isDeleted(HabitModel item) => item.isDeleted;
 
-  // Habit methods
+  // MARK: - Habit Methods
+
+  /// Adds a new habit and generates its initial instances.
   @override
   Future<String> addHabit(HabitModel habit) async {
     final id = await add(habit);
@@ -42,11 +44,13 @@ class HabitRepository extends BaseRepository<HabitModel>
     return id;
   }
 
+  /// Retrieves a habit by its ID.
   @override
   HabitModel? getHabit(String id) {
     return get(id);
   }
 
+  /// Retrieves all habits, sorted by creation date.
   @override
   List<HabitModel> getAllHabits() {
     final habits = getAll();
@@ -54,12 +58,14 @@ class HabitRepository extends BaseRepository<HabitModel>
     return habits;
   }
 
+  /// Updates an existing habit and regenerates its instances.
   @override
   Future<void> updateHabit(HabitModel habit) async {
     await update(habit);
     await _regenerateInstances(habit);
   }
 
+  /// Deletes a habit by marking it as deleted and deleting its future instances.
   @override
   Future<void> deleteHabit(String id) async {
     final habit = getHabit(id);
@@ -70,17 +76,21 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
-  // Instance methods
+  // MARK: - Instance Methods
+
+  /// Adds a new habit instance.
   @override
   Future<void> addInstance(HabitInstanceModel instance) async {
     await _instanceRepo.add(instance);
   }
 
+  /// Retrieves a habit instance by its ID.
   @override
   HabitInstanceModel? getInstance(String id) {
     return _instanceRepo.get(id);
   }
 
+  /// Retrieves all instances for a specific habit, sorted by date.
   @override
   List<HabitInstanceModel> getInstancesByHabitId(String habitId) {
     final instances =
@@ -89,6 +99,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     return instances;
   }
 
+  /// Retrieves all instances for a specific date.
   @override
   List<HabitInstanceModel> getInstancesByDate(DateTime date) {
     try {
@@ -106,7 +117,6 @@ class HabitRepository extends BaseRepository<HabitModel>
                 instanceDate.day == targetDay;
           }).toList();
 
-      // Sort by habit creation order for consistent UI
       instances.sort((a, b) => a.date.compareTo(b.date));
 
       DebugLogger.verbose(
@@ -122,6 +132,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Updates an existing habit instance.
   @override
   Future<void> updateInstance(HabitInstanceModel instance) async {
     await _instanceRepo.update(instance);
@@ -131,6 +142,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Marks a habit instance as completed.
   @override
   Future<void> completeInstance(String instanceId, {int? value}) async {
     final instance = getInstance(instanceId);
@@ -144,7 +156,9 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
-  // Instance generation
+  // MARK: - Instance Generation
+
+  /// Generates instances for a given habit.
   @override
   Future<void> generateInstances(
     HabitModel habit, {
@@ -183,11 +197,11 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Regenerates instances for a habit.
   Future<void> _regenerateInstances(HabitModel habit) async {
     final instances = getInstancesByHabitId(habit.id);
     final today = DateTime.now();
 
-    // Remove future pending instances
     for (final instance in instances) {
       if (instance.date.isAfter(today) &&
           instance.status == HabitInstanceStatus.pending) {
@@ -198,6 +212,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     await generateInstances(habit);
   }
 
+  /// Deletes future instances of a habit.
   Future<void> _deleteHabitInstances(String habitId) async {
     final instances = getInstancesByHabitId(habitId);
     final today = DateTime.now();
@@ -210,7 +225,9 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
-  // Streak management
+  // MARK: - Streak Management
+
+  /// Updates the streak for a habit.
   Future<void> _updateHabitStreak(String habitId) async {
     try {
       final habit = getHabit(habitId);
@@ -242,6 +259,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Calculates the current and longest streak for a habit.
   ({int current, int longest, DateTime? lastCompletedDate}) _calculateStreak(
     HabitModel habit,
     List<HabitInstanceModel> instances,
@@ -250,7 +268,6 @@ class HabitRepository extends BaseRepository<HabitModel>
     int longestStreak = 0;
     DateTime? lastCompletedDate;
 
-    // Calculation logic stays the same
     for (final instance in instances) {
       if (instance.status == HabitInstanceStatus.completed) {
         currentStreak++;
@@ -270,7 +287,9 @@ class HabitRepository extends BaseRepository<HabitModel>
     );
   }
 
-  // Helper methods
+  // MARK: - Helper Methods
+
+  /// Determines if an instance should be generated for a given habit and date.
   bool _shouldGenerateInstance(HabitModel habit, DateTime date) {
     final startDateOnly = DateTime(
       habit.startDate.year,
@@ -284,6 +303,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     return _matchesFrequencyPattern(habit, date);
   }
 
+  /// Checks if a habit has ended for a given date.
   bool _hasHabitEnded(HabitModel habit, DateTime date) {
     switch (habit.endCondition) {
       case HabitEndCondition.onDate:
@@ -296,6 +316,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Checks if a habit matches its frequency pattern for a given date.
   bool _matchesFrequencyPattern(HabitModel habit, DateTime date) {
     switch (habit.frequency) {
       case HabitFrequency.daily:
@@ -311,6 +332,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Retrieves a habit instance for a specific habit and date.
   Future<HabitInstanceModel?> _getInstanceForDate(
     String habitId,
     DateTime date,
@@ -323,16 +345,21 @@ class HabitRepository extends BaseRepository<HabitModel>
     }
   }
 
+  /// Checks if two DateTime objects represent the same day.
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  // MARK: - Repository Overrides
+
+  /// Clears all habits and their instances.
   @override
   Future<void> clearAllHabits() async {
     await clearAll();
     await _instanceRepo.clearAll();
   }
 
+  /// Invalidates the habit statistics cache.
   @override
   void invalidateCache() {
     super.invalidateCache();
@@ -341,10 +368,10 @@ class HabitRepository extends BaseRepository<HabitModel>
     DebugLogger.verbose('Habit statistics cache invalidated', tag: tag);
   }
 
+  /// Retrieves habit statistics, with optional cache refresh.
   @override
   Map<String, dynamic> getStatistics({bool forceRefresh = false}) {
     try {
-      // Return cached stats if valid
       if (!forceRefresh &&
           _cachedStats != null &&
           _lastStatsUpdate != null &&
@@ -362,14 +389,12 @@ class HabitRepository extends BaseRepository<HabitModel>
       int completedToday = 0;
       int pendingToday = 0;
 
-      // Calculate habit stats
       for (final habit in habits) {
         if (habit.isActive) {
           activeHabits++;
         }
       }
 
-      // Calculate today's stats
       for (final instance in todayInstances) {
         if (instance.isCompleted) {
           completedToday++;
@@ -405,7 +430,7 @@ class HabitRepository extends BaseRepository<HabitModel>
   }
 }
 
-// Separate repository for HabitInstance
+// MARK: - HabitInstanceRepository
 class HabitInstanceRepository extends BaseRepository<HabitInstanceModel> {
   HabitInstanceRepository()
     : super(boxName: AppConstants.habitInstancesBox, tag: 'HabitInstanceRepo');

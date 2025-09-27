@@ -10,7 +10,9 @@ import 'package:share_plus/share_plus.dart';
 class FileManager {
   static const String _tag = 'FileManager';
 
-  // Share export file
+  // MARK: - Export/Import Operations
+
+  /// Shares an exported file.
   static Future<bool> shareExport(ExportResult result) async {
     if (!result.success || result.data == null) return false;
 
@@ -35,7 +37,7 @@ class FileManager {
     }
   }
 
-  // Save to device
+  /// Saves an exported file to the device's storage.
   static Future<String?> saveToDevice(ExportResult result) async {
     if (!result.success || result.data == null) return null;
 
@@ -58,7 +60,6 @@ class FileManager {
 
       if (directory == null) return null;
 
-      // Create organized folder structure
       final monthFolder = DateFormat('yyyy-MM').format(DateTime.now());
       final dayflowDir = Directory(
         '${directory.path}/${AppConstants.appName}/$monthFolder',
@@ -68,7 +69,6 @@ class FileManager {
         await dayflowDir.create(recursive: true);
       }
 
-      // Save file
       final filePath = '${dayflowDir.path}/${result.fileName}';
       final file = File(filePath);
       await file.writeAsString(result.data!);
@@ -81,7 +81,7 @@ class FileManager {
     }
   }
 
-  // Pick file for import
+  /// Opens a file picker for importing data.
   static Future<String?> pickFileForImport() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -109,7 +109,9 @@ class FileManager {
     }
   }
 
-  // Get backup files
+  // MARK: - Backup Management
+
+  /// Retrieves a list of all backup files.
   static Future<List<FileInfo>> getBackupFiles() async {
     try {
       Directory? directory;
@@ -160,7 +162,7 @@ class FileManager {
     }
   }
 
-  // Delete backup file
+  /// Deletes a specific backup file.
   static Future<bool> deleteBackupFile(String path) async {
     try {
       final file = File(path);
@@ -177,6 +179,7 @@ class FileManager {
   }
 }
 
+// MARK: - FileInfo Model
 class FileInfo {
   final String path;
   final String name;
@@ -190,6 +193,7 @@ class FileInfo {
     required this.modified,
   });
 
+  /// Returns the formatted size of the file.
   String get formattedSize {
     if (size < 1024) return '$size B';
     if (size < 1024 * 1024) {

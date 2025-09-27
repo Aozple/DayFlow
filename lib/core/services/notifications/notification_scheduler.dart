@@ -17,6 +17,9 @@ class NotificationScheduler {
 
   NotificationScheduler(this._plugin);
 
+  // MARK: - Scheduling Methods
+
+  /// Schedules a notification for a given task.
   Future<bool> scheduleTaskNotification(TaskModel task) async {
     if (!_isTaskEligible(task)) return false;
 
@@ -58,6 +61,7 @@ class NotificationScheduler {
     }
   }
 
+  /// Schedules a notification for a given habit.
   Future<bool> scheduleHabitNotification(
     HabitModel habit, {
     DateTime? specificDate,
@@ -103,6 +107,7 @@ class NotificationScheduler {
     }
   }
 
+  /// Cancels a scheduled notification.
   Future<void> cancelNotification(String entityId, String type) async {
     final baseId = type == NotificationTypes.habit ? _habitIdBase : _taskIdBase;
     final notificationId = _generateId(entityId, baseId);
@@ -110,13 +115,16 @@ class NotificationScheduler {
     DebugLogger.info('Notification cancelled', tag: _tag, data: entityId);
   }
 
-  // Content generation for better notifications
+  // MARK: - Content Generation
+
+  /// Generates the title for a task notification.
   String _getTaskTitle(TaskModel task) {
     final priorityEmoji = _getPriorityEmoji(task.priority);
     final timeInfo = _getTimeInfo(task.dueDate);
     return '$priorityEmoji ${task.title} $timeInfo';
   }
 
+  /// Generates the body for a task notification.
   String _getTaskBody(TaskModel task) {
     final parts = <String>[];
 
@@ -145,12 +153,14 @@ class NotificationScheduler {
         : 'Tap to view details and complete this task';
   }
 
+  /// Generates the title for a habit notification.
   String _getHabitTitle(HabitModel habit) {
     final streakInfo =
         habit.currentStreak > 0 ? '🔥${habit.currentStreak}' : '🎯';
     return '$streakInfo ${habit.title}';
   }
 
+  /// Generates the body for a habit notification.
   String _getHabitBody(HabitModel habit) {
     final parts = <String>[];
 
@@ -158,7 +168,6 @@ class NotificationScheduler {
       parts.add(habit.description!);
     }
 
-    // Streak motivation
     if (habit.currentStreak > 0) {
       if (habit.currentStreak >= 30) {
         parts.add('🏆 Amazing ${habit.currentStreak}-day streak!');
@@ -171,10 +180,8 @@ class NotificationScheduler {
       parts.add('💫 Start your streak today!');
     }
 
-    // Frequency info
     parts.add('📅 ${habit.frequencyLabel}');
 
-    // Target info for quantifiable habits
     if (habit.habitType == HabitType.quantifiable &&
         habit.targetValue != null &&
         habit.unit != null) {
@@ -184,6 +191,7 @@ class NotificationScheduler {
     return parts.join(' • ');
   }
 
+  /// Returns an emoji based on task priority.
   String _getPriorityEmoji(int priority) {
     return switch (priority) {
       5 => '🚨',
@@ -194,6 +202,7 @@ class NotificationScheduler {
     };
   }
 
+  /// Returns time information based on a due date.
   String _getTimeInfo(DateTime? dueDate) {
     if (dueDate == null) return '';
 
@@ -211,6 +220,9 @@ class NotificationScheduler {
     }
   }
 
+  // MARK: - Notification Details
+
+  /// Creates notification details for a task.
   NotificationDetails _createTaskNotificationDetails(TaskModel task) {
     final channelId =
         task.priority >= 4
@@ -252,6 +264,7 @@ class NotificationScheduler {
     );
   }
 
+  /// Creates notification details for a habit.
   NotificationDetails _createHabitNotificationDetails(HabitModel habit) {
     final config =
         NotificationChannels.configs[NotificationChannels.habitReminder]!;
@@ -290,6 +303,7 @@ class NotificationScheduler {
     );
   }
 
+  /// Generates a summary for a task notification.
   String _getTaskSummary(TaskModel task) {
     if (task.priority >= 4) return 'High Priority';
     if (task.dueDate != null) {
@@ -303,12 +317,14 @@ class NotificationScheduler {
     return 'Task Reminder';
   }
 
+  /// Generates a summary for a habit notification.
   String _getHabitSummary(HabitModel habit) {
     if (habit.currentStreak >= 7) return 'Streak Active';
     if (habit.habitType == HabitType.quantifiable) return 'Measurable Goal';
     return 'Daily Habit';
   }
 
+  /// Parses a color string (hex) into a Color object.
   Color? _parseColor(String colorString) {
     try {
       return Color(int.parse(colorString.replaceFirst('#', '0xFF')));
@@ -317,21 +333,26 @@ class NotificationScheduler {
     }
   }
 
-  // Rest of the methods remain the same...
+  // MARK: - Eligibility & Time Calculation
+
+  /// Checks if a task is eligible for notification.
   bool _isTaskEligible(TaskModel task) {
     return task.hasNotification && task.dueDate != null;
   }
 
+  /// Checks if a habit is eligible for notification.
   bool _isHabitEligible(HabitModel habit) {
     return habit.hasNotification && habit.preferredTime != null;
   }
 
+  /// Calculates the notification time for a task.
   DateTime? _calculateTaskNotificationTime(TaskModel task) {
     if (task.dueDate == null) return null;
     final minutesBefore = task.notificationMinutesBefore ?? 0;
     return task.dueDate!.subtract(Duration(minutes: minutesBefore));
   }
 
+  /// Calculates the notification time for a habit.
   DateTime? _calculateHabitNotificationTime(
     HabitModel habit,
     DateTime? specificDate,
@@ -350,10 +371,14 @@ class NotificationScheduler {
         : notificationTime;
   }
 
+  /// Checks if a given time is in the past.
   bool _isTimeInPast(DateTime time) {
     return time.isBefore(DateTime.now());
   }
 
+  // MARK: - Payload & ID Generation
+
+  /// Creates a JSON payload for a task notification.
   String _createTaskPayload(TaskModel task) {
     return jsonEncode({
       NotificationPayloadKeys.type: NotificationTypes.task,
@@ -362,6 +387,7 @@ class NotificationScheduler {
     });
   }
 
+  /// Creates a JSON payload for a habit notification.
   String _createHabitPayload(HabitModel habit) {
     return jsonEncode({
       NotificationPayloadKeys.type: NotificationTypes.habit,
@@ -370,10 +396,14 @@ class NotificationScheduler {
     });
   }
 
+  /// Generates a unique notification ID.
   int _generateId(String entityId, int baseId) {
     return baseId + (entityId.hashCode.abs() % _idRange);
   }
 
+  // MARK: - Mapping Helpers
+
+  /// Maps an integer importance level to an Android Importance enum.
   Importance _mapImportance(int level) {
     return switch (level) {
       5 => Importance.max,
@@ -384,6 +414,7 @@ class NotificationScheduler {
     };
   }
 
+  /// Maps an integer priority level to an Android Priority enum.
   Priority _mapPriority(int level) {
     return switch (level) {
       >= 4 => Priority.max,

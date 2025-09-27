@@ -10,7 +10,9 @@ class HabitImporter extends BaseImporter {
 
   HabitImporter({required this.repository}) : super(tag: 'HabitImporter');
 
-  // Import habits from JSON
+  // MARK: - Import Methods
+
+  /// Imports habits from a JSON list.
   Future<ImportResult> importFromJson(
     List<dynamic> habitsData, {
     List<dynamic>? instancesData,
@@ -28,7 +30,6 @@ class HabitImporter extends BaseImporter {
       int failed = 0;
       final errors = <String>[];
 
-      // Import habits
       for (final habitData in habitsData) {
         try {
           final habit = HabitModel.fromMap(habitData);
@@ -41,7 +42,6 @@ class HabitImporter extends BaseImporter {
         }
       }
 
-      // Import instances if provided
       if (instancesData != null) {
         int instancesImported = 0;
         for (final instanceData in instancesData) {
@@ -78,12 +78,11 @@ class HabitImporter extends BaseImporter {
     }
   }
 
-  // Import habits from CSV
+  /// Imports habits from a CSV string.
   Future<ImportResult> importFromCsv(String csvString) async {
     try {
       logInfo('Starting CSV import');
 
-      // Remove BOM if present
       if (csvString.startsWith('\uFEFF')) {
         csvString = csvString.substring(1);
       }
@@ -105,7 +104,6 @@ class HabitImporter extends BaseImporter {
           final fields = parseCsvLine(line);
           if (fields.length < 8) continue;
 
-          // Parse preferred time
           TimeOfDay? preferredTime;
           if (fields[3].isNotEmpty) {
             final timeParts = fields[3].split(':');
@@ -117,7 +115,6 @@ class HabitImporter extends BaseImporter {
             }
           }
 
-          // Parse frequency
           HabitFrequency frequency = HabitFrequency.daily;
           final freqStr = fields[2].toLowerCase();
           if (freqStr.contains('weekly')) {

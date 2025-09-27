@@ -27,7 +27,16 @@ class ExportService {
     _habitExporter = HabitExporter(repository: _habitRepository);
   }
 
-  // Export all data to JSON
+  /// Checks if a quick export is possible based on the last export time.
+  bool get canQuickExport {
+    if (_lastExportTime == null) return false;
+    return DateTime.now().difference(_lastExportTime!).inSeconds <
+        AppConstants.quickExportDuration.inSeconds;
+  }
+
+  // MARK: - Export Methods
+
+  /// Exports all application data to a JSON string.
   Future<ExportResult> exportAllToJson({
     bool includeCompletedTasks = true,
     bool includeHabitInstances = true,
@@ -38,21 +47,17 @@ class ExportService {
 
       final packageInfo = await PackageInfo.fromPlatform();
 
-      // Get tasks data
       final tasksData = await _taskExporter.exportToJsonMap(
         includeCompleted: includeCompletedTasks,
       );
 
-      // Get habits data
       final habitsData = await _habitExporter.exportToJsonMap(
         includeInstances: includeHabitInstances,
       );
 
-      // Get settings
       final settings =
           includeSettings ? _settingsRepository.getSettings() : null;
 
-      // Build export data
       final exportData = {
         'version': AppConstants.currentDataVersion,
         'appVersion': packageInfo.version,
@@ -89,7 +94,7 @@ class ExportService {
     }
   }
 
-  // Export tasks only
+  /// Exports only tasks in the specified format.
   Future<ExportResult> exportTasksOnly(
     ExportFormat format, {
     bool includeCompleted = true,
@@ -116,7 +121,7 @@ class ExportService {
     }
   }
 
-  // Export habits only
+  /// Exports only habits in the specified format.
   Future<ExportResult> exportHabitsOnly(ExportFormat format) async {
     switch (format) {
       case ExportFormat.csv:
@@ -136,14 +141,11 @@ class ExportService {
     }
   }
 
+  // MARK: - Helper Methods
+
+  /// Generates a file name with a prefix and extension.
   String _generateFileName(String prefix, String extension) {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return '${AppConstants.appName.toLowerCase()}_${prefix}_$timestamp.$extension';
-  }
-
-  bool get canQuickExport {
-    if (_lastExportTime == null) return false;
-    return DateTime.now().difference(_lastExportTime!).inSeconds <
-        AppConstants.quickExportDuration.inSeconds;
   }
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-// Custom snackbar notifications with enhanced UI
 class CustomSnackBar {
-  // Private constructor to prevent instantiation
   CustomSnackBar._();
 
-  // Show a general custom snackbar
+  // MARK: - General SnackBar
+
+  /// Shows a customizable snackbar notification.
   static void show({
     required BuildContext context,
     required String message,
@@ -14,24 +14,19 @@ class CustomSnackBar {
     VoidCallback? onActionPressed,
     String? actionLabel,
   }) {
-    // Clear existing snackbars
     ScaffoldMessenger.of(context).clearSnackBars();
 
-    // Get theme for color adjustments
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
-    // Set background color based on type
     final backgroundColor =
         isSuccess
             ? (isDarkMode ? const Color(0xFF00C853) : const Color(0xFF4CAF50))
             : (isDarkMode ? const Color(0xFFFF5252) : const Color(0xFFF44336));
 
-    // Choose appropriate icon
     final iconData =
         isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
 
-    // Build snackbar content
     final snackBarContent = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -54,7 +49,6 @@ class CustomSnackBar {
         bottom: true,
         child: Row(
           children: [
-            // Animated icon
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 600),
@@ -67,7 +61,6 @@ class CustomSnackBar {
               },
             ),
             const SizedBox(width: 16),
-            // Message text
             Expanded(
               child: Text(
                 message,
@@ -81,7 +74,6 @@ class CustomSnackBar {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // Optional action button
             if (actionLabel != null && onActionPressed != null) ...[
               const SizedBox(width: 12),
               TextButton(
@@ -114,7 +106,6 @@ class CustomSnackBar {
       ),
     );
 
-    // Show the snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: snackBarContent,
@@ -129,23 +120,24 @@ class CustomSnackBar {
     );
   }
 
-  // Show success message
+  // MARK: - Specific SnackBar Types
+
+  /// Shows a success snackbar.
   static void success(BuildContext context, String message) {
     show(context: context, message: message, isSuccess: true);
   }
 
-  // Show error message
+  /// Shows an error snackbar.
   static void error(BuildContext context, String message) {
     show(context: context, message: message, isSuccess: false);
   }
 
-  // Show info message with primary color gradient
+  /// Shows an info snackbar with a primary color gradient.
   static void info(BuildContext context, String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
 
     final theme = Theme.of(context);
 
-    // Build info snackbar content
     final snackBarContent = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -175,7 +167,6 @@ class CustomSnackBar {
         bottom: true,
         child: Row(
           children: [
-            // Animated info icon
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 600),
@@ -192,7 +183,6 @@ class CustomSnackBar {
               },
             ),
             const SizedBox(width: 16),
-            // Message text
             Expanded(
               child: Text(
                 message,
@@ -211,7 +201,6 @@ class CustomSnackBar {
       ),
     );
 
-    // Show info snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: snackBarContent,
@@ -226,13 +215,12 @@ class CustomSnackBar {
     );
   }
 
-  // Show warning message with orange gradient
+  /// Shows a warning snackbar with an orange gradient.
   static void warning(BuildContext context, String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
 
     final warningColor = Colors.orange.shade700;
 
-    // Build warning snackbar content
     final snackBarContent = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -259,7 +247,6 @@ class CustomSnackBar {
         bottom: true,
         child: Row(
           children: [
-            // Animated warning icon
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: const Duration(milliseconds: 600),
@@ -276,7 +263,6 @@ class CustomSnackBar {
               },
             ),
             const SizedBox(width: 16),
-            // Message text
             Expanded(
               child: Text(
                 message,
@@ -295,7 +281,6 @@ class CustomSnackBar {
       ),
     );
 
-    // Show warning snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: snackBarContent,
@@ -310,12 +295,14 @@ class CustomSnackBar {
     );
   }
 
-  // Hide current snackbar with animation
+  // MARK: - Control Methods
+
+  /// Hides the current snackbar with animation.
   static void hide(BuildContext context) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 
-  // Hide all snackbars immediately
+  /// Hides all snackbars immediately.
   static void hideImmediately(BuildContext context) {
     ScaffoldMessenger.of(context).clearSnackBars();
   }

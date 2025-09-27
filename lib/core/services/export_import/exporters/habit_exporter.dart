@@ -10,7 +10,9 @@ class HabitExporter extends BaseExporter {
 
   HabitExporter({required this.repository}) : super(tag: 'HabitExporter');
 
-  // Export to JSON Map
+  // MARK: - Export Methods
+
+  /// Exports habits and their instances to a JSON map.
   Future<Map<String, dynamic>> exportToJsonMap({
     bool includeInstances = true,
   }) async {
@@ -38,7 +40,7 @@ class HabitExporter extends BaseExporter {
     }
   }
 
-  // Export to CSV
+  /// Exports habits to a CSV string.
   Future<ExportResult> exportToCsv() async {
     try {
       logInfo('Starting habits CSV export');
@@ -48,12 +50,10 @@ class HabitExporter extends BaseExporter {
       final csv = StringBuffer();
       csv.write('\uFEFF'); // UTF-8 BOM
 
-      // Header
       csv.writeln(
         'Title,Description,Frequency,Preferred Time,Current Streak,Total Completions,Tags,Has Reminder',
       );
 
-      // Data
       for (final habit in habits) {
         csv.writeln(_habitToCsvRow(habit));
       }
@@ -75,7 +75,7 @@ class HabitExporter extends BaseExporter {
     }
   }
 
-  // Export to Markdown
+  /// Exports habits to a Markdown string.
   Future<ExportResult> exportToMarkdown() async {
     try {
       logInfo('Starting habits Markdown export');
@@ -112,15 +112,19 @@ class HabitExporter extends BaseExporter {
     }
   }
 
-  // Helper methods
+  // MARK: - Helper Methods
+
+  /// Converts a HabitModel to a JSON map.
   Map<String, dynamic> _habitToJson(HabitModel habit) {
     return habit.toMap();
   }
 
+  /// Converts a HabitInstanceModel to a JSON map.
   Map<String, dynamic> _instanceToJson(HabitInstanceModel instance) {
     return instance.toMap();
   }
 
+  /// Converts a HabitModel to a CSV row string.
   String _habitToCsvRow(HabitModel habit) {
     return [
       escapeCsv(habit.title),
@@ -136,6 +140,7 @@ class HabitExporter extends BaseExporter {
     ].join(',');
   }
 
+  /// Writes a habit's details to a Markdown buffer.
   void _writeHabitMarkdown(StringBuffer md, HabitModel habit) {
     md.writeln('## 🎯 ${habit.title}\n');
 

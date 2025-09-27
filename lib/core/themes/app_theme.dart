@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 
-// App theme configuration
 class AppTheme {
-  // Private constructor to prevent instantiation
   AppTheme._();
 
-  // Dark theme definition
+  // MARK: - Dark Theme
+
+  /// Defines the dark theme for the application.
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
 
-      // Color scheme
       colorScheme: ColorScheme.dark(
         primary: AppColors.accent,
         secondary: AppColors.accent,
@@ -25,27 +24,23 @@ class AppTheme {
         onError: Colors.white,
       ),
 
-      // App bar styling
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
 
-      // Card styling
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
 
-      // Divider styling
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 0.5,
       ),
 
-      // Typography
       fontFamily: '.SF Pro Display',
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
@@ -67,6 +62,8 @@ class AppTheme {
     );
   }
 
-  // Light theme placeholder (currently same as dark theme)
+  // MARK: - Light Theme
+
+  /// Defines the light theme for the application (currently same as dark theme).
   static ThemeData get lightTheme => darkTheme;
 }

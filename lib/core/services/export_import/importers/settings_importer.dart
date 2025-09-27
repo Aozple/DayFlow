@@ -7,7 +7,9 @@ class SettingsImporter extends BaseImporter {
 
   SettingsImporter({required this.repository}) : super(tag: 'SettingsImporter');
 
-  // Import settings from JSON
+  // MARK: - Import Methods
+
+  /// Imports settings from a JSON map.
   Future<bool> importFromJson(Map<String, dynamic> settingsData) async {
     try {
       logInfo('Importing settings');
@@ -16,7 +18,6 @@ class SettingsImporter extends BaseImporter {
 
       if (!settings.isValid()) {
         logWarning('Invalid settings, attempting to fix');
-        // Settings repository will fix invalid settings
       }
 
       final success = await repository.saveSettings(settings);

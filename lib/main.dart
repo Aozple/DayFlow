@@ -14,10 +14,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:get_it/get_it.dart';
 import 'core/themes/app_theme.dart';
 
+// MARK: - Main Entry Point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // System UI setup
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -26,27 +26,22 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
-
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Initialize Hive
   await Hive.initFlutter();
   await Hive.openBox(AppConstants.tasksBox);
   await Hive.openBox(AppConstants.settingsBox);
   await Hive.openBox(AppConstants.habitsBox);
   await Hive.openBox(AppConstants.habitInstancesBox);
 
-  // Setup DI
   await setupServiceLocator();
 
-  // Initialize services
   final notificationService = GetIt.I<NotificationService>();
   await notificationService.initialize();
 
   final settingsRepository = GetIt.I<SettingsRepository>();
   await settingsRepository.init();
 
-  // Lock orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -55,6 +50,7 @@ void main() async {
   runApp(const DayFlowApp());
 }
 
+// MARK: - DayFlowApp Widget
 class DayFlowApp extends StatelessWidget {
   const DayFlowApp({super.key});
 
@@ -68,7 +64,6 @@ class DayFlowApp extends StatelessWidget {
       ],
       child: BlocListener<SettingsBloc, SettingsState>(
         listener: (context, state) {
-          // Handle AppColors side effect here
           if (state is SettingsLoaded) {
             AppColors.setAccentColor(state.accentColor);
           }

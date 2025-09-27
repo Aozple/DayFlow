@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+// MARK: - LogLevel Enum
 enum LogLevel { verbose, debug, info, warning, error, success }
 
+// MARK: - DebugLogger
 class DebugLogger {
   static const bool _enableLogging = kDebugMode;
   static const LogLevel _minLevel = LogLevel.debug;
@@ -26,6 +28,9 @@ class DebugLogger {
 
   static const String _resetColor = '\x1B[0m';
 
+  // MARK: - Logging Methods
+
+  /// Logs a message with a specified level, tag, and optional data.
   static void log(
     String message, {
     LogLevel level = LogLevel.info,
@@ -49,22 +54,27 @@ class DebugLogger {
     }
   }
 
+  /// Logs a verbose message.
   static void verbose(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.verbose, tag: tag, data: data);
   }
 
+  /// Logs a debug message.
   static void debug(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.debug, tag: tag, data: data);
   }
 
+  /// Logs an informational message.
   static void info(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.info, tag: tag, data: data);
   }
 
+  /// Logs a warning message.
   static void warning(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.warning, tag: tag, data: data);
   }
 
+  /// Logs an error message with optional error object and stack trace.
   static void error(
     String message, {
     String? tag,
@@ -74,16 +84,19 @@ class DebugLogger {
     log(message, level: LogLevel.error, tag: tag, data: error);
     if (stackTrace != null && kDebugMode) {
       debugPrint(
-        '$_levelColors[LogLevel.error]Stack trace:\n$stackTrace$_resetColor',
+        '${_levelColors[LogLevel.error]}Stack trace:\n$stackTrace$_resetColor',
       );
     }
   }
 
+  /// Logs a success message.
   static void success(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.success, tag: tag, data: data);
   }
 
-  // Utility method for operation timing
+  // MARK: - Utility Methods
+
+  /// Times the execution of an asynchronous operation and logs its duration.
   static Future<T> timeOperation<T>(
     String operationName,
     Future<T> Function() operation,
