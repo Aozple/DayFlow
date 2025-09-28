@@ -392,19 +392,9 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
       if (state is HabitLoaded) {
         final currentState = state as HabitLoaded;
 
-        // Create proper search filter
         final searchFilter =
             event.query.trim().isNotEmpty
-                ? HabitFilter(
-                  tags:
-                      currentState.habitsByTag.keys
-                          .where(
-                            (tag) => tag.toLowerCase().contains(
-                              event.query.toLowerCase(),
-                            ),
-                          )
-                          .toList(),
-                )
+                ? HabitFilter(searchQuery: event.query.trim())
                 : null;
 
         // Only emit if filter actually changed

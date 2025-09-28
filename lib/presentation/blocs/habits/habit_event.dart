@@ -147,6 +147,7 @@ class HabitFilter extends Equatable {
   final List<HabitType>? types;
   final bool? isActive;
   final List<String>? tags;
+  final String? searchQuery;
   final HabitSortOption sortBy;
   final bool sortAscending;
 
@@ -155,6 +156,7 @@ class HabitFilter extends Equatable {
     this.types,
     this.isActive,
     this.tags,
+    this.searchQuery,
     this.sortBy = HabitSortOption.createdDate,
     this.sortAscending = false,
   });
@@ -165,6 +167,7 @@ class HabitFilter extends Equatable {
     types,
     isActive,
     tags,
+    searchQuery,
     sortBy,
     sortAscending,
   ];
@@ -174,6 +177,7 @@ class HabitFilter extends Equatable {
     List<HabitType>? types,
     bool? isActive,
     List<String>? tags,
+    String? searchQuery,
     HabitSortOption? sortBy,
     bool? sortAscending,
   }) {
@@ -182,6 +186,7 @@ class HabitFilter extends Equatable {
       types: types ?? this.types,
       isActive: isActive ?? this.isActive,
       tags: tags ?? this.tags,
+      searchQuery: searchQuery ?? this.searchQuery,
       sortBy: sortBy ?? this.sortBy,
       sortAscending: sortAscending ?? this.sortAscending,
     );
@@ -191,7 +196,8 @@ class HabitFilter extends Equatable {
     return frequencies != null ||
         types != null ||
         isActive != null ||
-        tags != null;
+        tags != null ||
+        (searchQuery != null && searchQuery!.isNotEmpty);
   }
 }
 

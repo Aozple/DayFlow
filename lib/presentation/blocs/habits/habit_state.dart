@@ -184,6 +184,19 @@ class HabitLoaded extends HabitState {
               .toList();
     }
 
+    if (f.searchQuery?.isNotEmpty == true) {
+      final query = f.searchQuery!.toLowerCase();
+      filtered =
+          filtered
+              .where(
+                (h) =>
+                    h.title.toLowerCase().contains(query) ||
+                    (h.description?.toLowerCase().contains(query) ?? false) ||
+                    h.tags.any((tag) => tag.toLowerCase().contains(query)),
+              )
+              .toList();
+    }
+
     // Apply sorting
     filtered = _sortHabits(filtered, f.sortBy, f.sortAscending);
 

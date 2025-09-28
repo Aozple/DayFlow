@@ -3,10 +3,10 @@ import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
-import 'package:dayflow/presentation/screens/search/universal_search_delegate.dart';
+import 'package:dayflow/presentation/screens/search/app_search_delegate.dart';
 import 'package:dayflow/presentation/widgets/speed_dial_fab.dart';
 import 'package:dayflow/presentation/widgets/task_filter_modal.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide SearchDelegate;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -81,10 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // === Navigation & UI Actions ===
 
   Future<void> _openSearch() async {
-    await showSearch<void>(
-      context: context,
-      delegate: UniversalSearchDelegate(),
-    );
+    await showSearch<void>(context: context, delegate: AppSearchDelegate());
     // Navigation is handled inside the search delegate
   }
 
