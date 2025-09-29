@@ -7,13 +7,13 @@ import '../../core/constants/app_colors.dart';
 class SpeedDialFab extends StatefulWidget {
   final VoidCallback onCreateTask;
   final VoidCallback onCreateNote;
-  final VoidCallback onCreateHabit; // New parameter
+  final VoidCallback onCreateHabit;
 
   const SpeedDialFab({
     super.key,
     required this.onCreateTask,
     required this.onCreateNote,
-    required this.onCreateHabit, // New required parameter
+    required this.onCreateHabit,
   });
 
   @override

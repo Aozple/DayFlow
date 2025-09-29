@@ -121,8 +121,7 @@ class AppRouter {
             path: 'habit-stats',
             name: 'habitStats',
             builder: (context, state) {
-              final habit = state.extra as HabitModel;
-              return StatisticsScreen(selectedHabit: habit);
+              return const StatisticsScreen();
             },
           ),
         ],

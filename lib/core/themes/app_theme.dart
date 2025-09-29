@@ -64,6 +64,6 @@ class AppTheme {
 
   // MARK: - Light Theme
 
-  /// Defines the light theme for the application (currently same as dark theme).
+  /// Defines the light theme for the application (same as dark theme).
   static ThemeData get lightTheme => darkTheme;
 }
