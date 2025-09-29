@@ -129,7 +129,6 @@ class AppSearchDelegate extends SearchDelegate<void> {
       );
     }
 
-    // درخواست فوکوس هنگام ساخت فیلد جستجو
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });

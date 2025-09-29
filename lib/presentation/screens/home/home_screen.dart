@@ -5,7 +5,7 @@ import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/screens/search/app_search_delegate.dart';
 import 'package:dayflow/presentation/widgets/speed_dial_fab.dart';
-import 'package:dayflow/presentation/widgets/task_filter_modal.dart';
+import 'package:dayflow/presentation/widgets/universal_filter_modal.dart';
 import 'package:flutter/material.dart' hide SearchDelegate;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -24,12 +24,10 @@ import 'widgets/sheets/home_task_options_sheet.dart';
 import 'widgets/timeline/home_timeline.dart';
 import 'widgets/timeline/home_time_slot.dart';
 
-// Utility extension for safe list operations
 extension IterableExtension<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
 }
 
-/// Central dashboard for managing daily tasks, notes, and habits
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -40,10 +38,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late DateTime _selectedDate;
   late final ScrollController _scrollController;
-  late TaskFilterOptions _currentFilters;
+  late UniversalFilterOptions _currentFilters;
   List<TaskModel> _filteredTasks = [];
+  List<HabitWithInstance> _filteredHabits = [];
 
-  // Constants for timeline calculations
   static const double _hourHeight = 80.0;
   static const double _scrollOffset = 200.0;
 
@@ -52,9 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _selectedDate = DateTime.now();
     _scrollController = ScrollController();
-    _currentFilters = TaskFilterOptions();
+    _currentFilters = const UniversalFilterOptions();
 
-    // Initialize timeline position after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentTime();
       context.read<HabitBloc>().add(LoadHabitInstances(_selectedDate));
@@ -78,36 +75,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // === Navigation & UI Actions ===
-
   Future<void> _openSearch() async {
     await showSearch<void>(context: context, delegate: AppSearchDelegate());
-    // Navigation is handled inside the search delegate
-  }
-
-  bool _hasActiveFilters() {
-    return _currentFilters.dateFilter != null ||
-        _currentFilters.priorityFilter != null ||
-        _currentFilters.completedFilter != null ||
-        _currentFilters.tagFilters.isNotEmpty;
   }
 
   Future<void> _openFilterModal() async {
-    final state = context.read<TaskBloc>().state;
+    final taskState = context.read<TaskBloc>().state;
+    final habitState = context.read<HabitBloc>().state;
+
     final allTags = <String>{};
 
-    if (state is TaskLoaded) {
-      for (final task in state.tasks) {
+    if (taskState is TaskLoaded) {
+      for (final task in taskState.tasks) {
         allTags.addAll(task.tags);
       }
     }
 
-    final result = await showModalBottomSheet<TaskFilterOptions>(
+    if (habitState is HabitLoaded) {
+      for (final habit in habitState.habits) {
+        allTags.addAll(habit.tags);
+      }
+    }
+
+    final result = await showModalBottomSheet<UniversalFilterOptions>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder:
-          (context) => TaskFilterModal(
+          (context) => UniversalFilterModal(
             initialFilters: _currentFilters,
             availableTags: allTags.toList()..sort(),
           ),
@@ -122,101 +117,222 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _applyFilters() {
-    final state = context.read<TaskBloc>().state;
-    if (state is! TaskLoaded) return;
+    final taskState = context.read<TaskBloc>().state;
+    final habitState = context.read<HabitBloc>().state;
 
-    var filtered = state.tasks.where((task) => !task.isDeleted).toList();
+    if (taskState is TaskLoaded) {
+      var filteredTasks =
+          taskState.tasks.where((task) => !task.isDeleted).toList();
 
-    // Apply date filter
-    if (_currentFilters.dateFilter != null) {
-      filtered = _filterByDate(filtered);
+      if (!_currentFilters.showTasks && !_currentFilters.showNotes) {
+        filteredTasks = [];
+      } else {
+        if (!_currentFilters.showTasks) {
+          filteredTasks = filteredTasks.where((task) => task.isNote).toList();
+        }
+        if (!_currentFilters.showNotes) {
+          filteredTasks = filteredTasks.where((task) => !task.isNote).toList();
+        }
+      }
+
+      if (_currentFilters.priorities.isNotEmpty) {
+        filteredTasks =
+            filteredTasks
+                .where(
+                  (task) => _currentFilters.priorities.contains(task.priority),
+                )
+                .toList();
+      }
+
+      if (_currentFilters.isCompleted != null) {
+        filteredTasks =
+            filteredTasks
+                .where(
+                  (task) => task.isCompleted == _currentFilters.isCompleted,
+                )
+                .toList();
+      }
+
+      if (_currentFilters.tagFilters.isNotEmpty) {
+        filteredTasks =
+            filteredTasks.where((task) {
+              return task.tags.any(
+                (tag) => _currentFilters.tagFilters.contains(tag),
+              );
+            }).toList();
+      }
+
+      if (_currentFilters.timeRange != null) {
+        filteredTasks = _filterTasksByTimeRange(filteredTasks);
+      }
+
+      _sortTasks(filteredTasks);
+
+      setState(() {
+        _filteredTasks = filteredTasks;
+      });
     }
 
-    // Apply other filters
-    if (_currentFilters.priorityFilter != null) {
-      filtered =
-          filtered
-              .where((task) => task.priority == _currentFilters.priorityFilter)
-              .toList();
+    if (habitState is HabitLoaded) {
+      var filteredHabits = _getHabitsForDate(habitState);
+
+      if (!_currentFilters.showHabits) {
+        filteredHabits = [];
+      } else {
+        if (_currentFilters.frequencies.isNotEmpty) {
+          filteredHabits =
+              filteredHabits.where((habitWithInstance) {
+                return _currentFilters.frequencies.contains(
+                  habitWithInstance.habit.frequency,
+                );
+              }).toList();
+        }
+
+        if (_currentFilters.isActive != null) {
+          filteredHabits =
+              filteredHabits.where((habitWithInstance) {
+                return habitWithInstance.habit.isActive ==
+                    _currentFilters.isActive;
+              }).toList();
+        }
+
+        if (_currentFilters.minStreak != null) {
+          filteredHabits =
+              filteredHabits.where((habitWithInstance) {
+                return habitWithInstance.habit.currentStreak >=
+                    _currentFilters.minStreak!;
+              }).toList();
+        }
+
+        if (_currentFilters.tagFilters.isNotEmpty) {
+          filteredHabits =
+              filteredHabits.where((habitWithInstance) {
+                return habitWithInstance.habit.tags.any(
+                  (tag) => _currentFilters.tagFilters.contains(tag),
+                );
+              }).toList();
+        }
+
+        _sortHabits(filteredHabits);
+      }
+
+      setState(() {
+        _filteredHabits = filteredHabits;
+      });
     }
-
-    if (_currentFilters.completedFilter != null) {
-      filtered =
-          filtered
-              .where(
-                (task) => task.isCompleted == _currentFilters.completedFilter,
-              )
-              .toList();
-    }
-
-    if (_currentFilters.tagFilters.isNotEmpty) {
-      filtered =
-          filtered.where((task) {
-            return task.tags.any(
-              (tag) => _currentFilters.tagFilters.contains(tag),
-            );
-          }).toList();
-    }
-
-    // Apply sorting
-    _sortTasks(filtered);
-
-    setState(() {
-      _filteredTasks = filtered;
-    });
   }
 
-  List<TaskModel> _filterByDate(List<TaskModel> tasks) {
+  List<TaskModel> _filterTasksByTimeRange(List<TaskModel> tasks) {
     final now = DateTime.now();
     return tasks.where((task) {
       if (task.dueDate == null) return false;
 
-      switch (_currentFilters.dateFilter!) {
-        case DateFilter.today:
-          return _isSameDay(task.dueDate!, now);
-        case DateFilter.thisWeek:
+      switch (_currentFilters.timeRange!) {
+        case TimeRangeFilter.thisWeek:
           final weekStart = now.subtract(Duration(days: now.weekday - 1));
           final weekEnd = weekStart.add(const Duration(days: 6));
           return task.dueDate!.isAfter(
                 weekStart.subtract(const Duration(days: 1)),
               ) &&
               task.dueDate!.isBefore(weekEnd.add(const Duration(days: 1)));
-        case DateFilter.thisMonth:
+        case TimeRangeFilter.nextWeek:
+          final nextWeekStart = now.add(Duration(days: 7 - now.weekday + 1));
+          final nextWeekEnd = nextWeekStart.add(const Duration(days: 6));
+          return task.dueDate!.isAfter(
+                nextWeekStart.subtract(const Duration(days: 1)),
+              ) &&
+              task.dueDate!.isBefore(nextWeekEnd.add(const Duration(days: 1)));
+        case TimeRangeFilter.lastWeek:
+          final lastWeekStart = now.subtract(Duration(days: now.weekday + 6));
+          final lastWeekEnd = lastWeekStart.add(const Duration(days: 6));
+          return task.dueDate!.isAfter(
+                lastWeekStart.subtract(const Duration(days: 1)),
+              ) &&
+              task.dueDate!.isBefore(lastWeekEnd.add(const Duration(days: 1)));
+        case TimeRangeFilter.thisMonth:
           return task.dueDate!.year == now.year &&
               task.dueDate!.month == now.month;
-        case DateFilter.custom:
-          return true; // TODO: Implement custom date range
+        case TimeRangeFilter.nextMonth:
+          final nextMonth = DateTime(now.year, now.month + 1);
+          return task.dueDate!.year == nextMonth.year &&
+              task.dueDate!.month == nextMonth.month;
+        case TimeRangeFilter.lastMonth:
+          final lastMonth = DateTime(now.year, now.month - 1);
+          return task.dueDate!.year == lastMonth.year &&
+              task.dueDate!.month == lastMonth.month;
       }
     }).toList();
   }
 
   void _sortTasks(List<TaskModel> tasks) {
     switch (_currentFilters.sortBy) {
-      case SortOption.dateDesc:
-        tasks.sort(
-          (a, b) =>
-              (b.dueDate ?? b.createdAt).compareTo(a.dueDate ?? a.createdAt),
-        );
+      case SortBy.date:
+        if (_currentFilters.sortAscending) {
+          tasks.sort(
+            (a, b) =>
+                (a.dueDate ?? a.createdAt).compareTo(b.dueDate ?? b.createdAt),
+          );
+        } else {
+          tasks.sort(
+            (a, b) =>
+                (b.dueDate ?? b.createdAt).compareTo(a.dueDate ?? a.createdAt),
+          );
+        }
         break;
-      case SortOption.dateAsc:
-        tasks.sort(
-          (a, b) =>
-              (a.dueDate ?? a.createdAt).compareTo(b.dueDate ?? b.createdAt),
-        );
+      case SortBy.alphabetical:
+        if (_currentFilters.sortAscending) {
+          tasks.sort((a, b) => a.title.compareTo(b.title));
+        } else {
+          tasks.sort((a, b) => b.title.compareTo(a.title));
+        }
         break;
-      case SortOption.priorityDesc:
-        tasks.sort((a, b) => b.priority.compareTo(a.priority));
+      case SortBy.priority:
+        if (_currentFilters.sortAscending) {
+          tasks.sort((a, b) => a.priority.compareTo(b.priority));
+        } else {
+          tasks.sort((a, b) => b.priority.compareTo(a.priority));
+        }
         break;
-      case SortOption.priorityAsc:
-        tasks.sort((a, b) => a.priority.compareTo(b.priority));
-        break;
-      case SortOption.alphabetical:
-        tasks.sort((a, b) => a.title.compareTo(b.title));
+      case SortBy.streak:
+        // Not applicable for tasks
         break;
     }
   }
 
-  // === Habit Management ===
+  void _sortHabits(List<HabitWithInstance> habits) {
+    switch (_currentFilters.sortBy) {
+      case SortBy.date:
+        if (_currentFilters.sortAscending) {
+          habits.sort((a, b) => a.habit.createdAt.compareTo(b.habit.createdAt));
+        } else {
+          habits.sort((a, b) => b.habit.createdAt.compareTo(a.habit.createdAt));
+        }
+        break;
+      case SortBy.alphabetical:
+        if (_currentFilters.sortAscending) {
+          habits.sort((a, b) => a.habit.title.compareTo(b.habit.title));
+        } else {
+          habits.sort((a, b) => b.habit.title.compareTo(a.habit.title));
+        }
+        break;
+      case SortBy.priority:
+      case SortBy.streak:
+        if (_currentFilters.sortAscending) {
+          habits.sort(
+            (a, b) => a.habit.currentStreak.compareTo(b.habit.currentStreak),
+          );
+        } else {
+          habits.sort(
+            (a, b) => b.habit.currentStreak.compareTo(a.habit.currentStreak),
+          );
+        }
+        break;
+    }
+  }
+
+  bool _hasActiveFilters() {
+    return _currentFilters.hasActiveFilters;
+  }
 
   void _completeHabitInstance(HabitInstanceModel instance) {
     HapticFeedback.lightImpact();
@@ -279,8 +395,6 @@ class _HomeScreenState extends State<HomeScreen> {
     CustomSnackBar.success(context, 'Habit deleted successfully');
   }
 
-  // === Note Management ===
-
   void _showNoteOptionsMenu(TaskModel note) {
     showCupertinoModalPopup(
       context: context,
@@ -333,8 +447,6 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<TaskBloc>().add(AddTask(duplicatedNote));
     CustomSnackBar.success(context, 'Note duplicated successfully');
   }
-
-  // === Task Management ===
 
   void _showTaskOptionsMenu(TaskModel task) {
     showCupertinoModalPopup(
@@ -409,8 +521,6 @@ class _HomeScreenState extends State<HomeScreen> {
     CustomSnackBar.success(context, 'Task duplicated successfully');
   }
 
-  // === Quick Actions ===
-
   void _showQuickAddMenu(int hour) {
     showCupertinoModalPopup(
       context: context,
@@ -439,13 +549,10 @@ class _HomeScreenState extends State<HomeScreen> {
     context.push('/create-habit?hour=$hour');
   }
 
-  // === Utility Methods ===
-
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// Filters habits based on selected date and their schedule
   List<HabitWithInstance> _getHabitsForDate(HabitLoaded habitState) {
     final dayHabits = <HabitWithInstance>[];
     final selectedDateOnly = DateTime(
@@ -547,15 +654,12 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: AppColors.background,
           body: Column(
             children: [
-              // Status bar padding
               Container(
                 padding: EdgeInsets.only(
                   top: MediaQuery.of(context).padding.top,
                 ),
                 color: AppColors.surface.withAlpha(200),
               ),
-
-              // Navigation header
               HomeHeader(
                 selectedDate: _selectedDate,
                 onDateSelected: (date) {
@@ -568,8 +672,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 onFilterPressed: _openFilterModal,
                 onSearchPressed: _openSearch,
               ),
-
-              // Date selector strip
               HomeDateSelector(
                 selectedDate: _selectedDate,
                 onDateSelected: (date) {
@@ -578,16 +680,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   context.read<HabitBloc>().add(LoadHabitInstances(date));
                 },
               ),
-
               Container(height: 0.5, color: AppColors.divider),
-
-              // Main timeline view
               Expanded(
                 child: BlocBuilder<TaskBloc, TaskState>(
                   builder: (context, taskState) {
                     return BlocBuilder<HabitBloc, HabitState>(
                       builder: (context, habitState) {
-                        // Extract tasks for selected date
                         final dayTasks =
                             taskState is TaskLoaded
                                 ? taskState.tasks
@@ -602,7 +700,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     .toList()
                                 : <TaskModel>[];
 
-                        // Extract habits for selected date
                         final dayHabits =
                             habitState is HabitLoaded
                                 ? _getHabitsForDate(habitState)
@@ -615,6 +712,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           habits: dayHabits,
                           filteredTasks:
                               _hasActiveFilters() ? _filteredTasks : dayTasks,
+                          filteredHabits:
+                              _hasActiveFilters() ? _filteredHabits : dayHabits,
                           hasActiveFilters: _hasActiveFilters(),
                           onQuickAddMenu: _showQuickAddMenu,
                           onTaskToggled: _toggleTaskCompletion,

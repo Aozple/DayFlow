@@ -12,8 +12,9 @@ class HomeTimeline extends StatefulWidget {
   final ScrollController scrollController;
   final DateTime selectedDate;
   final List<TaskModel> tasks;
-  final List<TaskModel> filteredTasks;
   final List<HabitWithInstance> habits;
+  final List<TaskModel> filteredTasks;
+  final List<HabitWithInstance> filteredHabits;
   final bool hasActiveFilters;
   final Function(int) onQuickAddMenu;
   final Function(TaskModel) onTaskToggled;
@@ -30,8 +31,9 @@ class HomeTimeline extends StatefulWidget {
     required this.scrollController,
     required this.selectedDate,
     required this.tasks,
-    required this.filteredTasks,
     this.habits = const [],
+    required this.filteredTasks,
+    required this.filteredHabits,
     required this.hasActiveFilters,
     required this.onQuickAddMenu,
     required this.onTaskToggled,
@@ -99,12 +101,14 @@ class _HomeTimelineState extends State<HomeTimeline>
   Widget build(BuildContext context) {
     final displayTasks =
         widget.hasActiveFilters ? widget.filteredTasks : widget.tasks;
+    final displayHabits =
+        widget.hasActiveFilters ? widget.filteredHabits : widget.habits;
     final now = DateTime.now();
     final isToday = _isSameDay(widget.selectedDate, now);
 
     return Stack(
       children: [
-        _buildTimeline(displayTasks, isToday, now),
+        _buildTimeline(displayTasks, displayHabits, isToday, now),
         if (_isOverscrolling && !_hasNavigated) _buildNavigationOverlay(),
       ],
     );
@@ -112,6 +116,7 @@ class _HomeTimelineState extends State<HomeTimeline>
 
   Widget _buildTimeline(
     List<TaskModel> displayTasks,
+    List<HabitWithInstance> displayHabits,
     bool isToday,
     DateTime now,
   ) {
@@ -124,7 +129,7 @@ class _HomeTimelineState extends State<HomeTimeline>
         itemCount: 24,
         itemBuilder: (context, hour) {
           final hourTasks = _getTasksForHour(displayTasks, hour);
-          final hourHabits = _getHabitsForHour(hour);
+          final hourHabits = _getHabitsForHour(displayHabits, hour);
 
           return HomeTimeSlot(
             hour: hour,
@@ -181,8 +186,11 @@ class _HomeTimelineState extends State<HomeTimeline>
       });
   }
 
-  List<HabitWithInstance> _getHabitsForHour(int hour) {
-    return widget.habits.where((habitWithInstance) {
+  List<HabitWithInstance> _getHabitsForHour(
+    List<HabitWithInstance> habits,
+    int hour,
+  ) {
+    return habits.where((habitWithInstance) {
       final preferredTime = habitWithInstance.habit.preferredTime;
       return preferredTime != null && preferredTime.hour == hour;
     }).toList();
