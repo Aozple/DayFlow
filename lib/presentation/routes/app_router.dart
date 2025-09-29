@@ -2,6 +2,7 @@ import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/presentation/screens/habit/create_habit_screen.dart';
 import 'package:dayflow/presentation/screens/note/create_note_screen.dart';
 import 'package:dayflow/presentation/screens/settings/settings_screen.dart';
+import 'package:dayflow/presentation/screens/statistics/statistics_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/task/create_task_screen.dart';
@@ -9,7 +10,6 @@ import '../screens/task/task_details_screen.dart';
 import '../../data/models/task_model.dart';
 
 class AppRouter {
-  // Main router configuration
   static final GoRouter router = GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: true,
@@ -19,12 +19,10 @@ class AppRouter {
         name: 'home',
         builder: (context, state) => const HomeScreen(),
         routes: [
-          // Create task screen with optional prefilled data
           GoRoute(
             path: 'create-task',
             name: 'createTask',
             builder: (context, state) {
-              // Extract hour and date from query parameters
               final hourString = state.uri.queryParameters['hour'];
               final dateString = state.uri.queryParameters['date'];
 
@@ -36,12 +34,10 @@ class AppRouter {
             },
           ),
 
-          // Create note screen with optional prefilled data
           GoRoute(
             path: 'create-note',
             name: 'createNote',
             builder: (context, state) {
-              // Extract hour and date from query parameters
               final hourString = state.uri.queryParameters['hour'];
               final dateString = state.uri.queryParameters['date'];
 
@@ -53,12 +49,10 @@ class AppRouter {
             },
           ),
 
-          // Create habit screen with optional prefilled hour
           GoRoute(
             path: 'create-habit',
             name: 'createHabit',
             builder: (context, state) {
-              // Extract hour from query parameters
               final hourString = state.uri.queryParameters['hour'];
               final hour = hourString != null ? int.tryParse(hourString) : null;
 
@@ -66,14 +60,18 @@ class AppRouter {
             },
           ),
 
-          // Settings screen
           GoRoute(
             path: 'settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
           ),
 
-          // Edit existing task
+          GoRoute(
+            path: 'statistics',
+            name: 'statistics',
+            builder: (context, state) => const StatisticsScreen(),
+          ),
+
           GoRoute(
             path: 'edit-task',
             name: 'editTask',
@@ -83,7 +81,6 @@ class AppRouter {
             },
           ),
 
-          // Task details view
           GoRoute(
             path: 'task-details',
             name: 'taskDetails',
@@ -93,7 +90,6 @@ class AppRouter {
             },
           ),
 
-          // Edit existing note
           GoRoute(
             path: 'edit-note',
             name: 'editNote',
@@ -103,7 +99,6 @@ class AppRouter {
             },
           ),
 
-          // Edit existing habit
           GoRoute(
             path: 'edit-habit',
             name: 'editHabit',
@@ -113,27 +108,21 @@ class AppRouter {
             },
           ),
 
-          // Habit details view (placeholder for future implementation)
           GoRoute(
             path: 'habit-details',
             name: 'habitDetails',
             builder: (context, state) {
               final habit = state.extra as HabitModel;
-              // For now, redirect to edit screen
-              // Later you can create a HabitDetailsScreen
               return CreateHabitScreen(habitToEdit: habit);
             },
           ),
 
-          // Habit statistics view (placeholder for future implementation)
           GoRoute(
             path: 'habit-stats',
             name: 'habitStats',
             builder: (context, state) {
               final habit = state.extra as HabitModel;
-              // For now, redirect to edit screen
-              // Later you can create a HabitStatsScreen
-              return CreateHabitScreen(habitToEdit: habit);
+              return StatisticsScreen(selectedHabit: habit);
             },
           ),
         ],

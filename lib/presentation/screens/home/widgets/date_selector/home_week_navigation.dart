@@ -1,6 +1,8 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// Week navigation component with date range and navigation buttons
@@ -30,7 +32,7 @@ class HomeWeekNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Week range display with first day indicator
+          // Week range display with statistics button
           Expanded(
             child: Row(
               children: [
@@ -49,10 +51,14 @@ class HomeWeekNavigation extends StatelessWidget {
                     letterSpacing: 0.2,
                   ),
                 ),
-                // Saturday first day indicator
-                if (isSaturdayFirst) ...[
-                  const SizedBox(width: 12),
-                  Container(
+                const SizedBox(width: 12),
+                // Statistics button
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    context.push('/statistics');
+                  },
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 3,
@@ -65,17 +71,28 @@ class HomeWeekNavigation extends StatelessWidget {
                         width: 0.5,
                       ),
                     ),
-                    child: Text(
-                      'SAT',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
-                        letterSpacing: 0.5,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.chart_bar,
+                          size: 10,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'STATS',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.accent,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ],
             ),
           ),
