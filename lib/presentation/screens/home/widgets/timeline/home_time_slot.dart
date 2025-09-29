@@ -8,8 +8,7 @@ import '../blocks/home_note_block.dart';
 import '../blocks/home_task_block.dart';
 import 'home_empty_slot.dart';
 
-/// Single hour slot in the timeline containing tasks, notes, and habits
-class HomeTimeSlot extends StatelessWidget {
+class HomeTimeSlot extends StatefulWidget {
   final int hour;
   final List<TaskModel> tasks;
   final List<HabitWithInstance> habits;
@@ -23,6 +22,8 @@ class HomeTimeSlot extends StatelessWidget {
   final Function(HabitInstanceModel) onHabitUncomplete;
   final Function(HabitInstanceModel) onHabitUpdateInstance;
   final Function(HabitModel) onHabitOptions;
+  final Function(TaskModel, int) onTaskDropped;
+  final Function(HabitModel, int) onHabitDropped;
 
   const HomeTimeSlot({
     super.key,
@@ -39,9 +40,21 @@ class HomeTimeSlot extends StatelessWidget {
     required this.onHabitUncomplete,
     required this.onHabitUpdateInstance,
     required this.onHabitOptions,
+    required this.onTaskDropped,
+    required this.onHabitDropped,
   });
 
-  // Constants
+  @override
+  State<HomeTimeSlot> createState() => _HomeTimeSlotState();
+}
+
+class _HomeTimeSlotState extends State<HomeTimeSlot>
+    with SingleTickerProviderStateMixin {
+  bool _isDragOver = false;
+  bool _canAcceptDrop = false;
+  late AnimationController _highlightController;
+  late Animation<double> _highlightAnimation;
+
   static const double _minSlotHeight = 90.0;
   static const double _timeLabelWidth = 75.0;
   static const double _contentPadding = 12.0;
@@ -50,23 +63,141 @@ class HomeTimeSlot extends StatelessWidget {
   static const double _borderRadius = 8.0;
 
   @override
-  Widget build(BuildContext context) {
-    final hasContent = tasks.isNotEmpty || habits.isNotEmpty;
+  void initState() {
+    super.initState();
+    _highlightController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _highlightAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _highlightController, curve: Curves.easeOut),
+    );
+  }
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IntrinsicHeight(
+  @override
+  void dispose() {
+    _highlightController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasContent = widget.tasks.isNotEmpty || widget.habits.isNotEmpty;
+
+    return DragTarget<DraggableItem>(
+      onWillAcceptWithDetails: (details) => _onWillAcceptItem(details.data),
+      onAcceptWithDetails: (details) => _onAcceptItem(details.data),
+      onLeave: (item) => _onLeaveItem(),
+      builder: (context, candidateData, rejectedData) {
+        return AnimatedBuilder(
+          animation: _highlightAnimation,
+          builder: (context, child) {
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IntrinsicHeight(
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minHeight: _minSlotHeight,
+                    ),
+                    decoration: _getSlotDecoration(),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTimeLabel(),
+                        _buildContentArea(hasContent),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_isDragOver && _canAcceptDrop) _buildDropHighlight(),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  bool _onWillAcceptItem(DraggableItem? item) {
+    if (item == null) return false;
+
+    final currentHour = item.currentHour;
+    final canAccept = currentHour != widget.hour;
+
+    setState(() {
+      _isDragOver = true;
+      _canAcceptDrop = canAccept;
+    });
+
+    if (canAccept) {
+      _highlightController.forward();
+    }
+
+    return canAccept;
+  }
+
+  void _onAcceptItem(DraggableItem item) {
+    setState(() {
+      _isDragOver = false;
+      _canAcceptDrop = false;
+    });
+
+    _highlightController.reverse();
+
+    if (item.type == DraggableItemType.task && item.task != null) {
+      widget.onTaskDropped(item.task!, widget.hour);
+    } else if (item.type == DraggableItemType.habit && item.habit != null) {
+      widget.onHabitDropped(item.habit!, widget.hour);
+    }
+  }
+
+  void _onLeaveItem() {
+    setState(() {
+      _isDragOver = false;
+      _canAcceptDrop = false;
+    });
+    _highlightController.reverse();
+  }
+
+  Widget _buildDropHighlight() {
+    return Positioned.fill(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withAlpha(
+            (25.5 * _highlightAnimation.value).round(),
+          ),
+          borderRadius: BorderRadius.circular(_borderRadius),
+          border: Border.all(
+            color: AppColors.accent.withAlpha(
+              (153 * _highlightAnimation.value).round(),
+            ),
+            width: 2,
+          ),
+        ),
+        child: Center(
           child: Container(
-            constraints: const BoxConstraints(minHeight: _minSlotHeight),
-            decoration: _getSlotDecoration(),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [_buildTimeLabel(), _buildContentArea(hasContent)],
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withAlpha(
+                (230 * _highlightAnimation.value).round(),
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Drop here',
+              style: TextStyle(
+                color: Colors.white.withAlpha(
+                  (255 * _highlightAnimation.value).round(),
+                ),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -81,7 +212,7 @@ class HomeTimeSlot extends StatelessWidget {
 
   Widget _buildTimeLabel() {
     return GestureDetector(
-      onTap: () => onQuickAddMenu(hour),
+      onTap: () => widget.onQuickAddMenu(widget.hour),
       behavior: HitTestBehavior.opaque,
       child: Container(
         width: _timeLabelWidth,
@@ -91,10 +222,10 @@ class HomeTimeSlot extends StatelessWidget {
           border: Border(
             right: BorderSide(
               color:
-                  isCurrentHour
+                  widget.isCurrentHour
                       ? AppColors.accent
                       : AppColors.divider.withAlpha(150),
-              width: isCurrentHour ? 3 : 1,
+              width: widget.isCurrentHour ? 3 : 1,
             ),
           ),
         ),
@@ -104,7 +235,7 @@ class HomeTimeSlot extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildTimeText(),
-              if (isCurrentHour) ...[
+              if (widget.isCurrentHour) ...[
                 const SizedBox(height: 8),
                 _buildCurrentHourIndicator(),
               ],
@@ -117,11 +248,12 @@ class HomeTimeSlot extends StatelessWidget {
 
   Widget _buildTimeText() {
     return Text(
-      '${hour.toString().padLeft(2, '0')}:00',
+      '${widget.hour.toString().padLeft(2, '0')}:00',
       style: TextStyle(
         fontSize: 14,
-        fontWeight: isCurrentHour ? FontWeight.w800 : FontWeight.w500,
-        color: isCurrentHour ? AppColors.accent : AppColors.textSecondary,
+        fontWeight: widget.isCurrentHour ? FontWeight.w800 : FontWeight.w500,
+        color:
+            widget.isCurrentHour ? AppColors.accent : AppColors.textSecondary,
         letterSpacing: 0.3,
         height: 1.2,
       ),
@@ -149,7 +281,7 @@ class HomeTimeSlot extends StatelessWidget {
   Widget _buildContentArea(bool hasContent) {
     return Expanded(
       child: GestureDetector(
-        onTap: !hasContent ? () => onQuickAddMenu(hour) : null,
+        onTap: !hasContent ? () => widget.onQuickAddMenu(widget.hour) : null,
         behavior: HitTestBehavior.translucent,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -192,14 +324,9 @@ class HomeTimeSlot extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Render habits
         ..._buildHabitsList(),
-
-        // Add spacing between habits and tasks if needed
-        if (habits.isNotEmpty && tasks.isNotEmpty)
+        if (widget.habits.isNotEmpty && widget.tasks.isNotEmpty)
           const SizedBox(height: _itemSpacing),
-
-        // Render tasks and notes
         ..._buildTasksList(),
       ],
     );
@@ -208,22 +335,41 @@ class HomeTimeSlot extends StatelessWidget {
   List<Widget> _buildHabitsList() {
     final widgets = <Widget>[];
 
-    for (int i = 0; i < habits.length; i++) {
+    for (int i = 0; i < widget.habits.length; i++) {
       widgets.add(
         _buildItemContainer(
-          child: HomeHabitBlock(
-            habit: habits[i].habit,
-            instance: habits[i].instance,
-            selectedDate: selectedDate,
-            onComplete: onHabitComplete,
-            onUncomplete: onHabitUncomplete,
-            onUpdateInstance: onHabitUpdateInstance,
-            onOptions: onHabitOptions,
+          child: Draggable<DraggableItem>(
+            data: DraggableItem(
+              type: DraggableItemType.habit,
+              habit: widget.habits[i].habit,
+              currentHour: widget.hour,
+            ),
+            feedback: _buildDragFeedback(
+              child: HomeHabitBlock(
+                habit: widget.habits[i].habit,
+                instance: widget.habits[i].instance,
+                selectedDate: widget.selectedDate,
+                onComplete: widget.onHabitComplete,
+                onUncomplete: widget.onHabitUncomplete,
+                onUpdateInstance: widget.onHabitUpdateInstance,
+                onOptions: widget.onHabitOptions,
+              ),
+            ),
+            childWhenDragging: _buildDragPlaceholder(),
+            child: HomeHabitBlock(
+              habit: widget.habits[i].habit,
+              instance: widget.habits[i].instance,
+              selectedDate: widget.selectedDate,
+              onComplete: widget.onHabitComplete,
+              onUncomplete: widget.onHabitUncomplete,
+              onUpdateInstance: widget.onHabitUpdateInstance,
+              onOptions: widget.onHabitOptions,
+            ),
           ),
         ),
       );
 
-      if (i < habits.length - 1) {
+      if (i < widget.habits.length - 1) {
         widgets.add(const SizedBox(height: _itemSpacing));
       }
     }
@@ -234,16 +380,16 @@ class HomeTimeSlot extends StatelessWidget {
   List<Widget> _buildTasksList() {
     final widgets = <Widget>[];
 
-    for (int i = 0; i < tasks.length; i++) {
+    for (int i = 0; i < widget.tasks.length; i++) {
       widgets.add(
         _buildItemContainer(
-          child: _buildTaskOrNote(tasks[i]),
-          isTask: !tasks[i].isNote,
-          isCompleted: tasks[i].isCompleted,
+          child: _buildTaskOrNote(widget.tasks[i]),
+          isTask: !widget.tasks[i].isNote,
+          isCompleted: widget.tasks[i].isCompleted,
         ),
       );
 
-      if (i < tasks.length - 1) {
+      if (i < widget.tasks.length - 1) {
         widgets.add(const SizedBox(height: _itemSpacing));
       }
     }
@@ -253,12 +399,90 @@ class HomeTimeSlot extends StatelessWidget {
 
   Widget _buildTaskOrNote(TaskModel task) {
     return task.isNote
-        ? HomeNoteBlock(note: task, onOptions: onNoteOptions)
-        : HomeTaskBlock(
-          task: task,
-          onToggleComplete: onTaskToggled,
-          onOptions: onTaskOptions,
+        ? Draggable<DraggableItem>(
+          data: DraggableItem(
+            type: DraggableItemType.note,
+            task: task,
+            currentHour: widget.hour,
+          ),
+          feedback: _buildDragFeedback(
+            child: HomeNoteBlock(note: task, onOptions: widget.onNoteOptions),
+          ),
+          childWhenDragging: _buildDragPlaceholder(),
+          child: HomeNoteBlock(note: task, onOptions: widget.onNoteOptions),
+        )
+        : Draggable<DraggableItem>(
+          data: DraggableItem(
+            type: DraggableItemType.task,
+            task: task,
+            currentHour: widget.hour,
+          ),
+          feedback: _buildDragFeedback(
+            child: HomeTaskBlock(
+              task: task,
+              onToggleComplete: widget.onTaskToggled,
+              onOptions: widget.onTaskOptions,
+            ),
+          ),
+          childWhenDragging: _buildDragPlaceholder(),
+          child: HomeTaskBlock(
+            task: task,
+            onToggleComplete: widget.onTaskToggled,
+            onOptions: widget.onTaskOptions,
+          ),
         );
+  }
+
+  Widget _buildDragFeedback({required Widget child}) {
+    return Material(
+      color: Colors.transparent,
+      child: Transform.scale(
+        scale: 1.05,
+        child: Container(
+          width: 300,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_borderRadius),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.background.withAlpha(100),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+                spreadRadius: 2,
+              ),
+              BoxShadow(
+                color: AppColors.accent.withAlpha(50),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+                spreadRadius: -5,
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDragPlaceholder() {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: AppColors.surface.withAlpha(50),
+        borderRadius: BorderRadius.circular(_borderRadius),
+        border: Border.all(
+          color: AppColors.divider.withAlpha(100),
+          width: 2,
+          strokeAlign: BorderSide.strokeAlignInside,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.drag_indicator,
+          color: AppColors.textTertiary.withAlpha(100),
+          size: 24,
+        ),
+      ),
+    );
   }
 
   Widget _buildItemContainer({
@@ -294,7 +518,22 @@ class HomeTimeSlot extends StatelessWidget {
   }
 }
 
-/// Data model combining a habit with its instance for a specific date
+class DraggableItem {
+  final DraggableItemType type;
+  final TaskModel? task;
+  final HabitModel? habit;
+  final int currentHour;
+
+  const DraggableItem({
+    required this.type,
+    this.task,
+    this.habit,
+    required this.currentHour,
+  });
+}
+
+enum DraggableItemType { task, habit, note }
+
 class HabitWithInstance {
   final HabitModel habit;
   final HabitInstanceModel? instance;

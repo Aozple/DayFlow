@@ -294,7 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         break;
       case SortBy.streak:
-        // Not applicable for tasks
         break;
     }
   }
@@ -549,6 +548,22 @@ class _HomeScreenState extends State<HomeScreen> {
     context.push('/create-habit?hour=$hour');
   }
 
+  void _handleTaskTimeChanged(TaskModel task, int newHour) {
+    context.read<TaskBloc>().add(UpdateTask(task));
+    CustomSnackBar.success(
+      context,
+      'Task moved to ${newHour.toString().padLeft(2, '0')}:00',
+    );
+  }
+
+  void _handleHabitTimeChanged(HabitModel habit, int newHour) {
+    context.read<HabitBloc>().add(UpdateHabit(habit));
+    CustomSnackBar.success(
+      context,
+      'Habit moved to ${newHour.toString().padLeft(2, '0')}:00',
+    );
+  }
+
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
@@ -729,6 +744,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               LoadHabitInstances(newDate),
                             );
                           },
+                          onTaskTimeChanged: _handleTaskTimeChanged,
+                          onHabitTimeChanged: _handleHabitTimeChanged,
                         );
                       },
                     );

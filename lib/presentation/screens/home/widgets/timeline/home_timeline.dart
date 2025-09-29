@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'home_time_slot.dart';
 
-/// Interactive 24-hour timeline with pull-to-navigate between days
 class HomeTimeline extends StatefulWidget {
   final ScrollController scrollController;
   final DateTime selectedDate;
@@ -25,6 +24,8 @@ class HomeTimeline extends StatefulWidget {
   final Function(HabitInstanceModel) onHabitUpdateInstance;
   final Function(HabitModel) onHabitOptions;
   final Function(DateTime) onDateChanged;
+  final Function(TaskModel, int) onTaskTimeChanged;
+  final Function(HabitModel, int) onHabitTimeChanged;
 
   const HomeTimeline({
     super.key,
@@ -44,6 +45,8 @@ class HomeTimeline extends StatefulWidget {
     required this.onHabitUpdateInstance,
     required this.onHabitOptions,
     required this.onDateChanged,
+    required this.onTaskTimeChanged,
+    required this.onHabitTimeChanged,
   });
 
   @override
@@ -52,11 +55,9 @@ class HomeTimeline extends StatefulWidget {
 
 class _HomeTimelineState extends State<HomeTimeline>
     with SingleTickerProviderStateMixin {
-  // Animation controllers
   late AnimationController _indicatorController;
   late Animation<double> _indicatorAnimation;
 
-  // Overscroll state management
   double _overscrollAmount = 0.0;
   bool _isOverscrolling = false;
   bool _isAtTop = false;
@@ -65,13 +66,12 @@ class _HomeTimelineState extends State<HomeTimeline>
   bool _canStartNewGesture = true;
   DateTime? _lastNavigationTime;
 
-  // Constants
   static const double _overscrollThreshold = 200.0;
   static const double _maxOverscroll = 250.0;
   static const double _scrollEdgeBuffer = 25.0;
-  static const int _navigationCooldown = 500; // milliseconds
-  static const int _navigationDelay = 100; // milliseconds
-  static const int _resetDelay = 500; // milliseconds
+  static const int _navigationCooldown = 500;
+  static const int _navigationDelay = 100;
+  static const int _resetDelay = 500;
 
   @override
   void initState() {
@@ -94,8 +94,6 @@ class _HomeTimelineState extends State<HomeTimeline>
     _indicatorController.dispose();
     super.dispose();
   }
-
-  // === Build Methods ===
 
   @override
   Widget build(BuildContext context) {
@@ -145,10 +143,44 @@ class _HomeTimelineState extends State<HomeTimeline>
             onHabitUncomplete: widget.onHabitUncomplete,
             onHabitUpdateInstance: widget.onHabitUpdateInstance,
             onHabitOptions: widget.onHabitOptions,
+            onTaskDropped: (task, newHour) => _handleTaskDrop(task, newHour),
+            onHabitDropped:
+                (habit, newHour) => _handleHabitDrop(habit, newHour),
           );
         },
       ),
     );
+  }
+
+  void _handleTaskDrop(TaskModel task, int newHour) {
+    if (task.dueDate == null) return;
+
+    HapticFeedback.mediumImpact();
+
+    final newDueDate = DateTime(
+      widget.selectedDate.year,
+      widget.selectedDate.month,
+      widget.selectedDate.day,
+      newHour,
+      task.dueDate!.minute,
+    );
+
+    final updatedTask = task.copyWith(dueDate: newDueDate);
+    widget.onTaskTimeChanged(updatedTask, newHour);
+  }
+
+  void _handleHabitDrop(HabitModel habit, int newHour) {
+    if (habit.preferredTime == null) return;
+
+    HapticFeedback.mediumImpact();
+
+    final newPreferredTime = TimeOfDay(
+      hour: newHour,
+      minute: habit.preferredTime!.minute,
+    );
+
+    final updatedHabit = habit.copyWith(preferredTime: newPreferredTime);
+    widget.onHabitTimeChanged(updatedHabit, newHour);
   }
 
   Widget _buildNavigationOverlay() {
@@ -172,8 +204,6 @@ class _HomeTimelineState extends State<HomeTimeline>
     );
   }
 
-  // === Data Processing ===
-
   List<TaskModel> _getTasksForHour(List<TaskModel> tasks, int hour) {
     return tasks.where((task) => task.dueDate?.hour == hour).toList()
       ..sort((a, b) {
@@ -195,8 +225,6 @@ class _HomeTimelineState extends State<HomeTimeline>
       return preferredTime != null && preferredTime.hour == hour;
     }).toList();
   }
-
-  // === Scroll Handling ===
 
   bool _handleScrollNotification(ScrollNotification notification) {
     if (!_canStartNewGesture) {
@@ -277,8 +305,6 @@ class _HomeTimelineState extends State<HomeTimeline>
     }
   }
 
-  // === Navigation Logic ===
-
   bool _canNavigate() {
     if (_lastNavigationTime == null) return true;
 
@@ -341,8 +367,6 @@ class _HomeTimelineState extends State<HomeTimeline>
     });
     _indicatorController.reverse();
   }
-
-  // === UI Components ===
 
   Widget _buildNavigationIndicator() {
     final isNext = _isAtBottom;
@@ -576,8 +600,6 @@ class _HomeTimelineState extends State<HomeTimeline>
       ],
     );
   }
-
-  // === Utility Methods ===
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
