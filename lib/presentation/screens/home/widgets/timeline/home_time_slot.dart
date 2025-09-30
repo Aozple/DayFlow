@@ -3,6 +3,7 @@ import 'package:dayflow/data/models/habit_instance_model.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../blocks/home_habit_block.dart';
 import '../blocks/home_note_block.dart';
 import '../blocks/home_task_block.dart';
@@ -338,12 +339,13 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
     for (int i = 0; i < widget.habits.length; i++) {
       widgets.add(
         _buildItemContainer(
-          child: Draggable<DraggableItem>(
+          child: LongPressDraggable<DraggableItem>(
             data: DraggableItem(
               type: DraggableItemType.habit,
               habit: widget.habits[i].habit,
               currentHour: widget.hour,
             ),
+            delay: const Duration(milliseconds: 500),
             feedback: _buildDragFeedback(
               child: HomeHabitBlock(
                 habit: widget.habits[i].habit,
@@ -399,24 +401,26 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
 
   Widget _buildTaskOrNote(TaskModel task) {
     return task.isNote
-        ? Draggable<DraggableItem>(
+        ? LongPressDraggable<DraggableItem>(
           data: DraggableItem(
             type: DraggableItemType.note,
             task: task,
             currentHour: widget.hour,
           ),
+          delay: const Duration(milliseconds: 500),
           feedback: _buildDragFeedback(
             child: HomeNoteBlock(note: task, onOptions: widget.onNoteOptions),
           ),
           childWhenDragging: _buildDragPlaceholder(),
           child: HomeNoteBlock(note: task, onOptions: widget.onNoteOptions),
         )
-        : Draggable<DraggableItem>(
+        : LongPressDraggable<DraggableItem>(
           data: DraggableItem(
             type: DraggableItemType.task,
             task: task,
             currentHour: widget.hour,
           ),
+          delay: const Duration(milliseconds: 500),
           feedback: _buildDragFeedback(
             child: HomeTaskBlock(
               task: task,

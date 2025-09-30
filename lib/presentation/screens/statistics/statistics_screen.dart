@@ -23,11 +23,8 @@ class StatisticsScreen extends StatefulWidget {
   State<StatisticsScreen> createState() => _StatisticsScreenState();
 }
 
-class _StatisticsScreenState extends State<StatisticsScreen>
-    with SingleTickerProviderStateMixin {
+class _StatisticsScreenState extends State<StatisticsScreen> {
   late ScrollController _scrollController;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
 
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
@@ -37,23 +34,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    );
-
     _loadData();
-    _animationController.forward();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -128,59 +114,50 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               return _buildEmptyState();
             }
 
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: RefreshIndicator(
-                onRefresh: () async => _loadData(),
-                color: AppColors.accent,
-                backgroundColor: AppColors.surface,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 16),
-                          QuickStatsCards(
-                            taskState: taskState,
-                            habitState: habitState,
-                            dateRange: (_startDate, _endDate),
-                          ),
-                          const SizedBox(height: 24),
-                          ActivityHeatmap(
-                            taskState: taskState,
-                            habitState: habitState,
-                            dateRange: (_startDate, _endDate),
-                          ),
-                          const SizedBox(height: 24),
-                          ProductivityChart(
-                            taskState: taskState,
-                            habitState: habitState,
-                            dateRange: (_startDate, _endDate),
-                          ),
-                          const SizedBox(height: 24),
-                          HabitsBreakdown(
-                            habitState: habitState,
-                            dateRange: (_startDate, _endDate),
-                          ),
-                          const SizedBox(height: 24),
-                          TasksBreakdown(
-                            taskState: taskState,
-                            dateRange: (_startDate, _endDate),
-                          ),
-                          const SizedBox(height: 24),
-                          InsightsSection(
-                            taskState: taskState,
-                            habitState: habitState,
-                            dateRange: (_startDate, _endDate),
-                          ),
-                          const SizedBox(height: 100),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+            return RefreshIndicator(
+              onRefresh: () async => _loadData(),
+              color: AppColors.accent,
+              backgroundColor: AppColors.surface,
+              child: ListView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 100),
+                children: [
+                  const SizedBox(height: 16),
+                  QuickStatsCards(
+                    taskState: taskState,
+                    habitState: habitState,
+                    dateRange: (_startDate, _endDate),
+                  ),
+                  const SizedBox(height: 24),
+                  ActivityHeatmap(
+                    taskState: taskState,
+                    habitState: habitState,
+                    dateRange: (_startDate, _endDate),
+                  ),
+                  const SizedBox(height: 24),
+                  ProductivityChart(
+                    taskState: taskState,
+                    habitState: habitState,
+                    dateRange: (_startDate, _endDate),
+                  ),
+                  const SizedBox(height: 24),
+                  HabitsBreakdown(
+                    habitState: habitState,
+                    dateRange: (_startDate, _endDate),
+                  ),
+                  const SizedBox(height: 24),
+                  TasksBreakdown(
+                    taskState: taskState,
+                    dateRange: (_startDate, _endDate),
+                  ),
+                  const SizedBox(height: 24),
+                  InsightsSection(
+                    taskState: taskState,
+                    habitState: habitState,
+                    dateRange: (_startDate, _endDate),
+                  ),
+                ],
               ),
             );
           },

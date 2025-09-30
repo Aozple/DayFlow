@@ -23,11 +23,7 @@ class InsightsSection extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surface.withAlpha(200)],
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
       ),
@@ -66,7 +62,7 @@ class InsightsSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: insight.color.withAlpha(30), width: 0.5),
+        border: Border.all(color: AppColors.divider.withAlpha(20), width: 0.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,27 +97,6 @@ class InsightsSection extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                if (insight.action != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: insight.color.withAlpha(10),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      insight.action!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: insight.color,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -142,7 +117,6 @@ class InsightsSection extends StatelessWidget {
               'You completed ${(completionRate * 100).round()}% of your tasks. Keep up the great work!',
           icon: CupertinoIcons.star_fill,
           color: AppColors.success,
-          action: 'Maintain momentum',
         ),
       );
     } else if (completionRate < 0.5) {
@@ -153,7 +127,6 @@ class InsightsSection extends StatelessWidget {
               'Your task completion is at ${(completionRate * 100).round()}%. Try breaking tasks into smaller chunks.',
           icon: CupertinoIcons.arrow_up_circle_fill,
           color: AppColors.warning,
-          action: 'Simplify tasks',
         ),
       );
     }
@@ -167,7 +140,6 @@ class InsightsSection extends StatelessWidget {
               'You have $overdueTasks overdue tasks. Consider reviewing your priorities.',
           icon: CupertinoIcons.exclamationmark_triangle_fill,
           color: AppColors.error,
-          action: 'Review priorities',
         ),
       );
     }
@@ -188,20 +160,6 @@ class InsightsSection extends StatelessWidget {
       );
     }
 
-    final mostProductiveHour = _findMostProductiveHour();
-    if (mostProductiveHour != null) {
-      insights.add(
-        Insight(
-          title: 'Peak Performance Time',
-          description:
-              'You complete most tasks at $mostProductiveHour:00. Schedule important work during this time.',
-          icon: CupertinoIcons.clock_fill,
-          color: AppColors.info,
-          action: 'Optimize schedule',
-        ),
-      );
-    }
-
     if (insights.isEmpty) {
       insights.add(
         Insight(
@@ -216,21 +174,6 @@ class InsightsSection extends StatelessWidget {
 
     return insights.take(4).toList();
   }
-
-  int? _findMostProductiveHour() {
-    final hourCounts = <int, int>{};
-
-    for (final task in taskState.completedTasks) {
-      if (task.completedAt != null) {
-        final hour = task.completedAt!.hour;
-        hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
-      }
-    }
-
-    if (hourCounts.isEmpty) return null;
-
-    return hourCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-  }
 }
 
 class Insight {
@@ -238,13 +181,11 @@ class Insight {
   final String description;
   final IconData icon;
   final Color color;
-  final String? action;
 
   Insight({
     required this.title,
     required this.description,
     required this.icon,
     required this.color,
-    this.action,
   });
 }

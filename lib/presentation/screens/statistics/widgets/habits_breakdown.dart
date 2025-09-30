@@ -31,8 +31,10 @@ class HabitsBreakdown extends StatelessWidget {
           _buildHeader(),
           const SizedBox(height: 16),
           _buildTopHabits(breakdownData.topHabits),
-          const SizedBox(height: 16),
-          _buildFrequencyDistribution(breakdownData.frequencyData),
+          if (breakdownData.frequencyData.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildFrequencyDistribution(breakdownData.frequencyData),
+          ],
           const SizedBox(height: 16),
           _buildStreakAnalysis(breakdownData.streakData),
         ],
@@ -78,6 +80,22 @@ class HabitsBreakdown extends StatelessWidget {
   }
 
   Widget _buildTopHabits(List<HabitPerformance> topHabits) {
+    if (topHabits.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Center(
+          child: Text(
+            'No habits tracked yet',
+            style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -169,8 +187,6 @@ class HabitsBreakdown extends StatelessWidget {
   }
 
   Widget _buildFrequencyDistribution(Map<HabitFrequency, int> data) {
-    final total = data.values.fold(0, (sum, count) => sum + count);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -183,67 +199,45 @@ class HabitsBreakdown extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...data.entries.map((entry) {
-          final percentage = total > 0 ? (entry.value / total) : 0.0;
-          return _buildFrequencyItem(entry.key, entry.value, percentage);
-        }),
-      ],
-    );
-  }
-
-  Widget _buildFrequencyItem(
-    HabitFrequency frequency,
-    int count,
-    double percentage,
-  ) {
-    final color = _getFrequencyColor(frequency);
-    final label = _getFrequencyLabel(frequency);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              height: 20,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: percentage,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(4),
+        Row(
+          children:
+              data.entries.map((entry) {
+                return Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.divider.withAlpha(20),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${entry.value}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          _getFrequencyLabel(entry.key),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$count',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
+                );
+              }).toList(),
+        ),
+      ],
     );
   }
 
@@ -289,9 +283,9 @@ class HabitsBreakdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withAlpha(10),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withAlpha(30), width: 0.5),
+        border: Border.all(color: AppColors.divider.withAlpha(20), width: 0.5),
       ),
       child: Column(
         children: [
@@ -299,10 +293,10 @@ class HabitsBreakdown extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: AppColors.textPrimary,
             ),
           ),
           Text(
@@ -312,19 +306,6 @@ class HabitsBreakdown extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Color _getFrequencyColor(HabitFrequency frequency) {
-    switch (frequency) {
-      case HabitFrequency.daily:
-        return AppColors.success;
-      case HabitFrequency.weekly:
-        return AppColors.info;
-      case HabitFrequency.monthly:
-        return AppColors.warning;
-      case HabitFrequency.custom:
-        return AppColors.accent;
-    }
   }
 
   String _getFrequencyLabel(HabitFrequency frequency) {

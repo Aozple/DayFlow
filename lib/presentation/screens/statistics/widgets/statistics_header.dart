@@ -1,6 +1,7 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class StatisticsHeader extends StatelessWidget {
@@ -213,6 +214,7 @@ class _DateRangePickerState extends State<DateRangePicker> {
   Widget _buildOption(String label, int? days) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         setState(() {
           _endDate = DateTime.now();
           _startDate =
@@ -245,7 +247,10 @@ class _DateRangePickerState extends State<DateRangePicker> {
 
   Widget _buildConfirmButton() {
     return GestureDetector(
-      onTap: () => widget.onConfirm(_startDate, _endDate),
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        widget.onConfirm(_startDate, _endDate);
+      },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),

@@ -31,7 +31,7 @@ class QuickStatsCards extends StatelessWidget {
             value: '${stats.totalScore}',
             icon: CupertinoIcons.star_fill,
             color: AppColors.warning,
-            subtitle: 'points earned',
+            subtitle: 'points',
           ),
           const SizedBox(width: 12),
           _StatCard(
@@ -39,7 +39,7 @@ class QuickStatsCards extends StatelessWidget {
             value: '${stats.productivityRate}%',
             icon: CupertinoIcons.chart_pie_fill,
             color: AppColors.success,
-            subtitle: 'completion rate',
+            subtitle: 'completion',
           ),
           const SizedBox(width: 12),
           _StatCard(
@@ -47,7 +47,7 @@ class QuickStatsCards extends StatelessWidget {
             value: '${stats.currentStreak}',
             icon: CupertinoIcons.flame_fill,
             color: AppColors.error,
-            subtitle: 'days in a row',
+            subtitle: 'days',
           ),
           const SizedBox(width: 12),
           _StatCard(
@@ -55,7 +55,7 @@ class QuickStatsCards extends StatelessWidget {
             value: '${stats.focusHours}h',
             icon: CupertinoIcons.timer_fill,
             color: AppColors.info,
-            subtitle: 'this period',
+            subtitle: 'tracked',
           ),
         ],
       ),
@@ -114,22 +114,11 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 140,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surface.withAlpha(200)],
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withAlpha(20),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,17 +138,19 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
+              const SizedBox(width: 4),
               Text(
                 subtitle,
                 style: const TextStyle(

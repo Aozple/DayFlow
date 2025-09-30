@@ -144,14 +144,7 @@ class ProductivityChart extends StatelessWidget {
                       Container(
                         height: height,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              AppColors.accent,
-                              AppColors.accent.withAlpha(150),
-                            ],
-                          ),
+                          color: AppColors.accent,
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4),
                           ),

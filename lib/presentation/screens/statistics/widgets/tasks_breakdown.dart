@@ -32,8 +32,10 @@ class TasksBreakdown extends StatelessWidget {
           _buildStatusDistribution(breakdown.statusData),
           const SizedBox(height: 16),
           _buildPriorityAnalysis(breakdown.priorityData),
-          const SizedBox(height: 16),
-          _buildTimeEstimates(breakdown.timeData),
+          if (breakdown.timeData.estimatedHours > 0) ...[
+            const SizedBox(height: 16),
+            _buildTimeEstimates(breakdown.timeData),
+          ],
         ],
       ),
     );
@@ -142,7 +144,7 @@ class TasksBreakdown extends StatelessWidget {
     final percentage = total > 0 ? ((count / total) * 100).round() : 0;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
@@ -151,11 +153,11 @@ class TasksBreakdown extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, size: 16, color: color),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             '$count',
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
@@ -188,6 +190,10 @@ class TasksBreakdown extends StatelessWidget {
   }
 
   Widget _buildPriorityAnalysis(Map<int, int> priorityData) {
+    if (priorityData.isEmpty) {
+      return const SizedBox();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,7 +207,10 @@ class TasksBreakdown extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...priorityData.entries.map((entry) {
-          return _buildPriorityItem(entry.key, entry.value);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildPriorityItem(entry.key, entry.value),
+          );
         }),
       ],
     );
@@ -213,56 +222,53 @@ class TasksBreakdown extends StatelessWidget {
     final total = taskState.activeTasks.length;
     final percentage = total > 0 ? (count / total) : 0.0;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 60,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 60,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
             ),
           ),
-          Expanded(
-            child: Container(
-              height: 16,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: percentage,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(150),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
+        ),
+        Expanded(
+          child: Container(
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: percentage,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color.withAlpha(150),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            '$count',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$count',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -270,16 +276,9 @@ class TasksBreakdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.accent.withAlpha(20),
-            AppColors.accent.withAlpha(10),
-          ],
-        ),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 0.5),
+        border: Border.all(color: AppColors.divider.withAlpha(20), width: 0.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
