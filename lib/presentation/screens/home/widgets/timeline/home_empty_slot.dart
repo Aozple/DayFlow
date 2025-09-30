@@ -1,7 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Empty slot indicator with plus icon for adding new items
 class HomeEmptySlot extends StatelessWidget {
   const HomeEmptySlot({super.key});
 

@@ -60,10 +60,8 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     _controller.addListener(_onTextChanged);
     _controller.addListener(_onSelectionChanged);
 
-    // Listen to focus changes for editing state
     widget.focusNode.addListener(_onFocusChange);
 
-    // Set initial text direction
     _updateTextDirection(widget.block.text);
   }
 
@@ -86,7 +84,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     }
   }
 
-  // Handle focus state changes
   void _onFocusChange() {
     if (!_isDisposed && mounted) {
       setState(() {
@@ -95,11 +92,9 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     }
   }
 
-  // Handle text content changes
   void _onTextChanged() {
     if (_isDisposed) return;
 
-    // Update direction without interrupting typing
     _updateTextDirection(_controller.text);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -110,7 +105,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     });
   }
 
-  // Handle text selection changes
   void _onSelectionChanged() {
     if (_isDisposed || !mounted) return;
 
@@ -121,7 +115,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     });
   }
 
-  // Detect text direction based on first character
   void _updateTextDirection(String text) {
     if (text.isEmpty) {
       setState(() => _textDirection = TextDirection.ltr);
@@ -138,7 +131,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     final isRTL = _isRTLCharacter(firstChar);
     final newDirection = isRTL ? TextDirection.rtl : TextDirection.ltr;
 
-    // Only update if direction actually changed to prevent unnecessary rebuilds
     if (_textDirection != newDirection) {
       setState(() {
         _textDirection = newDirection;
@@ -146,7 +138,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     }
   }
 
-  // Strip markdown and formatting for direction detection
   String _stripMarkdown(String text) {
     return text
         .replaceAll(RegExp(r'\*{1,3}'), '')
@@ -155,16 +146,14 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
         .replaceAll(RegExp(r'<[^>]+>'), '');
   }
 
-  // Check if character belongs to RTL script (Arabic/Persian/Hebrew)
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms A
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
-  // Get placeholder text based on level and direction
   String _getPlaceholderText(int level) {
     if (_textDirection == TextDirection.rtl) {
       return _getRTLPlaceholder(level);
@@ -172,7 +161,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     return _getLTRPlaceholder(level);
   }
 
-  // English placeholders
   String _getLTRPlaceholder(int level) {
     switch (level) {
       case 1:
@@ -192,7 +180,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     }
   }
 
-  // Persian placeholders
   String _getRTLPlaceholder(int level) {
     switch (level) {
       case 1:
@@ -212,7 +199,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     }
   }
 
-  // Get font size for different heading levels
   double _getHeadingFontSize(int level) {
     switch (level) {
       case 1:
@@ -232,7 +218,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     }
   }
 
-  // Get font weight for different heading levels
   FontWeight _getHeadingWeight(int level) {
     switch (level) {
       case 1:
@@ -259,13 +244,11 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status indicators bar - shown when editing or has content
           if (_isEditing || _controller.text.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  // Heading type indicator
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
@@ -299,12 +282,10 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
 
                   const SizedBox(width: 8),
 
-                  // Level selector moved here
                   _buildCompactLevelSelector(),
 
                   const Spacer(),
 
-                  // Text direction indicator
                   if (_controller.text.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(4),
@@ -328,13 +309,11 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
               ),
             ),
 
-          // Main heading content with level controls
           Directionality(
             textDirection: _textDirection,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Visual heading indicator bar - auto positioned by Directionality
                 Container(
                   width: 3,
                   height: _getHeadingFontSize(widget.block.level),
@@ -354,7 +333,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
 
                 const SizedBox(width: 8),
 
-                // Text content area
                 Expanded(
                   child: TextField(
                     controller: _controller,
@@ -396,7 +374,6 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
     );
   }
 
-  // Build compact level selector with H1, H2, etc.
   Widget _buildCompactLevelSelector() {
     return Container(
       decoration: BoxDecoration(

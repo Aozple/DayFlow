@@ -5,11 +5,11 @@ class HabitInstanceModel {
   static const String _tag = 'HabitInstanceModel';
 
   final String id;
-  final String habitId; // Reference to parent HabitModel
+  final String habitId;
   final DateTime date;
   final HabitInstanceStatus status;
   final DateTime? completedAt;
-  final int? value; // For quantifiable habits
+  final int? value;
   final String? note;
   final bool isDeleted;
 
@@ -133,7 +133,6 @@ class HabitInstanceModel {
     );
   }
 
-  // Computed properties
   bool get isCompleted => status == HabitInstanceStatus.completed;
   bool get isPending => status == HabitInstanceStatus.pending;
   bool get isToday => _isSameDay(date, DateTime.now());

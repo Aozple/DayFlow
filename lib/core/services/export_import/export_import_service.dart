@@ -14,12 +14,8 @@ class ExportImportService {
   final ExportService _exportService = ExportService();
   final ImportService _importService = ImportService();
 
-  /// Checks if a quick export is possible.
   bool get canQuickExport => _exportService.canQuickExport;
 
-  // MARK: - Export Methods
-
-  /// Exports all data to JSON.
   Future<ExportResult> exportAllToJson({
     bool includeCompletedTasks = true,
     bool includeHabitInstances = true,
@@ -32,7 +28,6 @@ class ExportImportService {
     );
   }
 
-  /// Exports only tasks in the specified format.
   Future<ExportResult> exportTasksOnly(
     ExportFormat format, {
     bool includeCompleted = true,
@@ -43,19 +38,14 @@ class ExportImportService {
     );
   }
 
-  /// Exports only habits in the specified format.
   Future<ExportResult> exportHabitsOnly(ExportFormat format) async {
     return await _exportService.exportHabitsOnly(format);
   }
 
-  // MARK: - Import Methods
-
-  /// Validates the import data.
   Future<ImportValidation> validateImport(String data) async {
     return await _importService.validateImport(data);
   }
 
-  /// Imports data from a JSON string.
   Future<ImportResult> importFromJson(
     String jsonString, {
     bool merge = true,
@@ -72,14 +62,10 @@ class ExportImportService {
     );
   }
 
-  /// Imports data from a CSV string.
   Future<ImportResult> importFromCsv(String csvString, ImportType type) async {
     return await _importService.importFromCsv(csvString, type);
   }
 
-  // MARK: - Backup & Restore
-
-  /// Performs a quick backup of all data.
   Future<bool> quickBackup() async {
     try {
       DebugLogger.info('Starting quick backup', tag: _tag);
@@ -98,7 +84,6 @@ class ExportImportService {
     }
   }
 
-  /// Backs up all data and provides sharing options.
   Future<bool> backupAndShare() async {
     try {
       final result = await _exportService.exportAllToJson();
@@ -114,7 +99,6 @@ class ExportImportService {
     }
   }
 
-  /// Restores data from a selected file.
   Future<ImportResult> restoreFromFile() async {
     try {
       final content = await FileManager.pickFileForImport();
@@ -135,7 +119,6 @@ class ExportImportService {
       if (validation.format == 'json') {
         return await _importService.importFromJson(content, merge: true);
       } else {
-        // TODO: Implement UI selection for CSV import type (tasks/habits)
         return await _importService.importFromCsv(content, ImportType.tasks);
       }
     } catch (e) {
@@ -144,9 +127,6 @@ class ExportImportService {
     }
   }
 
-  // MARK: - Data Management
-
-  /// Clears all application data after creating a backup.
   Future<bool> clearAllDataWithBackup() async {
     try {
       DebugLogger.info('Creating backup before clear', tag: _tag);
@@ -173,14 +153,10 @@ class ExportImportService {
     }
   }
 
-  // MARK: - Legacy Export Methods
-
-  /// Exports tasks (legacy).
   Future<ExportResult> exportTasks(ExportFormat format) async {
     return await _exportService.exportTasksOnly(format);
   }
 
-  /// Exports habits (legacy).
   Future<ExportResult> exportHabits(ExportFormat format) async {
     return await _exportService.exportHabitsOnly(format);
   }

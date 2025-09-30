@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// Header section of the home screen with date display and action buttons
 class HomeHeader extends StatelessWidget {
   final DateTime selectedDate;
   final Function(DateTime) onDateSelected;
@@ -30,7 +29,6 @@ class HomeHeader extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Date display section
             Padding(
               padding: const EdgeInsets.only(left: 4.0),
               child: Column(
@@ -56,10 +54,9 @@ class HomeHeader extends StatelessWidget {
                 ],
               ),
             ),
-            // Action buttons row
+
             Row(
               children: [
-                // "Today" button - only visible when not on today's date
                 if (!_isSameDay(selectedDate, DateTime.now()))
                   CupertinoButton(
                     padding: EdgeInsets.zero,
@@ -87,7 +84,7 @@ class HomeHeader extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(width: 12),
-                // Filter button with active indicator
+
                 CupertinoButton(
                   padding: const EdgeInsets.all(4),
                   minimumSize: const Size(28, 28),
@@ -99,7 +96,7 @@ class HomeHeader extends StatelessWidget {
                         color: AppColors.textSecondary,
                         size: 24,
                       ),
-                      // Indicator dot for active filters
+
                       if (hasActiveFilters)
                         Positioned(
                           right: 0,
@@ -117,7 +114,7 @@ class HomeHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Search button
+
                 CupertinoButton(
                   padding: const EdgeInsets.all(4),
                   minimumSize: const Size(28, 28),
@@ -129,7 +126,7 @@ class HomeHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Settings button
+
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: () {
@@ -149,7 +146,6 @@ class HomeHeader extends StatelessWidget {
     );
   }
 
-  /// Check if two dates are the same day
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }

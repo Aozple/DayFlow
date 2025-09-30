@@ -16,30 +16,25 @@ class HabitModel {
   final bool hasNotification;
   final int? notificationMinutesBefore;
 
-  // Habit-specific fields
   final HabitFrequency frequency;
-  final List<int>? weekdays; // 1-7 (Monday-Sunday) for weekly habits
-  final int? monthDay; // 1-31 for monthly habits
-  final int? customInterval; // For custom frequency (every X days)
+  final List<int>? weekdays;
+  final int? monthDay;
+  final int? customInterval;
   final TimeOfDay? preferredTime;
 
-  // End conditions
   final HabitEndCondition endCondition;
   final DateTime? endDate;
   final int? targetCount;
 
-  // Habit type
   final HabitType habitType;
-  final int? targetValue; // For quantifiable habits
-  final String? unit; // "glasses", "minutes", "pages", etc.
+  final int? targetValue;
+  final String? unit;
 
-  // Tracking
   final int currentStreak;
   final int longestStreak;
   final int totalCompletions;
   final DateTime? lastCompletedDate;
 
-  // Validation constants
   static const int maxTitleLength = 200;
   static const int maxDescriptionLength = 1000;
   static const int maxTags = 10;
@@ -109,7 +104,6 @@ class HabitModel {
       }
     }
 
-    // Habit-specific validations
     _validateFrequency();
     _validateEndCondition();
     _validateHabitType();
@@ -142,7 +136,6 @@ class HabitModel {
         }
         break;
       case HabitFrequency.daily:
-        // No additional validation needed
         break;
     }
   }
@@ -166,7 +159,6 @@ class HabitModel {
         break;
       case HabitEndCondition.never:
       case HabitEndCondition.manual:
-        // No additional validation needed
         break;
     }
   }
@@ -234,7 +226,6 @@ class HabitModel {
 
   factory HabitModel.fromMap(Map<String, dynamic> map) {
     try {
-      // Safe parsing helpers
       DateTime? parseDate(String? dateStr) {
         if (dateStr == null || dateStr.isEmpty) return null;
         try {
@@ -282,7 +273,6 @@ class HabitModel {
       );
       var endDate = parseDate(map['endDate'] as String?);
 
-      // Fix ANY corrupted end date - be more aggressive
       if (endDate != null && endDate.isBefore(DateTime.now())) {
         endCondition = HabitEndCondition.never;
         endDate = null;
@@ -344,7 +334,7 @@ class HabitModel {
       return habit;
     } catch (e) {
       DebugLogger.error('Failed to deserialize habit', tag: _tag, error: e);
-      // Return a minimal valid habit instead of crashing
+
       return HabitModel(
         id: map['id'] as String? ?? const Uuid().v4(),
         title: 'Error loading habit',
@@ -411,7 +401,6 @@ class HabitModel {
     );
   }
 
-  // Computed properties
   bool get isActive => !isDeleted && !_hasEnded;
 
   bool get _hasEnded {
@@ -449,8 +438,7 @@ class HabitModel {
     if (habitType == HabitType.simple) {
       return totalCompletions > 0 ? 1.0 : 0.0;
     } else {
-      // For quantifiable habits, this would be calculated based on today's progress
-      return 0.0; // Will be implemented with HabitInstanceModel
+      return 0.0;
     }
   }
 
@@ -510,7 +498,6 @@ class HabitModel {
   int get hashCode => id.hashCode;
 }
 
-// Enums
 enum HabitFrequency { daily, weekly, monthly, custom }
 
 enum HabitEndCondition { never, onDate, afterCount, manual }

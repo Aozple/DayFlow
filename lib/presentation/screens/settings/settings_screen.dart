@@ -409,7 +409,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Export/Import Methods
   void _showExportOptions() {
     showCupertinoModalPopup(
       context: context,
@@ -457,7 +456,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ExportFormat.csv,
             );
           } else {
-            // For CSV, we need to export separately and combine
             result = await _exportImportService.exportTasksOnly(
               ExportFormat.csv,
             );
@@ -561,7 +559,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ImportResult result;
 
       if (validation.format == 'csv') {
-        // For CSV, determine type based on content or user selection
         result = await _exportImportService.importFromCsv(
           data,
           config.importTasks ? ImportType.tasks : ImportType.habits,
@@ -580,7 +577,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Navigator.pop(context);
 
         if (result.success) {
-          // Refresh relevant blocs
           if (config.importTasks) {
             context.read<TaskBloc>().add(const LoadTasks());
           }
@@ -639,7 +635,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Dialog Methods
   void _showLoadingDialog(String message) {
     showCupertinoDialog(
       context: context,
@@ -810,7 +805,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Helper Methods
   String _getTimeSinceExport() {
     if (_lastExportTime == null) return '';
 
@@ -844,7 +838,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Settings Methods
   void _showAccentColorPicker(String currentColor) {
     AccentColorPicker.show(
       context: context,

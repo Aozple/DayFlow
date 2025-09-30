@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Clean time picker modal with 24-hour format
 class TimePickerModal extends StatefulWidget {
   final TimeOfDay? selectedTime;
   final Function(TimeOfDay) onTimeSelected;

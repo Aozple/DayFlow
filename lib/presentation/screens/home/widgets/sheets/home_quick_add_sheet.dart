@@ -2,13 +2,12 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
-/// Quick add menu for creating tasks, notes, or habits at a specific time
 class HomeQuickAddSheet extends StatelessWidget {
   final int hour;
   final DateTime selectedDate;
   final Function(int) onCreateTask;
   final Function(int) onCreateNote;
-  final Function(int) onCreateHabit; // New parameter
+  final Function(int) onCreateHabit;
 
   const HomeQuickAddSheet({
     super.key,
@@ -16,7 +15,7 @@ class HomeQuickAddSheet extends StatelessWidget {
     required this.selectedDate,
     required this.onCreateTask,
     required this.onCreateNote,
-    required this.onCreateHabit, // New required parameter
+    required this.onCreateHabit,
   });
 
   @override
@@ -31,7 +30,6 @@ class HomeQuickAddSheet extends StatelessWidget {
         style: const TextStyle(fontSize: 14),
       ),
       actions: [
-        // New Task option
         CupertinoActionSheetAction(
           onPressed: () {
             Navigator.pop(context);
@@ -51,7 +49,6 @@ class HomeQuickAddSheet extends StatelessWidget {
           ),
         ),
 
-        // New Note option
         CupertinoActionSheetAction(
           onPressed: () {
             Navigator.pop(context);
@@ -71,7 +68,6 @@ class HomeQuickAddSheet extends StatelessWidget {
           ),
         ),
 
-        // New Habit option (NEW)
         CupertinoActionSheetAction(
           onPressed: () {
             Navigator.pop(context);

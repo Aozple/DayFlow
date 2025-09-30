@@ -4,27 +4,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Universal color picker modal with preview functionality and enhanced UX
 class ColorPickerModal extends StatefulWidget {
-  /// Currently selected color hex string
   final String selectedColor;
 
-  /// Callback when color is selected
   final Function(String) onColorSelected;
 
-  /// Optional preview widget that updates with selected color
   final Widget Function(String colorHex)? previewBuilder;
 
-  /// Modal title
   final String title;
 
-  /// Recently used colors (optional)
   final List<String>? recentColors;
 
-  /// Whether to show preview section
   final bool showPreview;
 
-  /// Custom colors to display instead of default userColors
   final List<Color>? customColors;
 
   const ColorPickerModal({
@@ -38,7 +30,6 @@ class ColorPickerModal extends StatefulWidget {
     this.customColors,
   });
 
-  /// Show color picker modal with enhanced presentation
   static Future<String?> show({
     required BuildContext context,
     required String selectedColor,
@@ -76,7 +67,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
-  /// Colors to display in the grid
   List<Color> get _colorsToShow => widget.customColors ?? AppColors.userColors;
 
   @override
@@ -93,7 +83,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     super.dispose();
   }
 
-  /// Initialize animations for enhanced visual feedback
   void _initializeAnimations() {
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
@@ -110,14 +99,12 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Handle color selection with enhanced haptic feedback
   void _handleColorSelection(String colorHex) {
     HapticFeedback.lightImpact();
     _scaleController.forward().then((_) => _scaleController.reverse());
     setState(() => _currentSelectedColor = colorHex);
   }
 
-  /// Confirm color selection and close modal
   void _confirmSelection() {
     HapticFeedback.mediumImpact();
     widget.onColorSelected(_currentSelectedColor);
@@ -146,28 +133,24 @@ class _ColorPickerModalState extends State<ColorPickerModal>
               const SizedBox(height: 32),
             ],
             _buildAllColorsSection(),
-            const SizedBox(height: 72), // Extra padding for gestures
+            const SizedBox(height: 72),
           ],
         ),
       ),
     );
   }
 
-  /// Calculate optimal initial height based on content and number of colors
   double _calculateInitialHeight() {
     double baseHeight = 300;
 
-    // Add height for preview section
     if (widget.showPreview && widget.previewBuilder != null) {
       baseHeight += 140;
     }
 
-    // Add height for recent colors section
     if (widget.recentColors != null && widget.recentColors!.isNotEmpty) {
       baseHeight += 120;
     }
 
-    // Calculate height needed for color grid (5 colors per row)
     const colorsPerRow = 5;
     const colorSize = 60.0;
     const rowSpacing = 16.0;
@@ -184,7 +167,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     return baseHeight.clamp(300, 700);
   }
 
-  /// Build enhanced confirm button with visual feedback
   Widget _buildConfirmButton() {
     final hasChanged = _currentSelectedColor != widget.selectedColor;
 
@@ -217,7 +199,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Build enhanced preview section with better visual hierarchy
   Widget _buildPreviewSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -272,7 +253,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Build enhanced recent colors section
   Widget _buildRecentColorsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,7 +283,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Build enhanced all colors section with dynamic grid
   Widget _buildAllColorsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,7 +299,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Build section header with consistent styling
   Widget _buildSectionHeader({
     required IconData icon,
     required String title,
@@ -366,12 +344,10 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Build dynamic color grid that adapts to any number of colors
   Widget _buildDynamicColorGrid() {
     const colorsPerRow = 5;
     final colorGroups = <List<Color>>[];
 
-    // Group colors into rows of 5
     for (int i = 0; i < _colorsToShow.length; i += colorsPerRow) {
       final endIndex =
           (i + colorsPerRow < _colorsToShow.length)
@@ -409,7 +385,6 @@ class _ColorPickerModalState extends State<ColorPickerModal>
     );
   }
 
-  /// Build enhanced color option with improved visual feedback
   Widget _buildColorOption(Color color, String colorHex, {double size = 60}) {
     final isSelected = _currentSelectedColor == colorHex;
     final isOriginalSelection = widget.selectedColor == colorHex;

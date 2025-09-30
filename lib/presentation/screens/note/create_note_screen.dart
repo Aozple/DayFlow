@@ -36,23 +36,19 @@ class CreateNoteScreen extends StatefulWidget {
 
 class _CreateNoteScreenState extends State<CreateNoteScreen>
     with TickerProviderStateMixin {
-  // Constants
   static const Duration _animationDuration = Duration(milliseconds: 300);
   static const Duration _autoSaveDelay = Duration(seconds: 2);
   static const Duration _toolbarAnimationDuration = Duration(milliseconds: 200);
 
-  // Controllers
   late TextEditingController _titleController;
   late TextEditingController _tagsController;
   late AnimationController _previewAnimationController;
   late AnimationController _toolbarAnimationController;
   late Animation<Offset> _toolbarSlideAnimation;
 
-  // Focus and Scroll
   final FocusNode _titleFocus = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
-  // State
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
   String _selectedColor = AppColors.toHex(AppColors.userColors[6]);
@@ -61,10 +57,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   bool _isDeleting = false;
   Timer? _autoSaveTimer;
 
-  // Content
   late List<NoteBlock> _blocks;
 
-  // Getters
   bool get isEditMode => widget.noteToEdit != null;
   bool get _hasTitle => _titleController.text.trim().isNotEmpty;
   bool get _hasContent => _blocks.any(_blockHasContent);
@@ -87,7 +81,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     super.dispose();
   }
 
-  // Initialization methods
   void _initializeControllers() {
     _titleController = TextEditingController(
       text: widget.noteToEdit?.title ?? '',
@@ -164,7 +157,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     _toolbarAnimationController.dispose();
   }
 
-  // Content change handling
   void _onContentChanged() {
     if (!_hasChanges) {
       setState(() => _hasChanges = true);
@@ -206,7 +198,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     }
   }
 
-  // Content validation
   bool _blockHasContent(NoteBlock block) {
     if (block is TextBlock) {
       return block.text.trim().isNotEmpty;
@@ -231,16 +222,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     return false;
   }
 
-  // Navigation handling
   void _handleBackNavigation() {
     if (_hasTitle) {
-      // Auto-save and exit
       _saveNote(autoExit: true);
     } else if (!_hasContent) {
-      // No content, just exit
       context.pop();
     } else {
-      // Has content but no title, show dialog
       _showContentWithoutTitleDialog();
     }
   }
@@ -275,7 +262,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     );
   }
 
-  // Delete functionality
   void _showDeleteConfirmation() {
     showCupertinoDialog(
       context: context,
@@ -328,20 +314,20 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
               CupertinoDialogAction(
                 isDestructiveAction: true,
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  context.pop(); // Exit without saving
+                  Navigator.pop(context);
+                  context.pop();
                 },
                 child: const Text('Discard'),
               ),
               CupertinoDialogAction(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context);
 
                   if (!_hasTitle) {
                     _titleController.text = 'Untitled Note';
                   }
 
-                  _saveNote(autoExit: true); // Save and exit
+                  _saveNote(autoExit: true);
                 },
                 child: const Text('Save & Exit'),
               ),
@@ -367,7 +353,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     }
   }
 
-  // Save functionality
   void _saveNote({bool autoExit = false}) {
     if (!_canSave) {
       if (!autoExit) {
@@ -442,7 +427,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     }
   }
 
-  // UI Event handlers
   Future<void> _selectDate() async {
     final selectedDate = await DatePickerModal.show(
       context: context,
@@ -481,18 +465,15 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     );
 
     if (selectedColor != null && mounted) {
-      // mounted check اضافه شد
       setState(() => _selectedColor = selectedColor);
       _onContentChanged();
       if (mounted) {
-        // mounted check دوباره
         CustomSnackBar.success(context, 'Color updated');
       }
     }
   }
 
   Widget _buildColorPreview(String colorHex) {
-    // Create a sample note for preview
     final previewNote = TaskModel(
       title:
           _titleController.text.isNotEmpty
@@ -516,17 +497,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         _selectedTime.hour,
         _selectedTime.minute,
       ),
-      // Create sample markdown content from blocks
+
       markdownContent:
           _blocks.isNotEmpty && _blocks.any(_blockHasContent)
               ? _getSampleMarkdownFromBlocks()
               : 'This is a sample note content to show how your note will look with the selected color.',
     );
 
-    return HomeNoteBlock(
-      note: previewNote,
-      onOptions: (_) {}, // Empty callback for preview
-    );
+    return HomeNoteBlock(note: previewNote, onOptions: (_) {});
   }
 
   String _getSampleMarkdownFromBlocks() {
@@ -542,7 +520,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       } else if (block is HeadingBlock && block.text.trim().isNotEmpty) {
         content += '${block.text.trim()} ';
       }
-      // Add other block types as needed
     }
 
     return content.trim().isNotEmpty
@@ -565,7 +542,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
           children: [
             const StatusBarPadding(),
 
-            // Animated header
             SlideTransition(
               position: _toolbarSlideAnimation,
               child: CreateNoteHeader(
@@ -580,11 +556,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
               ),
             ),
 
-            // Main content
             Expanded(
               child: Column(
                 children: [
-                  // Title and metadata section
                   CreateNoteTitleSection(
                     titleController: _titleController,
                     titleFocus: _titleFocus,
@@ -598,7 +572,6 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                     tagsController: _tagsController,
                   ),
 
-                  // Block editor
                   Expanded(
                     child: NoteBlockEditor(
                       initialBlocks: _blocks,

@@ -31,17 +31,14 @@ class MigrationManager {
         case 1:
           await _migrateToV1();
           break;
-        // Add future migrations here
       }
     }
   }
 
   static Future<void> _migrateToV1() async {
-    // Example migration
     try {
       final tasksBox = Hive.box('tasks');
 
-      // Add any data transformation needed
       for (final key in tasksBox.keys) {
         final task = tasksBox.get(key);
         if (task is Map && !task.containsKey('version')) {

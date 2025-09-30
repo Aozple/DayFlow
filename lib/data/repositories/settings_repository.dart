@@ -60,7 +60,6 @@ class SettingsRepository implements ISettingsRepository {
       return const AppSettings();
     }
 
-    // Return cached if valid
     if (_isCacheValid() && _cachedSettings != null) {
       DebugLogger.verbose('Returning cached settings', tag: _tag);
       return _cachedSettings!;

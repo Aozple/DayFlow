@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 class EditorUtils {
-  // Create different types of blocks
   static NoteBlock createBlockOfType(BlockType type) {
     final id = const Uuid().v4();
 
@@ -35,7 +34,6 @@ class EditorUtils {
     }
   }
 
-  // Duplicate a block
   static NoteBlock duplicateBlock(NoteBlock block) {
     final newId = const Uuid().v4();
 
@@ -72,7 +70,6 @@ class EditorUtils {
     }
   }
 
-  // Apply text formatting
   static String applyTextFormatting(
     String text,
     TextSelection selection,

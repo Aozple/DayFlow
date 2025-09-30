@@ -1,6 +1,7 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/core/constants/statistics_constants.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
+import 'package:dayflow/presentation/widgets/draggable_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -56,7 +57,6 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
   void _startAnimations() {
     _progressController.forward();
 
-    
     final score = widget.overview['todayScore'] as double? ?? 0.0;
     if (score >= 0.9) {
       _pulseController.repeat(reverse: true);
@@ -459,94 +459,98 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
   }
 
   void _showMetricDetails(Map<String, dynamic> metric) {
-    showCupertinoModalPopup(
+    showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder:
-          (context) => Container(
-            height: 180,
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: (metric['color'] as Color).withAlpha(20),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            metric['icon'],
-                            size: 20,
-                            color: metric['color'],
-                          ),
+          (context) => DraggableModal(
+            title: metric['label'],
+            initialHeight: 270,
+            minHeight: 260,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: metric['color'],
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                metric['label'],
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
+                        child: Icon(
+                          metric['icon'],
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              metric['value'],
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: metric['color'],
                               ),
+                            ),
+                            if (metric['completion'] != null) ...[
+                              const SizedBox(height: 8),
                               Text(
-                                metric['value'],
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: metric['color'],
+                                '${(metric['completion'] * 100).round()}% complete',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
-                          ),
+                          ],
                         ),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(
-                            CupertinoIcons.xmark,
-                            size: 20,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      metric['description'] ??
-                          'No additional information available.',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    if (metric['completion'] != null) ...[
-                      const SizedBox(height: 12),
-                      LinearProgressIndicator(
-                        value: metric['completion'],
-                        backgroundColor: (metric['color'] as Color).withAlpha(
-                          30,
-                        ),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          metric['color'],
-                        ),
-                        minHeight: 6,
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    metric['description'] ??
+                        'No additional information available.',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                  if (metric['completion'] != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 6,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.divider,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: metric['completion'],
+                          child: Container(
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: metric['color'],
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),

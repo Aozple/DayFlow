@@ -5,7 +5,6 @@ import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'home_date_item.dart';
 import 'home_week_navigation.dart';
 
-/// Horizontal date selector for navigating through days
 class HomeDateSelector extends StatelessWidget {
   final DateTime selectedDate;
   final Function(DateTime) onDateSelected;
@@ -20,7 +19,6 @@ class HomeDateSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
-        // Get first day of week setting
         final isSaturdayFirst =
             settingsState is SettingsLoaded
                 ? settingsState.isSaturdayFirst
@@ -38,14 +36,12 @@ class HomeDateSelector extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Week navigation controls
               HomeWeekNavigation(
                 selectedDate: selectedDate,
                 isSaturdayFirst: isSaturdayFirst,
                 onWeekChanged: onDateSelected,
               ),
 
-              // Day selector row
               Container(
                 height: 64,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -60,7 +56,6 @@ class HomeDateSelector extends StatelessWidget {
                 ),
                 child: Row(
                   children: List.generate(7, (index) {
-                    // Calculate date for each day in the week
                     final weekStart = _getWeekStart(
                       selectedDate,
                       isSaturdayFirst,
@@ -85,23 +80,20 @@ class HomeDateSelector extends StatelessWidget {
     );
   }
 
-  /// Calculate the first day of the week based on settings
   DateTime _getWeekStart(DateTime date, bool isSaturdayFirst) {
-    final weekday = date.weekday; // 1 for Monday, 7 for Sunday
+    final weekday = date.weekday;
 
     if (isSaturdayFirst) {
-      // Saturday-first week calculation
       int daysToSubtract;
       if (weekday == 6) {
-        daysToSubtract = 0; // Saturday
+        daysToSubtract = 0;
       } else if (weekday == 7) {
-        daysToSubtract = 1; // Sunday
+        daysToSubtract = 1;
       } else {
-        daysToSubtract = weekday + 1; // Monday-Friday
+        daysToSubtract = weekday + 1;
       }
       return date.subtract(Duration(days: daysToSubtract));
     } else {
-      // Monday-first week calculation
       return date.subtract(Duration(days: weekday - 1));
     }
   }

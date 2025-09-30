@@ -22,7 +22,6 @@ class BlockActionsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Overlay to detect taps outside
         Positioned.fill(
           child: GestureDetector(
             onTap: onHide,
@@ -30,7 +29,6 @@ class BlockActionsMenu extends StatelessWidget {
           ),
         ),
 
-        // Menu content
         Positioned(
           right: 16,
           top: 60,
@@ -51,7 +49,6 @@ class BlockActionsMenu extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Row(
@@ -88,7 +85,6 @@ class BlockActionsMenu extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // Action items
                   _buildActionItem(
                     Icons.transform,
                     'Convert Type',
@@ -115,7 +111,6 @@ class BlockActionsMenu extends StatelessWidget {
                   const Divider(height: 1, color: AppColors.divider),
                   const SizedBox(height: 8),
 
-                  // Destructive action
                   _buildActionItem(
                     Icons.delete_outline,
                     'Delete',
@@ -135,7 +130,6 @@ class BlockActionsMenu extends StatelessWidget {
     );
   }
 
-  // Enhanced action item with description
   Widget _buildActionItem(
     IconData icon,
     String label,
@@ -212,7 +206,6 @@ class BlockActionsMenu extends StatelessWidget {
     );
   }
 
-  // Show convert block type submenu with better layout
   void _showConvertSubmenu(BuildContext context) {
     showDialog(
       context: context,
@@ -229,7 +222,6 @@ class BlockActionsMenu extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: const BoxDecoration(
@@ -263,12 +255,10 @@ class BlockActionsMenu extends StatelessWidget {
                     ),
                   ),
 
-                  // Content
                   Expanded(
                     child: ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        // Text blocks section
                         _buildTypeSection('Text Blocks', [
                           BlockType.text,
                           BlockType.heading,
@@ -276,7 +266,6 @@ class BlockActionsMenu extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
-                        // List blocks section
                         _buildTypeSection('Lists', [
                           BlockType.bulletList,
                           BlockType.numberedList,
@@ -285,7 +274,6 @@ class BlockActionsMenu extends StatelessWidget {
 
                         const SizedBox(height: 20),
 
-                        // Special blocks section
                         _buildTypeSection('Special', [
                           BlockType.quote,
                           BlockType.code,
@@ -301,7 +289,6 @@ class BlockActionsMenu extends StatelessWidget {
     ).then((_) => onHide());
   }
 
-  // Build section with multiple block types
   Widget _buildTypeSection(String title, List<BlockType> types) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,7 +307,6 @@ class BlockActionsMenu extends StatelessWidget {
     );
   }
 
-  // Build individual type option
   Widget _buildTypeOption(BlockType type) {
     return Builder(
       builder:
@@ -388,7 +374,6 @@ class BlockActionsMenu extends StatelessWidget {
     );
   }
 
-  // Helper methods for block type info
   IconData _getBlockTypeIcon(BlockType type) {
     switch (type) {
       case BlockType.text:

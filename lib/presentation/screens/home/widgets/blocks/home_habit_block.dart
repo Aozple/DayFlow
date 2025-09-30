@@ -6,11 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-/// Compact habit display widget optimized for timeline view.
-///
-/// Provides an efficient and visually appealing interface for displaying
-/// and interacting with habits, including completion tracking, progress
-/// visualization, and metadata display.
 class HomeHabitBlock extends StatefulWidget {
   final HabitModel habit;
   final HabitInstanceModel? instance;
@@ -61,18 +56,17 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
         ),
         child: Row(
           children: [
-            // Color indicator
             _buildColorIndicator(habitColor, isCompleted, canInteract),
             const SizedBox(width: 12),
-            // Main content
+
             Expanded(
               child: _buildMainContent(habitColor, isCompleted, canInteract),
             ),
             const SizedBox(width: 8),
-            // Options button as vertical dots
+
             _buildVerticalOptionsButton(habitColor, canInteract),
             const SizedBox(width: 8),
-            // Completion control
+
             _buildCompletionControl(habitColor, isCompleted, canInteract),
           ],
         ),
@@ -80,7 +74,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build vertical options button with three dots
   Widget _buildVerticalOptionsButton(Color habitColor, bool canInteract) {
     return GestureDetector(
       onTap: () {
@@ -108,7 +101,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build single dot for options button
   Widget _buildDot(Color color) {
     return Container(
       width: 4,
@@ -117,12 +109,10 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Check if habit uses default color scheme
   bool _isDefaultHabitColor(String color) {
     return color == '#2C2C2E' || color == '#8E8E93';
   }
 
-  /// Check if habit is scheduled for today
   bool _isForToday() {
     final today = widget.selectedDate;
 
@@ -143,7 +133,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     }
   }
 
-  /// Check if selected date is today
   bool _isToday() {
     final today = DateTime.now();
     final selectedDay = widget.selectedDate;
@@ -152,7 +141,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
         today.day == selectedDay.day;
   }
 
-  /// Build container decoration based on habit state
   BoxDecoration _buildContainerDecoration(
     Color habitColor,
     bool isCompleted,
@@ -193,7 +181,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build color indicator on the left side
   Widget _buildColorIndicator(
     Color habitColor,
     bool isCompleted,
@@ -221,7 +208,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build main content area with title and metadata
   Widget _buildMainContent(
     Color habitColor,
     bool isCompleted,
@@ -231,9 +217,8 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Title row
         _buildTitleRow(habitColor, isCompleted, canInteract),
-        // Metadata or progress bar
+
         if (_shouldShowProgressBar()) ...[
           const SizedBox(height: 8),
           _buildProgressBar(habitColor, isCompleted, canInteract),
@@ -245,14 +230,12 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build title row with frequency icon and streak
   Widget _buildTitleRow(Color habitColor, bool isCompleted, bool canInteract) {
     final textColor = _getTextColor(isCompleted, canInteract);
     final iconColor = _getIconColor(habitColor, isCompleted, canInteract);
 
     return Row(
       children: [
-        // Frequency icon
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -262,7 +245,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
           child: Icon(_getHabitFrequencyIcon(), size: 12, color: iconColor),
         ),
         const SizedBox(width: 8),
-        // Title
+
         Expanded(
           child: Text(
             widget.habit.title,
@@ -278,7 +261,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // Streak indicator
+
         if (widget.habit.currentStreak > 0) ...[
           const SizedBox(width: 8),
           _buildCompactStreakBadge(isCompleted, canInteract),
@@ -287,7 +270,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build compact streak badge
   Widget _buildCompactStreakBadge(bool isCompleted, bool canInteract) {
     final color =
         !canInteract
@@ -321,7 +303,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build compact metadata row
   Widget _buildCompactMetadata(
     Color habitColor,
     bool isCompleted,
@@ -331,7 +312,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
 
     return Row(
       children: [
-        // Time
         if (widget.habit.preferredTime != null) ...[
           Icon(CupertinoIcons.clock, size: 10, color: color),
           const SizedBox(width: 4),
@@ -351,7 +331,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
             ),
           const SizedBox(width: 12),
         ],
-        // Frequency
+
         Icon(CupertinoIcons.repeat, size: 10, color: color),
         const SizedBox(width: 4),
         Flexible(
@@ -366,7 +346,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // Tags count
+
         if (widget.habit.tags.isNotEmpty) ...[
           const SizedBox(width: 12),
           Container(
@@ -389,7 +369,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build progress bar for quantifiable habits
   Widget _buildProgressBar(
     Color habitColor,
     bool isCompleted,
@@ -453,7 +432,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build completion control section
   Widget _buildCompletionControl(
     Color habitColor,
     bool isCompleted,
@@ -474,7 +452,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     return _buildCompactCheckbox(habitColor, isCompleted, canInteract);
   }
 
-  /// Build compact checkbox for simple habits
   Widget _buildCompactCheckbox(
     Color habitColor,
     bool isCompleted,
@@ -515,7 +492,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build compact quantifiable controls with vertical layout
   Widget _buildCompactQuantifiableControls(
     Color habitColor,
     bool isCompleted,
@@ -546,7 +522,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Value display
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
@@ -570,7 +545,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
           ),
         ),
         const SizedBox(height: 4),
-        // Control buttons
+
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -595,7 +570,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build mini adjustment button
   Widget _buildMiniButton({
     required IconData icon,
     required VoidCallback? onTap,
@@ -636,7 +610,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Build unavailable indicator
   Widget _buildUnavailableIndicator() {
     return Container(
       width: 32,
@@ -654,7 +627,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     );
   }
 
-  /// Handle checkbox tap
   void _handleCheckboxTap(bool isCompleted) {
     if (widget.instance == null) return;
 
@@ -665,7 +637,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     }
   }
 
-  /// Update quantifiable habit value
   void _updateQuantifiableValue(int change) {
     if (widget.instance == null) return;
 
@@ -685,7 +656,6 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     widget.onUpdateInstance(updatedInstance);
   }
 
-  /// Helper methods for colors and states
   Color _getTextColor(bool isCompleted, bool canInteract) {
     if (!canInteract) {
       return AppColors.textSecondary.withAlpha(140);

@@ -1,11 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
-/// Confirmation dialog before deleting a task.
-///
-/// This widget provides a confirmation dialog when the user attempts to
-/// delete a task, ensuring they don't accidentally delete important tasks.
 class TaskDetailsDeleteDialog extends StatelessWidget {
-  /// The title of the task to be deleted.
   final String taskTitle;
 
   const TaskDetailsDeleteDialog({super.key, required this.taskTitle});
@@ -18,12 +13,12 @@ class TaskDetailsDeleteDialog extends StatelessWidget {
       actions: [
         CupertinoDialogAction(
           isDefaultAction: true,
-          onPressed: () => Navigator.pop(context, false), // Cancel button.
+          onPressed: () => Navigator.pop(context, false),
           child: const Text('Cancel'),
         ),
         CupertinoDialogAction(
-          isDestructiveAction: true, // Red button.
-          onPressed: () => Navigator.pop(context, true), // Confirm delete.
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(context, true),
           child: const Text('Delete'),
         ),
       ],

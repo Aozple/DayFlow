@@ -4,19 +4,16 @@ import 'package:dayflow/core/services/notifications/notification_service.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:dayflow/data/repositories/habit_repository.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
+
 final GetIt sl = GetIt.instance;
 
-/// Registers all services and repositories with GetIt.
 Future<void> setupServiceLocator() async {
-  // MARK: - Plugins
   sl.registerLazySingleton<FlutterLocalNotificationsPlugin>(
     () => FlutterLocalNotificationsPlugin(),
   );
 
-  // MARK: - Services
   sl.registerLazySingleton<NotificationService>(() => NotificationService());
 
-  // MARK: - Repositories
   sl.registerLazySingleton<TaskRepository>(() => TaskRepository());
   sl.registerLazySingleton<HabitRepository>(() => HabitRepository());
   sl.registerLazySingleton<SettingsRepository>(() => SettingsRepository());

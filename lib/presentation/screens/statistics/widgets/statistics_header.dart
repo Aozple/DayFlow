@@ -8,12 +8,7 @@ class StatisticsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface.withAlpha(200),
-        border: const Border(
-          bottom: BorderSide(color: AppColors.divider, width: 1),
-        ),
-      ),
+      decoration: BoxDecoration(color: AppColors.surface.withAlpha(200)),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

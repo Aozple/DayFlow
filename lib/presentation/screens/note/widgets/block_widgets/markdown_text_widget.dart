@@ -24,24 +24,22 @@ class MarkdownTextWidget extends StatelessWidget {
   TextSpan _buildTextSpan(String text, TextStyle baseStyle) {
     final List<InlineSpan> spans = [];
 
-    // Enhanced regex to support nested formatting and links
     final RegExp markdownRegex = RegExp(
-      r'(\*\*\*[^*]+\*\*\*)|' // Bold + Italic
-      r'(\*\*[^*]+\*\*)|' // Bold
-      r'(\*[^*]+\*)|' // Italic
-      r'(<u>[^<]+</u>)|' // Underline
-      r'(~~[^~]+~~)|' // Strikethrough
-      r'(`[^`]+`)|' // Inline code
-      r'(```math[^```]+```KATEX_INLINE_OPEN[^)]+KATEX_INLINE_CLOSE)|' // Links [text](url)
-      r'(#{1,6}\s[^\n]+)|' // Headers
-      r'(>\s[^\n]+)', // Quotes
+      r'(\*\*\*[^*]+\*\*\*)|'
+      r'(\*\*[^*]+\*\*)|'
+      r'(\*[^*]+\*)|'
+      r'(<u>[^<]+</u>)|'
+      r'(~~[^~]+~~)|'
+      r'(`[^`]+`)|'
+      r'(```math[^```]+```KATEX_INLINE_OPEN[^)]+KATEX_INLINE_CLOSE)|'
+      r'(#{1,6}\s[^\n]+)|'
+      r'(>\s[^\n]+)',
       multiLine: true,
     );
 
     int lastIndex = 0;
 
     for (final match in markdownRegex.allMatches(text)) {
-      // Add text before match
       if (match.start > lastIndex) {
         final plainText = text.substring(lastIndex, match.start);
         if (plainText.isNotEmpty) {
@@ -49,14 +47,12 @@ class MarkdownTextWidget extends StatelessWidget {
         }
       }
 
-      // Add formatted text
       final matchText = match.group(0)!;
       spans.add(_createFormattedSpan(matchText, baseStyle));
 
       lastIndex = match.end;
     }
 
-    // Add remaining text
     if (lastIndex < text.length) {
       final remainingText = text.substring(lastIndex);
       if (remainingText.isNotEmpty) {
@@ -68,7 +64,6 @@ class MarkdownTextWidget extends StatelessWidget {
   }
 
   InlineSpan _createFormattedSpan(String text, TextStyle baseStyle) {
-    // Bold + Italic
     if (text.startsWith('***') && text.endsWith('***')) {
       return TextSpan(
         text: text.substring(3, text.length - 3),
@@ -77,9 +72,7 @@ class MarkdownTextWidget extends StatelessWidget {
           fontStyle: FontStyle.italic,
         ),
       );
-    }
-    // Bold text
-    else if (text.startsWith('**') && text.endsWith('**')) {
+    } else if (text.startsWith('**') && text.endsWith('**')) {
       return TextSpan(
         text: text.substring(2, text.length - 2),
         style: baseStyle.copyWith(
@@ -87,9 +80,7 @@ class MarkdownTextWidget extends StatelessWidget {
           letterSpacing: 0.2,
         ),
       );
-    }
-    // Italic text
-    else if (text.startsWith('*') && text.endsWith('*')) {
+    } else if (text.startsWith('*') && text.endsWith('*')) {
       return TextSpan(
         text: text.substring(1, text.length - 1),
         style: baseStyle.copyWith(
@@ -97,9 +88,7 @@ class MarkdownTextWidget extends StatelessWidget {
           letterSpacing: 0.1,
         ),
       );
-    }
-    // Underline text
-    else if (text.startsWith('<u>') && text.endsWith('</u>')) {
+    } else if (text.startsWith('<u>') && text.endsWith('</u>')) {
       return TextSpan(
         text: text.substring(3, text.length - 4),
         style: baseStyle.copyWith(
@@ -108,9 +97,7 @@ class MarkdownTextWidget extends StatelessWidget {
           decorationThickness: 1.5,
         ),
       );
-    }
-    // Strikethrough text
-    else if (text.startsWith('~~') && text.endsWith('~~')) {
+    } else if (text.startsWith('~~') && text.endsWith('~~')) {
       return TextSpan(
         text: text.substring(2, text.length - 2),
         style: baseStyle.copyWith(
@@ -120,9 +107,7 @@ class MarkdownTextWidget extends StatelessWidget {
           color: baseStyle.color?.withAlpha(150),
         ),
       );
-    }
-    // Inline code
-    else if (text.startsWith('`') && text.endsWith('`')) {
+    } else if (text.startsWith('`') && text.endsWith('`')) {
       return WidgetSpan(
         alignment: PlaceholderAlignment.middle,
         child: Container(
@@ -147,9 +132,7 @@ class MarkdownTextWidget extends StatelessWidget {
           ),
         ),
       );
-    }
-    // Links [text](url)
-    else if (text.contains('](')) {
+    } else if (text.contains('](')) {
       final linkRegex = RegExp(
         r'```math([^```]+)```KATEX_INLINE_OPEN([^)]+)KATEX_INLINE_CLOSE',
       );
@@ -164,7 +147,6 @@ class MarkdownTextWidget extends StatelessWidget {
           baseline: TextBaseline.alphabetic,
           child: GestureDetector(
             onTap: () {
-              // Handle link tap
               debugPrint('Link tapped: $linkUrl');
             },
             child: MouseRegion(
@@ -185,9 +167,7 @@ class MarkdownTextWidget extends StatelessWidget {
           ),
         );
       }
-    }
-    // Headers
-    else if (text.startsWith('#')) {
+    } else if (text.startsWith('#')) {
       final headerMatch = RegExp(r'^(#{1,6})\s(.+)$').firstMatch(text);
       if (headerMatch != null) {
         final level = headerMatch.group(1)!.length;
@@ -202,9 +182,7 @@ class MarkdownTextWidget extends StatelessWidget {
           ),
         );
       }
-    }
-    // Quotes
-    else if (text.startsWith('> ')) {
+    } else if (text.startsWith('> ')) {
       return WidgetSpan(
         alignment: PlaceholderAlignment.baseline,
         baseline: TextBaseline.alphabetic,

@@ -70,7 +70,6 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
       ),
       child: Column(
         children: [
-          // Preset options
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -83,7 +82,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Custom option
+
                 _buildCustomOption(),
               ],
             ),

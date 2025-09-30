@@ -4,16 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// A Cupertino-style modal for picking the note's color.
-///
-/// This widget presents a grid of color options that the user can select from
-/// to customize the appearance of their note. It provides visual feedback
-/// for the selected color and includes a confirmation button.
 class CreateNoteColorPicker extends StatelessWidget {
-  /// The initially selected color (in hex format).
   final String initialColor;
 
-  /// Callback function when a color is selected.
   final Function(String) onColorSelected;
 
   const CreateNoteColorPicker({
@@ -24,22 +17,18 @@ class CreateNoteColorPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String selectedColorHex =
-        initialColor; // Temporarily hold the selected color in the modal.
+    String selectedColorHex = initialColor;
 
     return StatefulBuilder(
       builder: (context, setModalState) {
         return Container(
           height: 300,
           decoration: const BoxDecoration(
-            color: AppColors.surface, // Background color.
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ), // Rounded top corners.
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
-              // Drag handle for the modal.
               Container(
                 margin: const EdgeInsets.only(top: 12),
                 width: 40,
@@ -49,7 +38,7 @@ class CreateNoteColorPicker extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Header for the color picker modal.
+
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -57,14 +46,14 @@ class CreateNoteColorPicker extends StatelessWidget {
                   children: [
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      onPressed: () => Navigator.pop(context), // Cancel button.
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
                         'Cancel',
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                     const Text(
-                      'Note Color', // Title.
+                      'Note Color',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -73,14 +62,9 @@ class CreateNoteColorPicker extends StatelessWidget {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () {
-                        onColorSelected(
-                          selectedColorHex,
-                        ); // Apply selected color to main state.
-                        Navigator.pop(context); // Close modal.
-                        CustomSnackBar.success(
-                          context,
-                          'Color updated',
-                        ); // Show success message.
+                        onColorSelected(selectedColorHex);
+                        Navigator.pop(context);
+                        CustomSnackBar.success(context, 'Color updated');
                       },
                       child: Text(
                         'Done',
@@ -90,55 +74,39 @@ class CreateNoteColorPicker extends StatelessWidget {
                   ],
                 ),
               ),
-              // Grid view for displaying selectable color options.
+
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: GridView.builder(
-                    physics:
-                        const BouncingScrollPhysics(), // iOS-style scroll physics.
+                    physics: const BouncingScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4, // 4 columns of colors.
+                          crossAxisCount: 4,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
-                    itemCount:
-                        AppColors
-                            .userColors
-                            .length, // Number of available colors.
+                    itemCount: AppColors.userColors.length,
                     itemBuilder: (context, index) {
                       final color = AppColors.userColors[index];
                       final colorHex = AppColors.toHex(color);
-                      final isSelected =
-                          selectedColorHex ==
-                          colorHex; // Check if this color is selected.
+                      final isSelected = selectedColorHex == colorHex;
                       return GestureDetector(
                         onTap: () {
-                          setModalState(
-                            () => selectedColorHex = colorHex,
-                          ); // Update selected color in modal state.
-                          HapticFeedback.lightImpact(); // Provide haptic feedback.
+                          setModalState(() => selectedColorHex = colorHex);
+                          HapticFeedback.lightImpact();
                         },
                         child: AnimatedContainer(
-                          duration: const Duration(
-                            milliseconds: 200,
-                          ), // Smooth animation for selection.
+                          duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
-                            color: color, // The actual color.
-                            shape: BoxShape.circle, // Circular shape.
+                            color: color,
+                            shape: BoxShape.circle,
                             border: Border.all(
                               color:
                                   isSelected
-                                      ? Colors
-                                          .white // White border if selected.
-                                      : AppColors.divider.withAlpha(
-                                        50,
-                                      ), // Subtle border if not selected.
-                              width:
-                                  isSelected
-                                      ? 3
-                                      : 1, // Thicker border if selected.
+                                      ? Colors.white
+                                      : AppColors.divider.withAlpha(50),
+                              width: isSelected ? 3 : 1,
                             ),
                             boxShadow:
                                 isSelected
@@ -149,26 +117,23 @@ class CreateNoteColorPicker extends StatelessWidget {
                                         spreadRadius: 2,
                                       ),
                                     ]
-                                    : [], // No shadow if not selected.
+                                    : [],
                           ),
                           child:
                               isSelected
                                   ? const Icon(
-                                    CupertinoIcons
-                                        .checkmark, // Checkmark if selected.
+                                    CupertinoIcons.checkmark,
                                     color: Colors.white,
                                     size: 20,
                                   )
-                                  : null, // No child if not selected.
+                                  : null,
                         ),
                       );
                     },
                   ),
                 ),
               ),
-              SizedBox(
-                height: MediaQuery.of(context).padding.bottom,
-              ), // Space for safe area.
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
             ],
           ),
         );

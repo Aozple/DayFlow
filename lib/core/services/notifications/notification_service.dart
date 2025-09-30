@@ -31,14 +31,10 @@ class NotificationService {
   bool get isInitialized => _isInitialized;
   bool get hasPermission => _hasPermission;
 
-  /// Sets the app context for navigation handling.
   void setContext(BuildContext context) {
     _context = context;
   }
 
-  // MARK: - Initialization
-
-  /// Initializes the notification service with timezone and permissions.
   Future<bool> initialize() async {
     if (_isInitialized) return true;
 
@@ -66,7 +62,6 @@ class NotificationService {
     }
   }
 
-  /// Sets up timezone for accurate scheduling.
   Future<void> _initializeTimezone() async {
     try {
       tz.initializeTimeZones();
@@ -78,7 +73,6 @@ class NotificationService {
     }
   }
 
-  /// Requests notification permissions (Android only).
   Future<bool> _requestPermissions() async {
     if (Platform.isAndroid) {
       final status = await Permission.notification.request();
@@ -87,7 +81,6 @@ class NotificationService {
     return true;
   }
 
-  /// Initializes the notification plugin with response handlers.
   Future<void> _initializePlugin() async {
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
@@ -104,7 +97,6 @@ class NotificationService {
     );
   }
 
-  /// Creates notification channels for Android.
   Future<void> _createChannels() async {
     final androidPlugin =
         _plugin
@@ -131,9 +123,6 @@ class NotificationService {
     }
   }
 
-  // MARK: - Notification Handling
-
-  /// Handles notification tap events.
   void _handleNotificationResponse(NotificationResponse response) {
     DebugLogger.info('Notification tapped', tag: _tag, data: response.payload);
 
@@ -163,7 +152,6 @@ class NotificationService {
     }
   }
 
-  /// Navigates to the task details page.
   void _navigateToTask(String taskId) {
     if (_context == null) return;
 
@@ -171,7 +159,6 @@ class NotificationService {
     DebugLogger.info('Navigated to task', tag: _tag, data: taskId);
   }
 
-  /// Navigates to the habit details page.
   void _navigateToHabit(String habitId) {
     if (_context == null) return;
 
@@ -179,15 +166,11 @@ class NotificationService {
     DebugLogger.info('Navigated to habit', tag: _tag, data: habitId);
   }
 
-  // MARK: - Scheduling & Cancellation
-
-  /// Schedules a notification for a task.
   Future<bool> scheduleTaskNotification(TaskModel task) async {
     if (!_canSchedule()) return false;
     return await _scheduler.scheduleTaskNotification(task);
   }
 
-  /// Schedules a notification for a habit.
   Future<bool> scheduleHabitNotification(
     HabitModel habit, {
     DateTime? specificDate,
@@ -199,19 +182,16 @@ class NotificationService {
     );
   }
 
-  /// Cancels a task notification.
   Future<void> cancelTaskNotification(String taskId) async {
     if (!_isInitialized) return;
     await _scheduler.cancelNotification(taskId, NotificationTypes.task);
   }
 
-  /// Cancels a habit notification.
   Future<void> cancelHabitNotification(String habitId) async {
     if (!_isInitialized) return;
     await _scheduler.cancelNotification(habitId, NotificationTypes.habit);
   }
 
-  /// Shows an immediate notification.
   Future<bool> showNotification({
     required String title,
     required String body,
@@ -249,7 +229,6 @@ class NotificationService {
     }
   }
 
-  /// Retrieves all pending notification requests.
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     if (!_isInitialized) return [];
     try {
@@ -264,7 +243,6 @@ class NotificationService {
     }
   }
 
-  /// Cancels all scheduled notifications.
   Future<void> cancelAll() async {
     if (!_isInitialized) return;
     try {
@@ -278,7 +256,6 @@ class NotificationService {
     }
   }
 
-  /// Tests the notification functionality by showing a test notification.
   Future<bool> testNotification() async {
     if (!_canSchedule()) return false;
 
@@ -318,12 +295,8 @@ class NotificationService {
     }
   }
 
-  // MARK: - Helper Methods
-
-  /// Checks if notifications can be scheduled (initialized and has permission).
   bool _canSchedule() => _isInitialized && _hasPermission;
 
-  /// Maps an integer importance level to an Android Importance enum.
   Importance _mapImportance(int level) {
     return switch (level) {
       5 => Importance.max,

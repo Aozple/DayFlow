@@ -31,7 +31,6 @@ class SettingsLoaded extends SettingsState {
   @override
   List<Object?> get props => [settings, metadata, stats];
 
-  // Convenience getters
   String get accentColor => settings.accentColor;
   String get firstDayOfWeek => settings.firstDayOfWeek;
   int get defaultPriority => settings.defaultTaskPriority;
@@ -41,7 +40,6 @@ class SettingsLoaded extends SettingsState {
   bool get notificationSound => settings.notificationSound;
   bool get notificationVibration => settings.notificationVibration;
 
-  // Human-readable labels
   String get firstDayLabel {
     return settings.firstDayOfWeek == 'saturday' ? 'Saturday' : 'Monday';
   }
@@ -77,7 +75,6 @@ class SettingsLoaded extends SettingsState {
     return '$hours hr $mins min before';
   }
 
-  // Helper methods
   bool get isSaturdayFirst => settings.firstDayOfWeek == 'saturday';
   bool get isMondayFirst => settings.firstDayOfWeek == 'monday';
 
@@ -279,7 +276,6 @@ enum SyncStatus {
   failed,
 }
 
-// Metadata for settings
 class SettingsMetadata {
   final DateTime lastModified;
   final DateTime? lastSyncTime;

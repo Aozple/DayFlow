@@ -66,7 +66,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
 
     _isExpanded = widget.block.isExpanded;
 
-    // Setup animations
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -77,10 +76,7 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
       curve: Curves.easeInOut,
     );
 
-    _rotateAnimation = Tween<double>(
-      begin: 0,
-      end: 0.25, // 90 degrees
-    ).animate(
+    _rotateAnimation = Tween<double>(begin: 0, end: 0.25).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
@@ -162,7 +158,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Toggle header
           InkWell(
             onTap: _toggleExpanded,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
@@ -177,7 +172,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
               ),
               child: Row(
                 children: [
-                  // Rotating arrow icon
                   RotationTransition(
                     turns: _rotateAnimation,
                     child: Container(
@@ -197,11 +191,9 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
 
                   const SizedBox(width: 12),
 
-                  // Title field
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        // Prevent toggle when clicking on text field
                         widget.focusNode.requestFocus();
                         _onSelectionChanged();
                       },
@@ -237,7 +229,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
                     ),
                   ),
 
-                  // Child count indicator
                   if (widget.block.children.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(left: 8),
@@ -263,7 +254,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
             ),
           ),
 
-          // Expandable content
           SizeTransition(
             sizeFactor: _expandAnimation,
             child: Container(
@@ -277,7 +267,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
               ),
               child: Column(
                 children: [
-                  // Child blocks (simplified for now)
                   if (widget.block.children.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -300,7 +289,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
                             const SizedBox(height: 12),
                             TextButton.icon(
                               onPressed: () {
-                                // Add child block functionality
                                 _addChildBlock();
                               },
                               icon: const Icon(Icons.add, size: 16),
@@ -314,7 +302,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
                       ),
                     )
                   else
-                    // Display child blocks
                     Container(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -343,7 +330,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
     );
   }
 
-  // Build child block widget (simplified version)
   Widget _buildChildBlock(NoteBlock child) {
     if (child is TextBlock) {
       return Container(
@@ -386,7 +372,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
       );
     }
 
-    // For other block types, show a placeholder
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -401,7 +386,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
     );
   }
 
-  // Add new child block
   void _addChildBlock() {
     final newChild = TextBlock(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -413,7 +397,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
     widget.onChanged(widget.block.copyWith(children: newChildren));
   }
 
-  // Update child block
   void _updateChildBlock(String childId, NoteBlock updatedChild) {
     final newChildren =
         widget.block.children.map((child) {
@@ -423,7 +406,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
     widget.onChanged(widget.block.copyWith(children: newChildren));
   }
 
-  // Remove child block
   void _removeChildBlock(String childId) {
     final newChildren =
         widget.block.children.where((child) => child.id != childId).toList();
@@ -432,7 +414,6 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
   }
 }
 
-// Custom selection controls
 class _CustomTextSelectionControls extends MaterialTextSelectionControls {
   @override
   Widget buildToolbar(

@@ -4,15 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dayflow/presentation/widgets/draggable_modal.dart';
 
-/// Modal for picking the default task priority.
-///
-/// This widget provides a visual interface for selecting the default priority
-/// for new tasks, with color-coded options and descriptions.
 class PriorityPicker extends StatelessWidget {
-  /// The currently selected priority (1-5).
   final int currentPriority;
 
-  /// Callback function when a priority is selected.
   final Function(int) onPrioritySelected;
 
   const PriorityPicker({
@@ -23,7 +17,7 @@ class PriorityPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int selectedPriority = currentPriority; // Local state for the picker.
+    int selectedPriority = currentPriority;
 
     return DraggableModal(
       title: 'Default Priority',
@@ -31,7 +25,7 @@ class PriorityPicker extends StatelessWidget {
       minHeight: 200,
       leftAction: CupertinoButton(
         padding: EdgeInsets.zero,
-        onPressed: () => Navigator.pop(context), // Cancel button.
+        onPressed: () => Navigator.pop(context),
         child: const Text(
           'Cancel',
           style: TextStyle(color: AppColors.textSecondary),
@@ -40,11 +34,9 @@ class PriorityPicker extends StatelessWidget {
       rightAction: CupertinoButton(
         padding: EdgeInsets.zero,
         onPressed: () {
-          onPrioritySelected(
-            selectedPriority,
-          ); // Dispatch event to update default priority.
-          Navigator.pop(context); // Close modal.
-          HapticFeedback.mediumImpact(); // Provide haptic feedback.
+          onPrioritySelected(selectedPriority);
+          Navigator.pop(context);
+          HapticFeedback.mediumImpact();
         },
         child: Text(
           'Done',
@@ -66,7 +58,6 @@ class PriorityPicker extends StatelessWidget {
                 String priorityLabel = 'Normal';
                 IconData priorityIcon = CupertinoIcons.flag;
 
-                // Determine color, label, and icon based on priority level.
                 switch (priority) {
                   case 5:
                     priorityColor = AppColors.getPriorityColor(5);
@@ -98,9 +89,9 @@ class PriorityPicker extends StatelessWidget {
                 return GestureDetector(
                   onTap: () {
                     setModalState(() {
-                      selectedPriority = priority; // Update local selection.
+                      selectedPriority = priority;
                     });
-                    HapticFeedback.selectionClick(); // Provide haptic feedback.
+                    HapticFeedback.selectionClick();
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -110,9 +101,7 @@ class PriorityPicker extends StatelessWidget {
                     decoration: BoxDecoration(
                       color:
                           isSelected
-                              ? priorityColor.withAlpha(
-                                10,
-                              ) // Subtle background if selected.
+                              ? priorityColor.withAlpha(10)
                               : Colors.transparent,
                       border: const Border(
                         bottom: BorderSide(
@@ -123,7 +112,6 @@ class PriorityPicker extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        // Priority icon with colored background.
                         Container(
                           width: 36,
                           height: 36,
@@ -140,7 +128,7 @@ class PriorityPicker extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        // Priority number and label.
+
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +140,7 @@ class PriorityPicker extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   color:
                                       isSelected
-                                          ? priorityColor // Text color matches priority if selected.
+                                          ? priorityColor
                                           : AppColors.textPrimary,
                                 ),
                               ),
@@ -169,7 +157,7 @@ class PriorityPicker extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Checkmark indicator if selected.
+
                         if (isSelected)
                           Icon(
                             CupertinoIcons.checkmark_circle_fill,

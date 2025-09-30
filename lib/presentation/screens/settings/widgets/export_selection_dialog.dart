@@ -130,23 +130,19 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Quick re-export option
             if (widget.canQuickExport && widget.lastExportResult != null) ...[
               _buildQuickExportSection(),
               const SizedBox(height: 24),
             ],
 
-            // Format selection
             _buildFormatSection(),
             const SizedBox(height: 24),
 
-            // Content selection (JSON only)
             if (_selectedFormat == ExportFormat.json) ...[
               _buildContentSection(),
               const SizedBox(height: 24),
             ],
 
-            // Format info
             _buildFormatInfoSection(),
             const SizedBox(height: 72),
           ],

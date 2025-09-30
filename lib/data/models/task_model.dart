@@ -25,11 +25,10 @@ class TaskModel {
   final int? notificationMinutesBefore;
   final List<NoteBlock>? blocks;
 
-  // Validation constants
   static const int minPriority = 1;
   static const int maxPriority = 5;
   static const int minEstimatedMinutes = 1;
-  static const int maxEstimatedMinutes = 1440; // 24 hours
+  static const int maxEstimatedMinutes = 1440;
   static const int maxTitleLength = 200;
   static const int maxDescriptionLength = 1000;
   static const int maxTags = 10;
@@ -58,7 +57,6 @@ class TaskModel {
   }) : id = id ?? const Uuid().v4(),
        createdAt = createdAt ?? DateTime.now(),
        tags = tags ?? [] {
-    // Validate on creation
     _validateModel();
   }
 
@@ -140,7 +138,6 @@ class TaskModel {
 
   factory TaskModel.fromMap(Map<String, dynamic> map) {
     try {
-      // Safe parsing with defaults
       List<NoteBlock>? blocks;
       if (map['blocks'] != null) {
         try {
@@ -149,7 +146,6 @@ class TaskModel {
                 if (blockJson is Map<String, dynamic>) {
                   return blockFromJson(blockJson);
                 } else {
-                  // Handle legacy or corrupted data
                   DebugLogger.warning(
                     'Invalid block data',
                     tag: _tag,
@@ -167,12 +163,11 @@ class TaskModel {
         }
       }
 
-      // Safe tag parsing
       List<String> tags = [];
       try {
         if (map['tags'] != null) {
           tags = List<String>.from(map['tags']);
-          // Validate and clean tags
+
           tags =
               tags
                   .where((tag) => tag.isNotEmpty && tag.length <= maxTagLength)
@@ -187,7 +182,6 @@ class TaskModel {
         );
       }
 
-      // Safe date parsing
       DateTime? parseDate(String? dateStr) {
         if (dateStr == null || dateStr.isEmpty) return null;
         try {
@@ -236,11 +230,11 @@ class TaskModel {
       return task;
     } catch (e) {
       DebugLogger.error('Failed to deserialize task', tag: _tag, error: e);
-      // Return a minimal valid task instead of crashing
+
       return TaskModel(
         id: map['id'] as String? ?? const Uuid().v4(),
         title: 'Error loading task',
-        isDeleted: true, // Mark as deleted to prevent display issues
+        isDeleted: true,
       );
     }
   }
@@ -323,7 +317,6 @@ class TaskModel {
     );
   }
 
-  // Legacy support
   List<NoteBlock> getLegacyBlocks() {
     if (markdownContent != null && markdownContent!.isNotEmpty) {
       return [TextBlock(id: const Uuid().v4(), text: markdownContent!)];
@@ -331,7 +324,6 @@ class TaskModel {
     return [];
   }
 
-  // Computed properties
   bool get isOverdue {
     if (dueDate == null || isCompleted) return false;
     return dueDate!.isBefore(DateTime.now());
@@ -375,7 +367,6 @@ class TaskModel {
     }
   }
 
-  // Validation methods
   bool get isValid {
     try {
       _validateModel();

@@ -39,23 +39,18 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
   final FocusNode _editorFocusNode = FocusNode();
   final Map<String, FocusNode> _blockFocusNodes = {};
 
-  // Animation controllers for smooth transitions
   late AnimationController _toolbarAnimationController;
 
-  // Keyboard height tracking
   double _keyboardHeight = 0;
 
-  // Formatting toolbar state management
   bool _showFormattingToolbar = false;
   TextSelection _currentSelection = const TextSelection.collapsed(offset: -1);
   String _currentBlockId = '';
   Offset _toolbarPosition = Offset.zero;
   String _selectedText = '';
 
-  // Block action menu state
   int _hoveredInsertIndex = -1;
 
-  // FAB menu state
   bool _isFabOpen = false;
   OverlayEntry? _fabOverlayEntry;
   final GlobalKey _fabKey = GlobalKey();
@@ -69,26 +64,21 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     _blocks = List.from(widget.initialBlocks);
     _scrollController = ScrollController();
 
-    // Add keyboard observer
     WidgetsBinding.instance.addObserver(this);
 
-    // Setup animations for UI elements
     _toolbarAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
 
-    // Create focus nodes for each block
     for (final block in _blocks) {
       _blockFocusNodes[block.id] = FocusNode();
     }
 
-    // Start with empty text block if no content
     if (_blocks.isEmpty) {
       _addTextBlock();
     }
 
-    // Setup FAB animations
     _fabRotationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -99,7 +89,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       duration: const Duration(milliseconds: 300),
     );
 
-    // Create smooth expansion curve
     _fabExpandAnimation = CurvedAnimation(
       parent: _fabExpandController,
       curve: Curves.easeOutBack,
@@ -122,7 +111,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     super.dispose();
   }
 
-  // Handle keyboard height changes
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
@@ -143,17 +131,13 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       decoration: const BoxDecoration(color: AppColors.background),
       child: Column(
         children: [
-          // Main editing area
           Expanded(
             child: Stack(
               children: [
-                // List of blocks with insertion points
                 _buildBlocksList(),
 
-                // Formatting toolbar that appears on text selection
                 if (_showFormattingToolbar) _buildAnimatedToolbar(),
 
-                // Floating add button
                 _buildFloatingAddButton(),
               ],
             ),
@@ -163,7 +147,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build the main list of blocks with insertion points
   Widget _buildBlocksList() {
     return Theme(
       data: Theme.of(context).copyWith(
@@ -173,7 +156,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       child: ReorderableListView.builder(
         scrollController: _scrollController,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-        itemCount: _blocks.length + 1, // +1 for final add button
+        itemCount: _blocks.length + 1,
         proxyDecorator: (child, index, animation) {
           return AnimatedBuilder(
             animation: animation,
@@ -189,7 +172,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           );
         },
         onReorder: (oldIndex, newIndex) {
-          // Don't allow reordering the add button
           if (oldIndex >= _blocks.length || newIndex >= _blocks.length) return;
 
           setState(() {
@@ -203,7 +185,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           HapticFeedback.mediumImpact();
         },
         itemBuilder: (context, index) {
-          // Last item is the add button
           if (index == _blocks.length) {
             return _buildAddBlockButton();
           }
@@ -211,10 +192,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           return Column(
             key: ValueKey('column_${_blocks[index].id}'),
             children: [
-              // Insertion point above each block (except first)
               if (index > 0) _buildInsertionPoint(index),
 
-              // The actual block
               _buildBlockItem(_blocks[index], index),
             ],
           );
@@ -223,7 +202,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build insertion point between blocks
   Widget _buildInsertionPoint(int insertIndex) {
     final isHovered = _hoveredInsertIndex == insertIndex;
 
@@ -272,14 +250,12 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build individual block with simplified UI
   Widget _buildBlockItem(NoteBlock block, int index) {
     return Container(
       key: ValueKey(block.id),
       margin: const EdgeInsets.only(bottom: 4),
       child: Stack(
         children: [
-          // Main block content
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -304,7 +280,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                 ),
                 child: Column(
                   children: [
-                    // Simple drag handle - only visible when focused
                     if (_isBlockFocused(block.id))
                       Container(
                         height: 24,
@@ -351,7 +326,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                         ),
                       ),
 
-                    // Block content
                     _buildBlockContent(block, index),
                   ],
                 ),
@@ -359,7 +333,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
             ),
           ),
 
-          // Action menu button - top right corner
           Positioned(
             top: 8,
             right: 8,
@@ -370,7 +343,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build simple action button for each block
   Widget _buildBlockActionButton(NoteBlock block, int index) {
     return Material(
       color: Colors.transparent,
@@ -405,7 +377,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build add block button at the bottom
   Widget _buildAddBlockButton() {
     return Container(
       key: const ValueKey('add_block_button'),
@@ -450,7 +421,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Floating add button
   Widget _buildFloatingAddButton() {
     return Positioned(
       right: 20,
@@ -464,7 +434,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         child: AnimatedBuilder(
           animation: _fabRotationController,
           builder: (context, child) {
-            // Rotate icon when menu opens
             return Transform.rotate(
               angle: _fabRotationController.value * 0.125 * 2 * math.pi,
               child: Icon(
@@ -479,18 +448,15 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Toggle FAB menu state
   void _toggleFabMenu() {
     setState(() {
       _isFabOpen = !_isFabOpen;
       if (_isFabOpen) {
-        // Opening sequence
         _fabRotationController.forward();
         _insertFabOverlay();
         _fabExpandController.forward();
         HapticFeedback.lightImpact();
       } else {
-        // Closing sequence
         _fabRotationController.reverse();
         _fabExpandController.reverse().then((_) {
           _removeFabOverlay();
@@ -499,9 +465,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     });
   }
 
-  // Create overlay with menu options
   void _insertFabOverlay() {
-    // Get FAB position for proper placement
     final RenderBox? renderBox =
         _fabKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
@@ -515,7 +479,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
             color: Colors.transparent,
             child: Stack(
               children: [
-                // Background overlay to capture taps
                 Positioned.fill(
                   child: GestureDetector(
                     onTapDown: (_) {
@@ -526,7 +489,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                   ),
                 ),
 
-                // Text button with animation
                 AnimatedBuilder(
                   animation: _fabExpandAnimation,
                   builder: (context, child) {
@@ -539,7 +501,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -567,7 +528,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                 ),
                               ),
 
-                            // Text button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -593,7 +553,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                   },
                 ),
 
-                // Todo button with animation
                 AnimatedBuilder(
                   animation: _fabExpandAnimation,
                   builder: (context, child) {
@@ -606,7 +565,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -634,7 +592,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                 ),
                               ),
 
-                            // Todo button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -660,7 +617,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                   },
                 ),
 
-                // Heading button with animation
                 AnimatedBuilder(
                   animation: _fabExpandAnimation,
                   builder: (context, child) {
@@ -673,7 +629,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -701,7 +656,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                 ),
                               ),
 
-                            // Heading button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -727,7 +681,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                   },
                 ),
 
-                // List button with animation
                 AnimatedBuilder(
                   animation: _fabExpandAnimation,
                   builder: (context, child) {
@@ -740,7 +693,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -768,7 +720,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                 ),
                               ),
 
-                            // List button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -794,7 +745,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                   },
                 ),
 
-                // More button with animation
                 AnimatedBuilder(
                   animation: _fabExpandAnimation,
                   builder: (context, child) {
@@ -807,7 +757,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // Label with delayed appearance
                             if (animValue > 0.5)
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
@@ -835,7 +784,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                 ),
                               ),
 
-                            // More button
                             SizedBox(
                               width: 56,
                               height: 56,
@@ -865,17 +813,14 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
           ),
     );
 
-    // Add overlay to widget tree
     Overlay.of(context).insert(_fabOverlayEntry!);
   }
 
-  // Remove overlay
   void _removeFabOverlay() {
     _fabOverlayEntry?.remove();
     _fabOverlayEntry = null;
   }
 
-  // Show block action menu with simplified options
   void _showBlockActionMenu(NoteBlock block, int index) {
     showCupertinoModalPopup(
       context: context,
@@ -935,7 +880,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Show insert block menu at specific position
   void _showInsertBlockMenu(int insertIndex) {
     showCupertinoModalPopup(
       context: context,
@@ -950,7 +894,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Show block type selector modal
   void _showBlockTypeSelector() {
     showCupertinoModalPopup(
       context: context,
@@ -965,7 +908,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build block type selector for insertion
   Widget _buildBlockTypeSelector(int insertIndex) {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -993,7 +935,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                     ),
                     child: Row(
                       children: [
-                        // Icon with colored background
                         Container(
                           width: 40,
                           height: 40,
@@ -1010,7 +951,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
 
                         const SizedBox(width: 16),
 
-                        // Text content
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1037,7 +977,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                           ),
                         ),
 
-                        // Arrow icon
                         const Icon(
                           Icons.arrow_forward_ios,
                           size: 16,
@@ -1053,7 +992,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Animated formatting toolbar
   Widget _buildAnimatedToolbar() {
     return Positioned(
       left: _toolbarPosition.dx.clamp(
@@ -1080,12 +1018,10 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Check if a block is currently focused
   bool _isBlockFocused(String blockId) {
     return _blockFocusNodes[blockId]?.hasFocus ?? false;
   }
 
-  // Get color for different block types
   Color _getBlockTypeColor(BlockType type) {
     switch (type) {
       case BlockType.text:
@@ -1111,7 +1047,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Get icon for different block types
   IconData _getBlockTypeIcon(BlockType type) {
     switch (type) {
       case BlockType.text:
@@ -1137,7 +1072,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Build the content for each block type
   Widget _buildBlockContent(NoteBlock block, int index) {
     switch (block.type) {
       case BlockType.text:
@@ -1242,10 +1176,8 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Handle text changes
   void _handleTextChange(String text, String blockId) {}
 
-  // Show convert block type menu
   void _showConvertMenu(int index) {
     showCupertinoModalPopup(
       context: context,
@@ -1260,7 +1192,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Build convert menu content
   Widget _buildConvertMenuContent(int index) {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1288,7 +1219,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                     ),
                     child: Row(
                       children: [
-                        // Icon with colored background
                         Container(
                           width: 40,
                           height: 40,
@@ -1305,7 +1235,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
 
                         const SizedBox(width: 16),
 
-                        // Text content
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1332,7 +1261,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                           ),
                         ),
 
-                        // Arrow icon
                         const Icon(
                           Icons.arrow_forward_ios,
                           size: 16,
@@ -1348,7 +1276,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     );
   }
 
-  // Get description for block types
   String _getBlockTypeDescription(BlockType type) {
     switch (type) {
       case BlockType.text:
@@ -1374,7 +1301,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Get human readable name for block types
   String _getBlockTypeName(BlockType type) {
     switch (type) {
       case BlockType.text:
@@ -1400,7 +1326,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Insert block at specific position
   void _insertBlockAt(int index, BlockType type) {
     final newBlock = EditorUtils.createBlockOfType(type);
     setState(() {
@@ -1414,14 +1339,12 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     });
   }
 
-  // Convert a block from one type to another
   void _convertBlock(int index, BlockType newType) {
     if (index < 0 || index >= _blocks.length) return;
 
     final currentBlock = _blocks[index];
     NoteBlock newBlock;
 
-    // Extract text content from current block safely
     String textContent = '';
 
     if (currentBlock is TextBlock) {
@@ -1443,7 +1366,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       textContent = currentBlock.code;
     }
 
-    // Create new block of desired type with preserved content
     switch (newType) {
       case BlockType.text:
         newBlock = TextBlock(id: currentBlock.id, text: textContent);
@@ -1503,7 +1425,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     HapticFeedback.lightImpact();
   }
 
-  // Handle text selection changes
   void _handleTextSelectionChanged(TextSelection selection, String blockId) {
     setState(() {
       _currentSelection = selection;
@@ -1530,7 +1451,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     });
   }
 
-  // Hide formatting toolbar with animation
   void _hideFormattingToolbar() {
     _toolbarAnimationController.reverse().then((_) {
       if (mounted) {
@@ -1542,29 +1462,24 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     });
   }
 
-  // Calculate position for formatting toolbar
   Offset _calculateToolbarPosition(TextSelection selection) {
     final screenWidth = MediaQuery.of(context).size.width;
     return Offset((screenWidth * 0.5) - 125, 150);
   }
 
-  // Add new block of specified type at the end
   void _addBlockOfType(BlockType type) {
     _insertBlockAt(_blocks.length, type);
   }
 
-  // Add default text block
   void _addTextBlock() {
     _addBlockOfType(BlockType.text);
   }
 
-  // Update a block at specific index
   void _updateBlock(int index, NoteBlock newBlock) {
     setState(() => _blocks[index] = newBlock);
     _notifyBlocksChanged();
   }
 
-  // Duplicate a block
   void _duplicateBlock(int index) {
     final block = _blocks[index];
     final duplicatedBlock = EditorUtils.duplicateBlock(block);
@@ -1577,7 +1492,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     HapticFeedback.lightImpact();
   }
 
-  // Delete a block
   void _deleteBlock(int index) {
     setState(() {
       _blockFocusNodes[_blocks[index].id]?.dispose();
@@ -1592,7 +1506,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     HapticFeedback.lightImpact();
   }
 
-  // Apply text formatting
   void _applyFormatting(String format) {
     if (_currentSelection.isCollapsed && format != 'delete') return;
 
@@ -1621,7 +1534,6 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
     }
   }
 
-  // Notify parent about blocks changes
   void _notifyBlocksChanged() {
     widget.onBlocksChanged(_blocks);
   }

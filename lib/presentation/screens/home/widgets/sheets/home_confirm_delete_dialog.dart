@@ -1,7 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Confirmation dialog for deleting tasks or notes
 class HomeConfirmDeleteDialog extends StatelessWidget {
   final String title;
   final String content;
@@ -39,12 +38,11 @@ class HomeConfirmDeleteDialog extends StatelessWidget {
         ],
       ),
       actions: [
-        // Cancel button
         CupertinoDialogAction(
           child: const Text('Cancel'),
           onPressed: () => Navigator.pop(context),
         ),
-        // Delete button (red)
+
         CupertinoDialogAction(
           isDestructiveAction: true,
           onPressed: () {

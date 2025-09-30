@@ -1,14 +1,8 @@
 import 'package:flutter/cupertino.dart';
 
-/// Options for the "About" section.
-///
-/// This widget provides a modal with options for sending feedback,
-/// with different methods for contacting the support team.
 class AboutSection extends StatelessWidget {
-  /// Callback function for sending email.
   final VoidCallback onSendEmail;
 
-  /// Callback function for copying feedback template.
   final VoidCallback onCopyTemplate;
 
   const AboutSection({
@@ -25,8 +19,8 @@ class AboutSection extends StatelessWidget {
       actions: [
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close action sheet.
-            onSendEmail(); // Open email client.
+            Navigator.pop(context);
+            onSendEmail();
           },
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -39,8 +33,8 @@ class AboutSection extends StatelessWidget {
         ),
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close action sheet.
-            onCopyTemplate(); // Copy feedback template to clipboard.
+            Navigator.pop(context);
+            onCopyTemplate();
           },
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -54,7 +48,7 @@ class AboutSection extends StatelessWidget {
       ],
       cancelButton: CupertinoActionSheetAction(
         isDefaultAction: true,
-        onPressed: () => Navigator.pop(context), // Cancel button.
+        onPressed: () => Navigator.pop(context),
         child: const Text('Cancel'),
       ),
     );

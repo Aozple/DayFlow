@@ -4,11 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-/// Compact note display widget optimized for timeline view.
-///
-/// Provides an efficient and visually appealing interface for displaying
-/// notes with content preview, tags, and quick access to options while
-/// maintaining minimal space usage.
 class HomeNoteBlock extends StatelessWidget {
   final TaskModel note;
   final Function(TaskModel) onOptions;
@@ -17,7 +12,6 @@ class HomeNoteBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine color scheme
     final isDefaultColor = note.color == '#2C2C2E' || note.color == '#8E8E93';
     final noteColor =
         isDefaultColor
@@ -31,16 +25,15 @@ class HomeNoteBlock extends StatelessWidget {
         decoration: _buildContainerDecoration(noteColor, isDefaultColor),
         child: Row(
           children: [
-            // Color indicator
             _buildColorIndicator(noteColor, isDefaultColor),
             const SizedBox(width: 12),
-            // Main content
+
             Expanded(child: _buildMainContent(noteColor, isDefaultColor)),
             const SizedBox(width: 8),
-            // Options button as vertical dots
+
             _buildVerticalOptionsButton(noteColor, isDefaultColor),
             const SizedBox(width: 8),
-            // Note type indicator
+
             _buildNoteTypeIndicator(noteColor, isDefaultColor),
           ],
         ),
@@ -48,7 +41,6 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build container decoration with gradient background
   BoxDecoration _buildContainerDecoration(
     Color noteColor,
     bool isDefaultColor,
@@ -86,7 +78,6 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build vertical options button with three dots
   Widget _buildVerticalOptionsButton(Color noteColor, bool isDefaultColor) {
     return GestureDetector(
       onTap: () {
@@ -126,7 +117,6 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build single dot for options button
   Widget _buildDot(Color color) {
     return Container(
       width: 4,
@@ -135,7 +125,6 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build color indicator with gradient effect
   Widget _buildColorIndicator(Color noteColor, bool isDefaultColor) {
     return Container(
       width: 4,
@@ -157,20 +146,18 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build main content area with title, preview, and metadata
   Widget _buildMainContent(Color noteColor, bool isDefaultColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Title row with note icon
         _buildTitleRow(noteColor, isDefaultColor),
-        // Content preview
+
         if (_shouldShowPreview()) ...[
           const SizedBox(height: 6),
           _buildContentPreview(noteColor, isDefaultColor),
         ],
-        // Tags
+
         if (note.tags.isNotEmpty) ...[
           const SizedBox(height: 6),
           _buildTagsRow(noteColor),
@@ -179,11 +166,9 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build title row with note type badge
   Widget _buildTitleRow(Color noteColor, bool isDefaultColor) {
     return Row(
       children: [
-        // Note type badge
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -200,7 +185,7 @@ class HomeNoteBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        // Title
+
         Expanded(
           child: Text(
             note.title,
@@ -218,7 +203,6 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build content preview with cleaned markdown
   Widget _buildContentPreview(Color noteColor, bool isDefaultColor) {
     return Container(
       padding: const EdgeInsets.all(8),
@@ -249,11 +233,9 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build tags row with count and preview
   Widget _buildTagsRow(Color noteColor) {
     return Row(
       children: [
-        // Tags count badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
           decoration: BoxDecoration(
@@ -270,7 +252,7 @@ class HomeNoteBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        // First tag preview
+
         Flexible(
           child: Text(
             note.tags.first,
@@ -283,7 +265,7 @@ class HomeNoteBlock extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        // Additional tags count
+
         if (note.tags.length > 1) ...[
           Text(
             ' +${note.tags.length - 1}',
@@ -298,7 +280,6 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Build note type indicator with icon
   Widget _buildNoteTypeIndicator(Color noteColor, bool isDefaultColor) {
     return Container(
       width: 32,
@@ -329,24 +310,22 @@ class HomeNoteBlock extends StatelessWidget {
     );
   }
 
-  /// Check if content preview should be displayed
   bool _shouldShowPreview() {
     return note.markdownContent?.isNotEmpty == true;
   }
 
-  /// Clean markdown content for preview display
   String _cleanMarkdown(String markdown) {
     return markdown
-        .replaceAll(RegExp(r'#{1,6}\s'), '') // Remove headers
-        .replaceAll(RegExp(r'\*{1,3}'), '') // Remove bold/italic
-        .replaceAll(RegExp(r'`{1,3}'), '') // Remove code formatting
+        .replaceAll(RegExp(r'#{1,6}\s'), '')
+        .replaceAll(RegExp(r'\*{1,3}'), '')
+        .replaceAll(RegExp(r'`{1,3}'), '')
         .replaceAll(
           RegExp(r'```math|```|KATEX_INLINE_OPEN|KATEX_INLINE_CLOSE'),
           '',
-        ) // Remove math/code blocks
-        .replaceAll(RegExp(r'[-*+]\s'), '') // Remove list markers
-        .replaceAll(RegExp(r'>\s'), '') // Remove blockquotes
-        .replaceAll('\n', ' ') // Replace newlines with spaces
+        )
+        .replaceAll(RegExp(r'[-*+]\s'), '')
+        .replaceAll(RegExp(r'>\s'), '')
+        .replaceAll('\n', ' ')
         .trim();
   }
 }

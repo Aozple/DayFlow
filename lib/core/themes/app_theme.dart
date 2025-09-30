@@ -5,9 +5,6 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  // MARK: - Dark Theme
-
-  /// Defines the dark theme for the application.
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
@@ -62,8 +59,5 @@ class AppTheme {
     );
   }
 
-  // MARK: - Light Theme
-
-  /// Defines the light theme for the application (same as dark theme).
   static ThemeData get lightTheme => darkTheme;
 }

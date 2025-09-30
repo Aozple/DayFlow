@@ -45,7 +45,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     super.dispose();
   }
 
-  // Check if clipboard has content for paste functionality
   void _checkClipboard() async {
     try {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
@@ -54,24 +53,19 @@ class _FormattingToolbarState extends State<FormattingToolbar>
           _hasClipboardContent = data?.text?.isNotEmpty == true;
         });
       }
-    } catch (e) {
-      // Clipboard access might fail, that's okay
-    }
+    } catch (e) {}
   }
 
-  // Check if selected text is a URL
   bool _isURL(String text) {
     return text.startsWith('http://') ||
         text.startsWith('https://') ||
         text.startsWith('www.');
   }
 
-  // Check if selected text is all caps
   bool _isAllCaps(String text) {
     return text == text.toUpperCase() && text != text.toLowerCase();
   }
 
-  // Check if selected text has formatting markers
   bool _hasFormatting(String text) {
     return text.contains('**') ||
         text.contains('*') ||
@@ -109,11 +103,9 @@ class _FormattingToolbarState extends State<FormattingToolbar>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Main actions row
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Clipboard actions section
                     _buildActionGroup([
                       _buildActionButton(
                         Icons.content_copy_rounded,
@@ -138,7 +130,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
 
                     _buildDivider(),
 
-                    // Formatting actions section
                     _buildActionGroup([
                       _buildActionButton(
                         Icons.format_bold_rounded,
@@ -174,7 +165,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
                   ],
                 ),
 
-                // Smart contextual actions (second row if needed)
                 if (isURL ||
                     isAllCaps ||
                     hasFormatting ||
@@ -185,7 +175,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // URL specific actions
                         if (isURL) ...[
                           _buildSmartAction(
                             Icons.link_rounded,
@@ -195,7 +184,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
                           ),
                         ],
 
-                        // Text case actions
                         if (selectedText.length > 1 && !isURL) ...[
                           if (isAllCaps)
                             _buildSmartAction(
@@ -220,7 +208,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
                           ),
                         ],
 
-                        // Clear formatting if has formatting
                         if (hasFormatting) ...[
                           _buildSmartAction(
                             Icons.format_clear_rounded,
@@ -230,7 +217,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
                           ),
                         ],
 
-                        // Select all for long text
                         if (selectedText.length > 10) ...[
                           _buildSmartAction(
                             Icons.select_all_rounded,
@@ -250,7 +236,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     );
   }
 
-  // Build action group with spacing
   Widget _buildActionGroup(List<Widget> actions) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -266,7 +251,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     );
   }
 
-  // Build main action button
   Widget _buildActionButton(
     IconData icon,
     String tooltip,
@@ -299,7 +283,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     );
   }
 
-  // Build smart contextual action (smaller)
   Widget _buildSmartAction(
     IconData icon,
     String tooltip,
@@ -330,7 +313,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     );
   }
 
-  // Build divider
   Widget _buildDivider() {
     return Container(
       width: 1,
@@ -350,7 +332,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     );
   }
 
-  // Enhanced action handlers
   void _handleCopy() {
     if (widget.selectedText != null && widget.selectedText!.isNotEmpty) {
       Clipboard.setData(ClipboardData(text: widget.selectedText!));
@@ -381,7 +362,6 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     widget.onFormat(format);
     HapticFeedback.lightImpact();
 
-    // Don't hide immediately for some actions
     if (['uppercase', 'lowercase', 'titlecase', 'clear'].contains(format)) {
       _showFeedback('Applied');
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -392,10 +372,7 @@ class _FormattingToolbarState extends State<FormattingToolbar>
     }
   }
 
-  // Show brief feedback
   void _showFeedback(String message) {
-    // You can implement a brief toast or snackbar here if needed
-    // For now, just haptic feedback
     HapticFeedback.lightImpact();
   }
 }

@@ -1,4 +1,3 @@
-// MARK: - ExportResult
 class ExportResult {
   final bool success;
   final String? data;
@@ -16,7 +15,6 @@ class ExportResult {
     this.error,
   });
 
-  /// Returns the formatted size of the exported data.
   String get formattedSize {
     if (data == null) return 'Unknown';
     final bytes = data!.length;
@@ -28,7 +26,6 @@ class ExportResult {
   }
 }
 
-// MARK: - ImportResult
 class ImportResult {
   final bool success;
   final int? importedCount;
@@ -46,7 +43,6 @@ class ImportResult {
     this.type,
   });
 
-  /// Returns the success rate of the import.
   double get successRate {
     final total = (importedCount ?? 0) + (failedCount ?? 0);
     if (total == 0) return 0;
@@ -54,7 +50,6 @@ class ImportResult {
   }
 }
 
-// MARK: - ImportValidation
 class ImportValidation {
   final bool isValid;
   final String? format;
@@ -77,7 +72,6 @@ class ImportValidation {
   });
 }
 
-// MARK: - Enums
 enum ImportType { tasks, habits, all }
 
 enum ExportFormat { json, csv, markdown }

@@ -7,9 +7,6 @@ class SettingsImporter extends BaseImporter {
 
   SettingsImporter({required this.repository}) : super(tag: 'SettingsImporter');
 
-  // MARK: - Import Methods
-
-  /// Imports settings from a JSON map.
   Future<bool> importFromJson(Map<String, dynamic> settingsData) async {
     try {
       logInfo('Importing settings');

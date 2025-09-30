@@ -35,7 +35,6 @@ class TaskLoaded extends TaskState {
     required this.lastUpdated,
   });
 
-  // Main constructor for runtime use
   TaskLoaded.create({
     required this.tasks,
     this.selectedDate,
@@ -51,7 +50,7 @@ class TaskLoaded extends TaskState {
     selectedDate,
     activeFilter,
     statistics,
-    lastUpdated.millisecondsSinceEpoch ~/ 1000, // Round to seconds
+    lastUpdated.millisecondsSinceEpoch ~/ 1000,
   ];
 
   @override
@@ -76,19 +75,17 @@ class TaskLoaded extends TaskState {
         ((lastUpdated.difference(other.lastUpdated).abs().inSeconds) < 2);
   }
 
-  // Generate efficient signature for tasks content
   String _generateTasksSignature() {
     if (tasks.isEmpty) return 'empty';
 
     final buffer = StringBuffer();
     for (final task in tasks) {
       buffer.write('${task.id}_${task.isCompleted}_${task.title.hashCode}');
-      if (buffer.length > 200) break; // Limit signature length
+      if (buffer.length > 200) break;
     }
     return buffer.toString();
   }
 
-  // Efficient task content comparison
   bool _tasksContentEqual(List<TaskModel> otherTasks) {
     if (tasks.length != otherTasks.length) return false;
 
@@ -99,14 +96,12 @@ class TaskLoaded extends TaskState {
           a.isCompleted != b.isCompleted ||
           a.title != b.title ||
           a.createdAt != b.createdAt) {
-        // Use createdAt instead of lastUpdated
         return false;
       }
     }
     return true;
   }
 
-  // Computed properties - optimized but not cached (for immutability)
   List<TaskModel> get activeTasks =>
       _filterTasks(predicate: (task) => !task.isCompleted && !task.isDeleted);
 
@@ -132,7 +127,6 @@ class TaskLoaded extends TaskState {
             task.dueDate!.isAfter(DateTime.now()),
   );
 
-  // Optimized filter helper
   List<TaskModel> _filterTasks({required bool Function(TaskModel) predicate}) {
     final result = <TaskModel>[];
     for (final task in tasks) {
@@ -143,7 +137,6 @@ class TaskLoaded extends TaskState {
     return result;
   }
 
-  // Computed maps and counts
   Map<String, List<TaskModel>> get tasksByTag {
     final Map<String, List<TaskModel>> grouped = {};
     final active = activeTasks;
@@ -166,7 +159,6 @@ class TaskLoaded extends TaskState {
     return grouped;
   }
 
-  // Efficient counts
   int get activeCount =>
       _countTasks((task) => !task.isCompleted && !task.isDeleted);
   int get completedCount =>
@@ -177,7 +169,6 @@ class TaskLoaded extends TaskState {
   int get todayCount =>
       _countTasks((task) => !task.isDeleted && task.isDueToday);
 
-  // Optimized count helper
   int _countTasks(bool Function(TaskModel) predicate) {
     int count = 0;
     for (final task in tasks) {
@@ -192,7 +183,6 @@ class TaskLoaded extends TaskState {
     return completedCount / total;
   }
 
-  // Helper methods
   List<TaskModel> getTasksForDate(DateTime date) {
     return _filterTasks(
       predicate: (task) {
@@ -209,10 +199,8 @@ class TaskLoaded extends TaskState {
     final f = filter ?? activeFilter;
     if (f == null) return tasks.where((task) => !task.isDeleted).toList();
 
-    // Start with non-deleted tasks
     var filtered = tasks.where((task) => !task.isDeleted).toList();
 
-    // Apply filters efficiently
     if (f.priorities?.isNotEmpty == true) {
       filtered =
           filtered.where((t) => f.priorities!.contains(t.priority)).toList();
@@ -268,7 +256,6 @@ class TaskLoaded extends TaskState {
               .toList();
     }
 
-    // Apply sorting
     return _sortTasks(filtered, f.sortBy, f.sortAscending);
   }
 
@@ -385,7 +372,6 @@ class TaskStatistics {
     final activeTasks = tasks.where((t) => !t.isDeleted).toList();
     final completed = activeTasks.where((t) => t.isCompleted).toList();
 
-    // Calculate average completion time
     double avgCompletionTime = 0;
     if (completed.isNotEmpty) {
       final totalMinutes = completed.fold(0, (sum, task) {
@@ -397,13 +383,11 @@ class TaskStatistics {
       avgCompletionTime = totalMinutes / completed.length;
     }
 
-    // Group by priority
     final byPriority = <int, int>{};
     for (final task in activeTasks.where((t) => !t.isCompleted)) {
       byPriority[task.priority] = (byPriority[task.priority] ?? 0) + 1;
     }
 
-    // Group by tag
     final byTag = <String, int>{};
     for (final task in activeTasks) {
       for (final tag in task.tags) {

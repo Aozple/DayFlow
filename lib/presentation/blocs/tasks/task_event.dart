@@ -7,7 +7,7 @@ abstract class TaskEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Load events
+
 class LoadTasks extends TaskEvent {
   final bool forceRefresh;
 
@@ -42,7 +42,7 @@ class LoadTasksByDateRange extends TaskEvent {
   List<Object?> get props => [startDate, endDate, includeCompleted];
 }
 
-// CRUD events
+
 class AddTask extends TaskEvent {
   final TaskModel task;
   final bool showNotification;
@@ -112,7 +112,7 @@ class DeleteMultipleTasks extends TaskEvent {
   List<Object?> get props => [taskIds, permanent];
 }
 
-// Filter and search events
+
 class FilterTasks extends TaskEvent {
   final TaskFilter filter;
 
@@ -132,7 +132,7 @@ class SearchTasks extends TaskEvent {
   List<Object?> get props => [query, options];
 }
 
-// Utility events
+
 class ClearError extends TaskEvent {
   const ClearError();
 }
@@ -147,7 +147,7 @@ class RestoreTasks extends TaskEvent {
 }
 
 class ExportTasks extends TaskEvent {
-  final String format; // 'json', 'csv', 'markdown'
+  final String format; 
   final TaskFilter? filter;
 
   const ExportTasks({this.format = 'json', this.filter});
@@ -159,7 +159,7 @@ class ExportTasks extends TaskEvent {
 class ImportTasks extends TaskEvent {
   final String data;
   final String format;
-  final bool merge; // Merge with existing or replace
+  final bool merge; 
 
   const ImportTasks({
     required this.data,
@@ -171,7 +171,7 @@ class ImportTasks extends TaskEvent {
   List<Object?> get props => [data, format, merge];
 }
 
-// Filter model
+
 class TaskFilter extends Equatable {
   final List<int>? priorities;
   final List<String>? tags;

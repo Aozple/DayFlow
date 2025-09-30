@@ -8,7 +8,6 @@ class TaskRepository extends BaseRepository<TaskModel>
     implements ITaskRepository {
   static const String _tag = 'TaskRepo';
 
-  // Cache for statistics
   Map<String, dynamic>? _cachedStats;
   DateTime? _lastStatsUpdate;
   static const Duration _statsCacheDuration = Duration(minutes: 2);
@@ -27,7 +26,6 @@ class TaskRepository extends BaseRepository<TaskModel>
   @override
   bool isDeleted(TaskModel item) => item.isDeleted;
 
-  // Task-specific methods
   @override
   Future<String> addTask(TaskModel task) async {
     return await add(task);
@@ -54,15 +52,11 @@ class TaskRepository extends BaseRepository<TaskModel>
         data: date.toString().split(' ')[0],
       );
 
-      // Use cache-aware getAllTasks
       final tasks =
           useCache
-              ? getAll(
-                operationType: 'filter',
-              ) // Use longer cache for filtering
+              ? getAll(operationType: 'filter')
               : getAll(forceRefresh: true);
 
-      // Pre-calculate date components for faster comparison
       final targetYear = date.year;
       final targetMonth = date.month;
       final targetDay = date.day;
@@ -103,7 +97,6 @@ class TaskRepository extends BaseRepository<TaskModel>
     try {
       final task = getTask(id);
       if (task != null) {
-        // Soft delete
         final deletedTask = task.copyWith(isDeleted: true);
         await updateTask(deletedTask);
         DebugLogger.success('Task soft deleted', tag: tag);
@@ -150,7 +143,6 @@ class TaskRepository extends BaseRepository<TaskModel>
   @override
   Map<String, dynamic> getStatistics({bool forceRefresh = false}) {
     try {
-      // Return cached stats if valid
       if (!forceRefresh &&
           _cachedStats != null &&
           _lastStatsUpdate != null &&
@@ -169,7 +161,6 @@ class TaskRepository extends BaseRepository<TaskModel>
       int overdue = 0;
       int todayTasks = 0;
 
-      // Single pass through tasks for all calculations
       for (final task in allTasks) {
         if (task.isDeleted) continue;
 

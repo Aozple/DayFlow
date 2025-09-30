@@ -15,7 +15,6 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
   final NotificationService _notificationService =
       GetIt.I<NotificationService>();
 
-  // Last processed values to avoid duplicate processing
   String? _lastSearchQuery;
 
   HabitBloc() : super(tag: 'HabitBloc', initialState: const HabitInitial()) {
@@ -36,13 +35,11 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
   }
 
   Future<HabitLoaded> _refreshHabitsState({DateTime? selectedDate}) async {
-    // Use operation-aware repository calls
     final habits = _repository.getAll(operationType: 'read');
 
     final currentState = state is HabitLoaded ? state as HabitLoaded : null;
     final date = selectedDate ?? currentState?.selectedDate ?? DateTime.now();
 
-    // Use cached instances when possible
     final instances = _repository.getInstancesByDate(date);
     final statistics = HabitStatistics.fromHabits(habits, instances);
 
@@ -128,8 +125,6 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
       },
       emit: emit,
       successState: (result) {
-        // Details loaded successfully, but keep current state
-        // Just log the success - this event is for loading data, not changing state
         logSuccess(
           'Details loaded',
           data: '${(result['instances'] as List).length} instances',
@@ -380,7 +375,6 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     Emitter<HabitState> emit,
   ) async {
     try {
-      // Skip if same query (simple debouncing)
       if (_lastSearchQuery == event.query) {
         logVerbose('Skipping duplicate search query');
         return;
@@ -397,7 +391,6 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
                 ? HabitFilter(searchQuery: event.query.trim())
                 : null;
 
-        // Only emit if filter actually changed
         if (_filterActuallyChanged(currentState.activeFilter, searchFilter)) {
           emit(currentState.copyWith(activeFilter: searchFilter));
           logSuccess('Search filter applied');
@@ -410,7 +403,6 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     }
   }
 
-  // Helper to check if filter actually changed
   bool _filterActuallyChanged(HabitFilter? oldFilter, HabitFilter? newFilter) {
     if (oldFilter == null && newFilter == null) return false;
     if (oldFilter == null || newFilter == null) return true;

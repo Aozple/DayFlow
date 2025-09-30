@@ -7,7 +7,6 @@ abstract class SettingsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Load and save events
 class LoadSettings extends SettingsEvent {
   final bool forceRefresh;
 
@@ -17,7 +16,6 @@ class LoadSettings extends SettingsEvent {
   List<Object?> get props => [forceRefresh];
 }
 
-// Theme and appearance
 class UpdateAccentColor extends SettingsEvent {
   final String colorHex;
   final bool saveImmediately;
@@ -28,7 +26,6 @@ class UpdateAccentColor extends SettingsEvent {
   List<Object?> get props => [colorHex, saveImmediately];
 }
 
-// Calendar settings
 class UpdateFirstDayOfWeek extends SettingsEvent {
   final String day;
 
@@ -38,7 +35,6 @@ class UpdateFirstDayOfWeek extends SettingsEvent {
   List<Object?> get props => [day];
 }
 
-// Task defaults
 class UpdateDefaultPriority extends SettingsEvent {
   final int priority;
 
@@ -48,7 +44,6 @@ class UpdateDefaultPriority extends SettingsEvent {
   List<Object?> get props => [priority];
 }
 
-// Notification settings
 class UpdateNotificationEnabled extends SettingsEvent {
   final bool enabled;
   final NotificationType? type;
@@ -88,7 +83,6 @@ class UpdateNotificationVibration extends SettingsEvent {
   List<Object?> get props => [enabled, pattern];
 }
 
-// Batch updates
 class BatchUpdateSettings extends SettingsEvent {
   final Map<String, dynamic> updates;
   final bool validateBeforeSave;
@@ -99,7 +93,6 @@ class BatchUpdateSettings extends SettingsEvent {
   List<Object?> get props => [updates, validateBeforeSave];
 }
 
-// Reset and export/import
 class ResetSettings extends SettingsEvent {
   final SettingsResetScope scope;
 
@@ -109,7 +102,6 @@ class ResetSettings extends SettingsEvent {
   List<Object?> get props => [scope];
 }
 
-// Enums for settings events
 enum NotificationType { all, tasks, reminders, updates }
 
 enum VibrationType { none, light, medium, heavy, pattern }

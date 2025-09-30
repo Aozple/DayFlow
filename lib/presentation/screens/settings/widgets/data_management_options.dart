@@ -1,20 +1,12 @@
 import 'package:flutter/cupertino.dart';
 
-/// Options for data management (export/import).
-///
-/// This widget provides a modal with options for exporting and importing data,
-/// with different methods for each operation.
 class DataManagementOptions extends StatelessWidget {
-  /// Callback function for exporting as JSON.
   final VoidCallback onExportJSON;
 
-  /// Callback function for exporting as CSV.
   final VoidCallback onExportCSV;
 
-  /// Callback function for importing from files.
   final VoidCallback onImportFromFiles;
 
-  /// Callback function for importing from clipboard.
   final VoidCallback onImportFromClipboard;
 
   const DataManagementOptions({
@@ -33,8 +25,8 @@ class DataManagementOptions extends StatelessWidget {
       actions: [
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close action sheet.
-            onExportJSON(); // Export as JSON.
+            Navigator.pop(context); 
+            onExportJSON(); 
           },
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -47,8 +39,8 @@ class DataManagementOptions extends StatelessWidget {
         ),
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close action sheet.
-            onExportCSV(); // Export as CSV.
+            Navigator.pop(context); 
+            onExportCSV(); 
           },
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -61,8 +53,8 @@ class DataManagementOptions extends StatelessWidget {
         ),
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close action sheet.
-            onImportFromFiles(); // Import from files.
+            Navigator.pop(context); 
+            onImportFromFiles(); 
           },
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -75,8 +67,8 @@ class DataManagementOptions extends StatelessWidget {
         ),
         CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close action sheet.
-            onImportFromClipboard(); // Import from clipboard.
+            Navigator.pop(context); 
+            onImportFromClipboard(); 
           },
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -90,7 +82,7 @@ class DataManagementOptions extends StatelessWidget {
       ],
       cancelButton: CupertinoActionSheetAction(
         isDefaultAction: true,
-        onPressed: () => Navigator.pop(context), // Cancel button.
+        onPressed: () => Navigator.pop(context), 
         child: const Text('Cancel'),
       ),
     );

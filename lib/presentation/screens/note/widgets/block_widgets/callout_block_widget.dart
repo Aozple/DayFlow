@@ -52,7 +52,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
   bool _isDisposed = false;
   TextDirection _textDirection = TextDirection.ltr;
 
-  // Enhanced callout types
   final Map<String, _CalloutType> _calloutTypes = {
     'info': const _CalloutType(
       'info',
@@ -142,7 +141,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
     });
   }
 
-  // Smart RTL/LTR detection
   void _updateTextDirection(String text) {
     if (text.isEmpty) {
       setState(() => _textDirection = TextDirection.ltr);
@@ -164,11 +162,11 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
   }
 
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms-B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
   @override
@@ -207,19 +205,16 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon
           Container(
             width: 48,
             padding: const EdgeInsets.only(top: 14),
             child: Icon(calloutType.icon, size: 24, color: calloutType.color),
           ),
 
-          // Content and type selector
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Type selector with better design
                 Padding(
                   padding: const EdgeInsets.only(top: 14, right: 12),
                   child: InkWell(
@@ -262,7 +257,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
                   ),
                 ),
 
-                // Content area with RTL support
                 Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: 14, right: 12),
                   child: TextField(
@@ -301,7 +295,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
     );
   }
 
-  // Show type selector with modern design
   void _showTypeSelector(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -316,7 +309,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
                 Container(
                   width: 40,
                   height: 4,
@@ -342,7 +334,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
 
                 const Divider(height: 1),
 
-                // Type options
                 ..._calloutTypes.entries.map((entry) {
                   final type = entry.value;
                   final isSelected = widget.block.calloutType == entry.key;
@@ -432,7 +423,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
     );
   }
 
-  // Get bilingual placeholder text
   String _getPlaceholderText() {
     switch (widget.block.calloutType) {
       case 'info':
@@ -453,7 +443,6 @@ class _CalloutFieldWidgetState extends State<_CalloutFieldWidget> {
   }
 }
 
-// Callout type model
 class _CalloutType {
   final String key;
   final String name;

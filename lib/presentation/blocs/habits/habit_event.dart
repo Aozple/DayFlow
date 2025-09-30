@@ -7,7 +7,6 @@ abstract class HabitEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Load events
 class LoadHabits extends HabitEvent {
   final bool forceRefresh;
 
@@ -35,7 +34,6 @@ class LoadHabitDetails extends HabitEvent {
   List<Object?> get props => [habitId];
 }
 
-// CRUD events for Habits
 class AddHabit extends HabitEvent {
   final HabitModel habit;
 
@@ -64,7 +62,6 @@ class DeleteHabit extends HabitEvent {
   List<Object?> get props => [habitId];
 }
 
-// Instance events
 class CompleteHabitInstance extends HabitEvent {
   final String instanceId;
   final int? value;
@@ -93,7 +90,6 @@ class UpdateHabitInstance extends HabitEvent {
   List<Object?> get props => [instance];
 }
 
-// Bulk operations
 class GenerateHabitInstances extends HabitEvent {
   final String habitId;
   final int daysAhead;
@@ -108,7 +104,6 @@ class CompleteAllTodayInstances extends HabitEvent {
   const CompleteAllTodayInstances();
 }
 
-// Filter and search
 class FilterHabits extends HabitEvent {
   final HabitFilter filter;
 
@@ -127,7 +122,6 @@ class SearchHabits extends HabitEvent {
   List<Object?> get props => [query];
 }
 
-// Utility events
 class ClearError extends HabitEvent {
   const ClearError();
 }
@@ -141,7 +135,6 @@ class ExportHabits extends HabitEvent {
   List<Object?> get props => [format];
 }
 
-// Filter model
 class HabitFilter extends Equatable {
   final List<HabitFrequency>? frequencies;
   final List<HabitType>? types;

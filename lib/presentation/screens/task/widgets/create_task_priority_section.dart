@@ -3,16 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Compact task priority selection widget with minimal space usage.
-///
-/// Provides a streamlined interface for selecting task priority levels
-/// with visual feedback and color coding while maintaining minimal
-/// vertical space consumption.
 class CreateTaskPrioritySection extends StatelessWidget {
-  /// The currently selected priority (1-5).
   final int priority;
 
-  /// Callback function when the priority changes.
   final Function(int) onPriorityChanged;
 
   const CreateTaskPrioritySection({
@@ -53,7 +46,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Build main row with icon and title
   Widget _buildMainRow() {
     return Row(
       children: [
@@ -66,7 +58,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Build priority icon with current selection styling
   Widget _buildPriorityIcon() {
     final color = AppColors.getPriorityColor(priority);
 
@@ -96,7 +87,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Build header information section
   Widget _buildHeaderInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,7 +114,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Build current priority badge
   Widget _buildCurrentPriorityBadge() {
     final color = AppColors.getPriorityColor(priority);
 
@@ -147,7 +136,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Build priority selection buttons
   Widget _buildPriorityButtons() {
     return Row(
       children: List.generate(5, (index) {
@@ -162,7 +150,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Build individual priority selection button
   Widget _buildPriorityButton(int priorityValue) {
     final isSelected = priority == priorityValue;
     final color = AppColors.getPriorityColor(priorityValue);
@@ -235,7 +222,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     );
   }
 
-  /// Get label for current priority level
   String _getPriorityLabel() {
     switch (priority) {
       case 1:
@@ -253,7 +239,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     }
   }
 
-  /// Get short label for priority buttons
   String _getShortPriorityLabel(int priorityValue) {
     switch (priorityValue) {
       case 1:
@@ -271,7 +256,6 @@ class CreateTaskPrioritySection extends StatelessWidget {
     }
   }
 
-  /// Get description for current priority level
   String _getPriorityDescription() {
     switch (priority) {
       case 1:

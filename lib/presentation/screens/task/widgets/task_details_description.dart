@@ -1,12 +1,7 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Section displaying the task's description.
-///
-/// This widget displays the task description in a formatted container,
-/// with appropriate styling and readability.
 class TaskDetailsDescription extends StatelessWidget {
-  /// The description text to display.
   final String description;
 
   const TaskDetailsDescription({super.key, required this.description});
@@ -14,10 +9,10 @@ class TaskDetailsDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity, // Full width.
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface, // Background color.
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -26,7 +21,7 @@ class TaskDetailsDescription extends StatelessWidget {
           const Row(
             children: [
               Icon(
-                CupertinoIcons.doc_text, // Document icon.
+                CupertinoIcons.doc_text,
                 size: 18,
                 color: AppColors.textSecondary,
               ),
@@ -43,11 +38,11 @@ class TaskDetailsDescription extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            description, // Display the description text.
+            description,
             style: const TextStyle(
               fontSize: 15,
               color: AppColors.textPrimary,
-              height: 1.5, // Line height for readability.
+              height: 1.5,
               letterSpacing: 0.1,
             ),
           ),

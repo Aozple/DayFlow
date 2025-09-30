@@ -8,9 +8,6 @@ class SettingsExporter extends BaseExporter {
 
   SettingsExporter({required this.repository}) : super(tag: 'SettingsExporter');
 
-  // MARK: - Export Methods
-
-  /// Exports settings to a JSON map.
   Map<String, dynamic> exportToJsonMap() {
     try {
       final settings = repository.getSettings();
@@ -24,7 +21,6 @@ class SettingsExporter extends BaseExporter {
     }
   }
 
-  /// Exports settings to a readable text format.
   Future<ExportResult> exportToText() async {
     try {
       logInfo('Starting settings text export');
@@ -46,9 +42,7 @@ class SettingsExporter extends BaseExporter {
       text.writeln('');
 
       text.writeln('Tasks:');
-      text.writeln(
-        '  Default Priority: ${settings.priorityLabel}',
-      );
+      text.writeln('  Default Priority: ${settings.priorityLabel}');
       text.writeln('');
 
       text.writeln('Notifications:');

@@ -2,7 +2,6 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Options menu for habit actions
 class HomeHabitOptionsSheet extends StatelessWidget {
   final HabitModel habit;
   final VoidCallback onEdit;
@@ -53,7 +52,6 @@ class HomeHabitOptionsSheet extends StatelessWidget {
         ],
       ),
       actions: [
-        // Edit option
         CupertinoActionSheetAction(
           onPressed: onEdit,
           child: const Row(
@@ -70,7 +68,6 @@ class HomeHabitOptionsSheet extends StatelessWidget {
           ),
         ),
 
-        // View Statistics option
         CupertinoActionSheetAction(
           onPressed: onViewStats,
           child: const Row(
@@ -87,7 +84,6 @@ class HomeHabitOptionsSheet extends StatelessWidget {
           ),
         ),
 
-        // Pause/Resume option
         CupertinoActionSheetAction(
           onPressed: onPause,
           child: Row(
@@ -106,7 +102,6 @@ class HomeHabitOptionsSheet extends StatelessWidget {
           ),
         ),
 
-        // Delete option
         CupertinoActionSheetAction(
           isDestructiveAction: true,
           onPressed: onDelete,

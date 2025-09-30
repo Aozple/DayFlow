@@ -1,13 +1,11 @@
 class NotificationChannels {
   NotificationChannels._();
 
-  // MARK: - Channel IDs
   static const String taskHigh = 'dayflow_task_high';
   static const String taskDefault = 'dayflow_task_default';
   static const String habitReminder = 'dayflow_habit_reminder';
   static const String general = 'dayflow_general';
 
-  // MARK: - Channel Configurations
   static const Map<String, ChannelConfig> configs = {
     taskHigh: ChannelConfig(
       name: 'Urgent Tasks',
@@ -47,7 +45,6 @@ class ChannelConfig {
 class NotificationPayloadKeys {
   NotificationPayloadKeys._();
 
-  // MARK: - Payload Keys
   static const String id = 'id';
   static const String type = 'type';
   static const String title = 'title';
@@ -58,7 +55,6 @@ class NotificationPayloadKeys {
 class NotificationTypes {
   NotificationTypes._();
 
-  // MARK: - Notification Types
   static const String task = 'task';
   static const String habit = 'habit';
   static const String general = 'general';

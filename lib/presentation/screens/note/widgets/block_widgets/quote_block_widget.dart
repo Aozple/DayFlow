@@ -64,10 +64,8 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     _controller.addListener(_onTextChanged);
     _controller.addListener(_onSelectionChanged);
 
-    // Listen to focus changes for editing state
     widget.focusNode.addListener(_onFocusChange);
 
-    // Set initial text direction
     _updateTextDirection(widget.block.text);
   }
 
@@ -92,7 +90,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     }
   }
 
-  // Detect text direction based on first character
   void _updateTextDirection(String text) {
     if (text.isEmpty) {
       setState(() => _textDirection = TextDirection.ltr);
@@ -109,7 +106,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     final isRTL = _isRTLCharacter(firstChar);
     final newDirection = isRTL ? TextDirection.rtl : TextDirection.ltr;
 
-    // Only update if direction actually changed to prevent unnecessary rebuilds
     if (_textDirection != newDirection) {
       setState(() {
         _textDirection = newDirection;
@@ -117,7 +113,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     }
   }
 
-  // Strip markdown and formatting for direction detection
   String _stripMarkdown(String text) {
     return text
         .replaceAll(RegExp(r'\*{1,3}'), '')
@@ -126,16 +121,14 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
         .replaceAll(RegExp(r'<[^>]+>'), '');
   }
 
-  // Check if character belongs to RTL script (Arabic/Persian/Hebrew)
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms A
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
-  // Handle focus state changes
   void _onFocusChange() {
     if (!_isDisposed && mounted) {
       setState(() {
@@ -144,11 +137,9 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     }
   }
 
-  // Handle text content changes
   void _onTextChanged() {
     if (_isDisposed) return;
 
-    // Update direction without interrupting typing
     _updateTextDirection(_controller.text);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -159,7 +150,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     });
   }
 
-  // Handle text selection changes
   void _onSelectionChanged() {
     if (_isDisposed || !mounted) return;
 
@@ -170,7 +160,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     });
   }
 
-  // Get placeholder text based on current direction
   String _getPlaceholderText() {
     if (_textDirection == TextDirection.rtl) {
       return 'نقل قول اضافه کنید...';
@@ -178,7 +167,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
     return 'Add a quote...';
   }
 
-  // Get author placeholder text based on current direction
   String _getAuthorPlaceholder() {
     if (_textDirection == TextDirection.rtl) {
       return 'نویسنده (اختیاری)';
@@ -193,13 +181,11 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status indicators bar - shown when editing or has content
           if (_isEditing || _controller.text.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
-                  // Quote type indicator
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
@@ -237,7 +223,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
 
                   const Spacer(),
 
-                  // Text direction indicator
                   if (_controller.text.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(4),
@@ -261,13 +246,11 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
               ),
             ),
 
-          // Main quote content area with fixed structure
           Directionality(
             textDirection: _textDirection,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Quote bar - automatically appears on correct side
                 Container(
                   width: 3,
                   height: 24,
@@ -280,12 +263,10 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
 
                 const SizedBox(width: 8),
 
-                // Text content area
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Main quote text field
                       TextField(
                         controller: _controller,
                         focusNode: widget.focusNode,
@@ -318,13 +299,11 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
                         onTap: _onSelectionChanged,
                       ),
 
-                      // Optional author field - only shown when quote has content
                       if (_controller.text.isNotEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
                           child: Row(
                             children: [
-                              // Icon - always on the correct side based on direction
                               const Icon(
                                 Icons.person_outline,
                                 size: 14,
@@ -332,7 +311,6 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
                               ),
                               const SizedBox(width: 6),
 
-                              // Text field
                               Expanded(
                                 child: TextField(
                                   controller: _authorController,
@@ -360,9 +338,7 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
                                     color: AppColors.textSecondary,
                                     letterSpacing: 0.1,
                                   ),
-                                  onChanged: (author) {
-                                    // TODO: Store author in block metadata if needed
-                                  },
+                                  onChanged: (author) {},
                                 ),
                               ),
                             ],

@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-// MARK: - LogLevel Enum
 enum LogLevel { verbose, debug, info, warning, error, success }
 
-// MARK: - DebugLogger
 class DebugLogger {
   static const bool _enableLogging = kDebugMode;
   static const LogLevel _minLevel = LogLevel.debug;
@@ -18,19 +16,16 @@ class DebugLogger {
   };
 
   static final Map<LogLevel, String> _levelColors = {
-    LogLevel.verbose: '\x1B[90m', // Gray
-    LogLevel.debug: '\x1B[36m', // Cyan
-    LogLevel.info: '\x1B[34m', // Blue
-    LogLevel.warning: '\x1B[33m', // Yellow
-    LogLevel.error: '\x1B[31m', // Red
-    LogLevel.success: '\x1B[32m', // Green
+    LogLevel.verbose: '\x1B[90m',
+    LogLevel.debug: '\x1B[36m',
+    LogLevel.info: '\x1B[34m',
+    LogLevel.warning: '\x1B[33m',
+    LogLevel.error: '\x1B[31m',
+    LogLevel.success: '\x1B[32m',
   };
 
   static const String _resetColor = '\x1B[0m';
 
-  // MARK: - Logging Methods
-
-  /// Logs a message with a specified level, tag, and optional data.
   static void log(
     String message, {
     LogLevel level = LogLevel.info,
@@ -54,27 +49,22 @@ class DebugLogger {
     }
   }
 
-  /// Logs a verbose message.
   static void verbose(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.verbose, tag: tag, data: data);
   }
 
-  /// Logs a debug message.
   static void debug(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.debug, tag: tag, data: data);
   }
 
-  /// Logs an informational message.
   static void info(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.info, tag: tag, data: data);
   }
 
-  /// Logs a warning message.
   static void warning(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.warning, tag: tag, data: data);
   }
 
-  /// Logs an error message with optional error object and stack trace.
   static void error(
     String message, {
     String? tag,
@@ -89,14 +79,10 @@ class DebugLogger {
     }
   }
 
-  /// Logs a success message.
   static void success(String message, {String? tag, dynamic data}) {
     log(message, level: LogLevel.success, tag: tag, data: data);
   }
 
-  // MARK: - Utility Methods
-
-  /// Times the execution of an asynchronous operation and logs its duration.
   static Future<T> timeOperation<T>(
     String operationName,
     Future<T> Function() operation,

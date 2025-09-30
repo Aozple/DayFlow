@@ -2,7 +2,6 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Action sheet for task operations
 class HomeTaskOptionsSheet extends StatelessWidget {
   final TaskModel task;
   final VoidCallback onToggleComplete;
@@ -32,11 +31,9 @@ class HomeTaskOptionsSheet extends StatelessWidget {
       ),
       message: Column(
         children: [
-          // Status and priority indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Status badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -57,7 +54,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Priority badge
+
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -78,7 +75,6 @@ class HomeTaskOptionsSheet extends StatelessWidget {
         ],
       ),
       actions: [
-        // Toggle completion status
         CupertinoActionSheetAction(
           onPressed: onToggleComplete,
           child: Row(
@@ -102,7 +98,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
             ],
           ),
         ),
-        // Edit task
+
         CupertinoActionSheetAction(
           onPressed: onEdit,
           child: const Row(
@@ -114,7 +110,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
             ],
           ),
         ),
-        // View task details
+
         CupertinoActionSheetAction(
           onPressed: onViewDetails,
           child: const Row(
@@ -126,7 +122,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
             ],
           ),
         ),
-        // Duplicate task
+
         CupertinoActionSheetAction(
           onPressed: onDuplicate,
           child: const Row(
@@ -138,7 +134,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
             ],
           ),
         ),
-        // Delete task (red)
+
         CupertinoActionSheetAction(
           isDestructiveAction: true,
           onPressed: onDelete,
@@ -152,7 +148,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
           ),
         ),
       ],
-      // Cancel button
+
       cancelButton: CupertinoActionSheetAction(
         isDefaultAction: true,
         onPressed: () => Navigator.pop(context),
@@ -161,10 +157,9 @@ class HomeTaskOptionsSheet extends StatelessWidget {
     );
   }
 
-  /// Get color based on task priority
   Color _getPriorityColor(int priority) {
-    if (priority >= 4) return AppColors.error; // High priority
-    if (priority == 3) return AppColors.warning; // Medium priority
-    return AppColors.textSecondary; // Low priority
+    if (priority >= 4) return AppColors.error;
+    if (priority == 3) return AppColors.warning;
+    return AppColors.textSecondary;
   }
 }

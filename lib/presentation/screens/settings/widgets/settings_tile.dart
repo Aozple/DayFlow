@@ -1,27 +1,17 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// A reusable widget to build a tappable list tile for settings.
-///
-/// This widget provides a consistent tile layout for settings options,
-/// with support for destructive actions (shown in red).
 class SettingsTile extends StatelessWidget {
-  /// The title of the setting.
   final String title;
 
-  /// The subtitle describing the setting.
   final String subtitle;
 
-  /// The widget to display on the trailing side of the tile.
   final Widget trailing;
 
-  /// Callback function when the tile is tapped.
   final VoidCallback onTap;
 
-  /// The icon to display on the leading side of the tile.
   final IconData icon;
 
-  /// Whether this is a destructive action (affects styling).
   final bool isDestructive;
 
   const SettingsTile({
@@ -38,54 +28,39 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: AppColors.divider, width: 0.5),
-        ), // Top border.
+        border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
       ),
       child: ListTile(
         leading: Icon(
           icon,
           size: 20,
-          color:
-              isDestructive
-                  ? AppColors.error
-                  : AppColors.textSecondary, // Red if destructive.
+          color: isDestructive ? AppColors.error : AppColors.textSecondary,
         ),
         title: Text(
           title,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color:
-                isDestructive
-                    ? AppColors.error
-                    : AppColors.textPrimary, // Red if destructive.
+            color: isDestructive ? AppColors.error : AppColors.textPrimary,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
-        trailing: trailing, // Custom trailing widget.
-        onTap: onTap, // Action on tap.
+        trailing: trailing,
+        onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }
 }
 
-/// A reusable widget to build an info list tile (read-only).
-///
-/// This widget provides a consistent tile layout for displaying information
-/// that cannot be changed by the user.
 class SettingsInfoTile extends StatelessWidget {
-  /// The title of the information.
   final String title;
 
-  /// The value of the information.
   final String value;
 
-  /// The icon to display on the leading side of the tile.
   final IconData icon;
 
   const SettingsInfoTile({
@@ -102,11 +77,7 @@ class SettingsInfoTile extends StatelessWidget {
         border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          size: 20,
-          color: AppColors.textSecondary,
-        ), // Leading icon.
+        leading: Icon(icon, size: 20, color: AppColors.textSecondary),
         title: Text(
           title,
           style: const TextStyle(
@@ -116,7 +87,7 @@ class SettingsInfoTile extends StatelessWidget {
           ),
         ),
         trailing: Text(
-          value, // The info value.
+          value,
           style: const TextStyle(
             fontSize: 14,
             color: AppColors.textSecondary,

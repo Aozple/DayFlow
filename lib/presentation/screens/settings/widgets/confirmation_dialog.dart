@@ -1,29 +1,18 @@
 import 'package:flutter/cupertino.dart';
 
-/// A customizable confirmation dialog for potentially destructive actions.
-///
-/// This widget provides a consistent dialog layout for confirming actions
-/// that may have significant consequences, such as deleting data.
 class ConfirmationDialog extends StatelessWidget {
-  /// The title of the dialog.
   final String title;
 
-  /// The icon to display in the dialog header.
   final IconData icon;
 
-  /// The color of the icon.
   final Color iconColor;
 
-  /// The content of the dialog.
   final Widget content;
 
-  /// Callback function when the confirm button is pressed.
   final VoidCallback onConfirm;
 
-  /// The text for the confirm button.
   final String confirmText;
 
-  /// Whether this is a destructive action (affects styling).
   final bool isDestructive;
 
   const ConfirmationDialog({
@@ -51,10 +40,10 @@ class ConfirmationDialog extends StatelessWidget {
       actions: [
         CupertinoDialogAction(
           child: const Text('Cancel'),
-          onPressed: () => Navigator.pop(context), // Cancel action.
+          onPressed: () => Navigator.pop(context),
         ),
         CupertinoDialogAction(
-          isDestructiveAction: isDestructive, // Red button if destructive.
+          isDestructiveAction: isDestructive,
           onPressed: onConfirm,
           child: Text(confirmText),
         ),

@@ -1,7 +1,6 @@
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 
-/// Base class for all search results
 abstract class SearchResult {
   String get id;
   String get title;
@@ -11,10 +10,8 @@ abstract class SearchResult {
   DateTime get createdAt;
 }
 
-/// Types of searchable content
 enum SearchResultType { task, note, habit }
 
-/// Task search result implementation
 class TaskSearchResult extends SearchResult {
   final TaskModel task;
 
@@ -39,14 +36,12 @@ class TaskSearchResult extends SearchResult {
   @override
   DateTime get createdAt => task.createdAt;
 
-  // Task-specific properties
   bool get isCompleted => task.isCompleted;
   int get priority => task.priority;
   DateTime? get dueDate => task.dueDate;
   String get color => task.color;
 }
 
-/// Habit search result implementation
 class HabitSearchResult extends SearchResult {
   final HabitModel habit;
 
@@ -70,7 +65,6 @@ class HabitSearchResult extends SearchResult {
   @override
   DateTime get createdAt => habit.createdAt;
 
-  // Habit-specific properties
   bool get isActive => habit.isActive;
   String get frequencyLabel => habit.frequencyLabel;
   int get currentStreak => habit.currentStreak;

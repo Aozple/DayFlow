@@ -15,7 +15,6 @@ abstract class BaseBlockWidget extends StatelessWidget {
     required this.onTextChange,
   });
 
-  // Abstract method that each block type must implement
   Widget buildContent(BuildContext context);
 
   @override
@@ -27,7 +26,6 @@ abstract class BaseBlockWidget extends StatelessWidget {
     );
   }
 
-  // Clean text field decoration
   InputDecoration getTextFieldDecoration({
     String? hintText,
     Widget? prefixIcon,
@@ -43,13 +41,13 @@ abstract class BaseBlockWidget extends StatelessWidget {
         fontWeight: FontWeight.w400,
       ),
       prefixIcon: prefixIcon,
-      prefixIconConstraints: prefixIcon != null
-          ? const BoxConstraints(minWidth: 28, minHeight: 20)
-          : null,
+      prefixIconConstraints:
+          prefixIcon != null
+              ? const BoxConstraints(minWidth: 28, minHeight: 20)
+              : null,
     );
   }
 
-  // Clean text styles
   TextStyle getTextStyle({
     double fontSize = 16,
     FontWeight fontWeight = FontWeight.normal,
@@ -64,7 +62,6 @@ abstract class BaseBlockWidget extends StatelessWidget {
     );
   }
 
-  // Heading styles
   TextStyle getHeadingStyle({required int level}) {
     switch (level) {
       case 1:
@@ -94,7 +91,6 @@ abstract class BaseBlockWidget extends StatelessWidget {
     }
   }
 
-  // Code style
   TextStyle getCodeStyle() {
     return const TextStyle(
       fontFamily: 'monospace',
@@ -104,39 +100,31 @@ abstract class BaseBlockWidget extends StatelessWidget {
     );
   }
 
-  // Handle selection
   void handleSelectionChange(TextEditingController controller) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       onSelectionChanged(controller.selection);
     });
   }
 
-  // Handle text change
   void handleTextChange(String text) {
     onTextChange(text, blockId);
   }
 
-  // Minimal block padding
   EdgeInsets getBlockPadding() {
     return EdgeInsets.zero;
   }
 
-  // Simple list bullet
   Widget buildListBullet(String text) {
     return Container(
       width: 20,
       margin: const EdgeInsets.only(right: 4),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          color: AppColors.textSecondary,
-        ),
+        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
       ),
     );
   }
 
-  // Simple checkbox for todo
   Widget buildCheckbox({
     required bool checked,
     required VoidCallback onChanged,
@@ -148,29 +136,22 @@ abstract class BaseBlockWidget extends StatelessWidget {
         height: 20,
         margin: const EdgeInsets.only(right: 4),
         decoration: BoxDecoration(
-          color: checked 
-              ? AppColors.accent 
-              : AppColors.surface,
+          color: checked ? AppColors.accent : AppColors.surface,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: checked 
-                ? AppColors.accent 
-                : AppColors.divider.withAlpha(100),
+            color:
+                checked ? AppColors.accent : AppColors.divider.withAlpha(100),
             width: 1.5,
           ),
         ),
-        child: checked
-            ? const Icon(
-                Icons.check,
-                size: 14,
-                color: Colors.white,
-              )
-            : null,
+        child:
+            checked
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : null,
       ),
     );
   }
 
-  // Subtle backgrounds for special blocks
   Color getBlockBackgroundColor(String type) {
     switch (type) {
       case 'quote':
@@ -184,7 +165,6 @@ abstract class BaseBlockWidget extends StatelessWidget {
     }
   }
 
-  // Simple left accent for quotes
   Widget buildQuoteAccent() {
     return Container(
       width: 3,

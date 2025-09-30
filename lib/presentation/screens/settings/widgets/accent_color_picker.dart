@@ -3,12 +3,9 @@ import 'package:dayflow/presentation/widgets/color_picker_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Simplified accent color picker using the universal ColorPickerModal
 class AccentColorPicker extends StatelessWidget {
-  /// The currently selected color (in hex format)
   final String currentColor;
 
-  /// Callback function when a color is selected
   final Function(String) onColorSelected;
 
   const AccentColorPicker({
@@ -17,7 +14,6 @@ class AccentColorPicker extends StatelessWidget {
     required this.onColorSelected,
   });
 
-  /// Show accent color picker modal
   static Future<void> show({
     required BuildContext context,
     required String currentColor,
@@ -37,7 +33,6 @@ class AccentColorPicker extends StatelessWidget {
     }
   }
 
-  /// Build accent color preview showing how it affects the app
   static Widget _buildAccentPreview(String colorHex) {
     final accentColor = AppColors.fromHex(colorHex);
 
@@ -51,7 +46,6 @@ class AccentColorPicker extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Compact header
           Row(
             children: [
               Container(
@@ -98,11 +92,9 @@ class AccentColorPicker extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Compact preview elements in single row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Compact button
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -122,7 +114,6 @@ class AccentColorPicker extends StatelessWidget {
                 ),
               ),
 
-              // Icon with background
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -140,7 +131,6 @@ class AccentColorPicker extends StatelessWidget {
                 ),
               ),
 
-              // Compact switch
               Transform.scale(
                 scale: 0.8,
                 child: CupertinoSwitch(
@@ -150,7 +140,6 @@ class AccentColorPicker extends StatelessWidget {
                 ),
               ),
 
-              // Text with icon
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -179,7 +168,6 @@ class AccentColorPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // This is now just a wrapper that calls the static show method
     return const SizedBox.shrink();
   }
 }

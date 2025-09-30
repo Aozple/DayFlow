@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_colors.dart';
 
-// Resizable and draggable modal sheet with iOS-style behavior
 class DraggableModal extends StatefulWidget {
   final Widget child;
   final double initialHeight;
@@ -44,13 +43,11 @@ class _DraggableModalState extends State<DraggableModal>
     super.initState();
     _currentHeight = widget.initialHeight;
 
-    // Initialize animation controller
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
-    // Create height animation
     _heightAnimation = Tween<double>(
       begin: widget.initialHeight,
       end: widget.initialHeight,
@@ -65,12 +62,10 @@ class _DraggableModalState extends State<DraggableModal>
     super.dispose();
   }
 
-  // Store initial height when drag starts
   void _handleDragStart(DragStartDetails details) {
     _dragStartHeight = _currentHeight;
   }
 
-  // Update height during drag
   void _handleDragUpdate(DragUpdateDetails details) {
     setState(() {
       final screenHeight = MediaQuery.of(context).size.height;
@@ -86,7 +81,6 @@ class _DraggableModalState extends State<DraggableModal>
     });
   }
 
-  // Handle drag end with velocity-based snapping
   void _handleDragEnd(DragEndDetails details) {
     final screenHeight = MediaQuery.of(context).size.height;
     final velocity = details.velocity.pixelsPerSecond.dy;
@@ -94,7 +88,6 @@ class _DraggableModalState extends State<DraggableModal>
     double targetHeight;
 
     if (velocity < -500) {
-      // Fast swipe up - expand to fullscreen
       if (widget.allowFullScreen) {
         targetHeight = screenHeight;
         _isFullScreen = true;
@@ -103,47 +96,37 @@ class _DraggableModalState extends State<DraggableModal>
       }
       _isExpanded = true;
     } else if (velocity > 500) {
-      // Fast swipe down - collapse or dismiss
       if (_isFullScreen) {
-        // From full screen to expanded
         targetHeight = screenHeight * 0.75;
         _isFullScreen = false;
         _isExpanded = true;
       } else if (_currentHeight < widget.initialHeight * 0.7) {
-        // Dismiss if dragged down significantly
         Navigator.of(context).pop();
         return;
       } else {
-        // Return to initial height
         targetHeight = widget.initialHeight;
         _isExpanded = false;
         _isFullScreen = false;
       }
     } else {
-      // Slow drag - snap to nearest position
       if (_currentHeight > screenHeight * 0.85) {
-        // Near top - go full screen
         targetHeight = screenHeight;
         _isFullScreen = true;
         _isExpanded = true;
       } else if (_currentHeight > screenHeight * 0.6) {
-        // More than 60% - expanded
         targetHeight = screenHeight * 0.75;
         _isExpanded = true;
         _isFullScreen = false;
       } else if (_currentHeight < widget.initialHeight * 0.5) {
-        // Less than half - dismiss
         Navigator.of(context).pop();
         return;
       } else {
-        // Return to initial height
         targetHeight = widget.initialHeight;
         _isExpanded = false;
         _isFullScreen = false;
       }
     }
 
-    // Animate to target height
     _heightAnimation = Tween<double>(
       begin: _currentHeight,
       end: targetHeight,
@@ -193,11 +176,9 @@ class _DraggableModalState extends State<DraggableModal>
             type: MaterialType.transparency,
             child: Column(
               children: [
-                // Status bar padding in fullscreen mode
                 if (isCurrentlyFullScreen)
                   Container(height: topPadding, color: AppColors.surface),
 
-                // Drag handle and header
                 GestureDetector(
                   onVerticalDragStart: _handleDragStart,
                   onVerticalDragUpdate: _handleDragUpdate,
@@ -211,7 +192,6 @@ class _DraggableModalState extends State<DraggableModal>
                     ),
                     child: Column(
                       children: [
-                        // Drag handle (hidden in fullscreen)
                         if (!isCurrentlyFullScreen)
                           Container(
                             margin: const EdgeInsets.only(top: 12),
@@ -223,7 +203,6 @@ class _DraggableModalState extends State<DraggableModal>
                             ),
                           ),
 
-                        // Header with title and actions
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 16,
@@ -244,7 +223,6 @@ class _DraggableModalState extends State<DraggableModal>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // Left action (cancel/close)
                               widget.leftAction ??
                                   CupertinoButton(
                                     padding: EdgeInsets.zero,
@@ -261,7 +239,6 @@ class _DraggableModalState extends State<DraggableModal>
                                     ),
                                   ),
 
-                              // Title with swipe indicator
                               Column(
                                 children: [
                                   if (widget.title != null)
@@ -272,7 +249,7 @@ class _DraggableModalState extends State<DraggableModal>
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  // "Swipe up" indicator
+
                                   if (!isCurrentlyFullScreen &&
                                       !_isExpanded) ...[
                                     const SizedBox(height: 2),
@@ -308,7 +285,6 @@ class _DraggableModalState extends State<DraggableModal>
                                 ],
                               ),
 
-                              // Right action
                               widget.rightAction ?? const SizedBox(width: 60),
                             ],
                           ),
@@ -318,7 +294,6 @@ class _DraggableModalState extends State<DraggableModal>
                   ),
                 ),
 
-                // Content area
                 Expanded(
                   child:
                       isCurrentlyFullScreen

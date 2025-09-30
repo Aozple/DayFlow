@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// Week navigation component with date range and navigation buttons
 class HomeWeekNavigation extends StatelessWidget {
   final DateTime selectedDate;
   final bool isSaturdayFirst;
@@ -32,7 +31,6 @@ class HomeWeekNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Week range display with statistics button
           Expanded(
             child: Row(
               children: [
@@ -52,7 +50,7 @@ class HomeWeekNavigation extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Statistics button
+
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
@@ -97,7 +95,6 @@ class HomeWeekNavigation extends StatelessWidget {
             ),
           ),
 
-          // Week navigation buttons
           Container(
             decoration: BoxDecoration(
               color: AppColors.surfaceLight,
@@ -106,7 +103,6 @@ class HomeWeekNavigation extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Previous week button
                 GestureDetector(
                   onTap: () => _navigateWeek(-1),
                   child: Container(
@@ -126,13 +122,13 @@ class HomeWeekNavigation extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Divider between buttons
+
                 Container(
                   width: 0.5,
                   height: 24,
                   color: AppColors.divider.withAlpha(80),
                 ),
-                // Next week button
+
                 GestureDetector(
                   onTap: () => _navigateWeek(1),
                   child: Container(
@@ -160,42 +156,35 @@ class HomeWeekNavigation extends StatelessWidget {
     );
   }
 
-  /// Format week range string (e.g., "Aug 21 - 27" or "Aug 21 - Sep 3")
   String _getWeekRange(DateTime date) {
     final weekStart = _getWeekStart(date);
     final weekEnd = weekStart.add(const Duration(days: 6));
 
     if (weekStart.month == weekEnd.month) {
-      // Same month format
       return '${DateFormat('MMM d').format(weekStart)} - ${weekEnd.day}';
     } else {
-      // Different month format
       return '${DateFormat('MMM d').format(weekStart)} - ${DateFormat('MMM d').format(weekEnd)}';
     }
   }
 
-  /// Calculate first day of week based on settings
   DateTime _getWeekStart(DateTime date) {
-    final weekday = date.weekday; // 1 for Monday, 7 for Sunday
+    final weekday = date.weekday;
 
     if (isSaturdayFirst) {
-      // Saturday-first week calculation
       int daysToSubtract;
       if (weekday == 6) {
-        daysToSubtract = 0; // Saturday
+        daysToSubtract = 0;
       } else if (weekday == 7) {
-        daysToSubtract = 1; // Sunday
+        daysToSubtract = 1;
       } else {
-        daysToSubtract = weekday + 1; // Monday-Friday
+        daysToSubtract = weekday + 1;
       }
       return date.subtract(Duration(days: daysToSubtract));
     } else {
-      // Monday-first week calculation
       return date.subtract(Duration(days: weekday - 1));
     }
   }
 
-  /// Navigate to previous or next week
   void _navigateWeek(int direction) {
     final newDate = selectedDate.add(Duration(days: 7 * direction));
     onWeekChanged(newDate);

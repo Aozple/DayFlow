@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;
 import '../../core/constants/app_colors.dart';
 
-// Animated floating action button with expandable options
 class SpeedDialFab extends StatefulWidget {
   final VoidCallback onCreateTask;
   final VoidCallback onCreateNote;
@@ -87,7 +86,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
             color: Colors.transparent,
             child: Stack(
               children: [
-                // Background overlay to capture taps
                 Positioned.fill(
                   child: GestureDetector(
                     onTapDown: (_) {
@@ -98,7 +96,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                   ),
                 ),
 
-                // Task button
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {
@@ -162,7 +159,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                   },
                 ),
 
-                // Note button
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {
@@ -226,7 +222,6 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                   },
                 ),
 
-                // Habit button (NEW)
                 AnimatedBuilder(
                   animation: _expandAnimation,
                   builder: (context, child) {

@@ -3,15 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Header widget for settings screen.
-///
-/// Provides navigation controls with consistent styling matching the app's
-/// design system. Features a back button and centered title with proper
-/// visual hierarchy and spacing.
 class SettingsHeader extends StatelessWidget {
   const SettingsHeader({super.key});
 
-  // Button dimensions
   static const double _buttonHeight = 40.0;
   static const double _buttonVerticalPadding = 8.0;
   static const double _buttonHorizontalPadding = 18.0;
@@ -39,20 +33,14 @@ class SettingsHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Back button
           _buildBackButton(context),
-
-          // Header title
           _buildTitleSection(),
-
-          // Spacer to balance the layout (same width as back button)
-          const SizedBox(width: 72), // Approximate width of back button
+          const SizedBox(width: 72),
         ],
       ),
     );
   }
 
-  /// Build back button with appropriate styling
   Widget _buildBackButton(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
@@ -64,9 +52,12 @@ class SettingsHeader extends StatelessWidget {
           vertical: _buttonVerticalPadding,
         ),
         decoration: BoxDecoration(
-          color: AppColors.error.withAlpha(25),
+          color: AppColors.textSecondary.withAlpha(10),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.error.withAlpha(40), width: 1),
+          border: Border.all(
+            color: AppColors.textSecondary.withAlpha(30),
+            width: 1,
+          ),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -74,10 +65,9 @@ class SettingsHeader extends StatelessWidget {
             Text(
               'Back',
               style: TextStyle(
-                color: AppColors.error,
+                color: AppColors.textSecondary,
                 fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
+                fontWeight: FontWeight.w500,
                 height: 1.0,
               ),
             ),
@@ -87,7 +77,6 @@ class SettingsHeader extends StatelessWidget {
     );
   }
 
-  /// Build title section with settings icon
   Widget _buildTitleSection() {
     return Expanded(
       child: Row(

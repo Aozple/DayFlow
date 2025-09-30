@@ -6,7 +6,6 @@ abstract class BaseRepository<T> {
   final String tag;
   final Box _box;
 
-  // Cache management
   List<T>? _cachedItems;
   DateTime? _lastCacheUpdate;
   static const Duration cacheDuration = Duration(minutes: 5);
@@ -15,13 +14,11 @@ abstract class BaseRepository<T> {
   BaseRepository({required String boxName, required this.tag})
     : _box = Hive.box(boxName);
 
-  // Abstract methods to implement
   T fromMap(Map<String, dynamic> map);
   Map<String, dynamic> toMap(T item);
   String getId(T item);
   bool isDeleted(T item);
 
-  // Cache management
   void invalidateCache() {
     _cachedItems = null;
     _lastCacheUpdate = null;
@@ -31,7 +28,6 @@ abstract class BaseRepository<T> {
   bool isCacheValid() {
     if (_cachedItems == null || _lastCacheUpdate == null) return false;
 
-    // Check if cache was force invalidated
     try {
       final settingsBox = Hive.box(AppConstants.settingsBox);
       final forceInvalidation = settingsBox.get('_force_cache_invalidation');
@@ -41,13 +37,11 @@ abstract class BaseRepository<T> {
         );
         if (invalidationTime.isAfter(_lastCacheUpdate!)) {
           DebugLogger.info('Cache invalidated by background action', tag: tag);
-          settingsBox.delete('_force_cache_invalidation'); // Clear flag
+          settingsBox.delete('_force_cache_invalidation');
           return false;
         }
       }
-    } catch (e) {
-      // Ignore error, continue with normal cache validation
-    }
+    } catch (e) {}
 
     final age = DateTime.now().difference(_lastCacheUpdate!);
     return age < cacheDuration;
@@ -58,28 +52,25 @@ abstract class BaseRepository<T> {
     _lastCacheUpdate = DateTime.now();
   }
 
-  // Smart cache validation based on operation type
   bool isCacheValidForOperation(String operationType) {
     if (_cachedItems == null || _lastCacheUpdate == null) return false;
 
     final age = DateTime.now().difference(_lastCacheUpdate!);
 
-    // Use different durations for different operations
     switch (operationType) {
       case 'read':
       case 'filter':
       case 'search':
-        return age < cacheDuration; // 5 minutes for read operations
+        return age < cacheDuration;
       case 'write':
       case 'update':
       case 'delete':
-        return age < quickCacheDuration; // 10 seconds after write operations
+        return age < quickCacheDuration;
       default:
         return age < cacheDuration;
     }
   }
 
-  // Type conversion helpers
   dynamic convertValue(dynamic value) {
     if (value is Map) {
       return Map<String, dynamic>.from(
@@ -112,7 +103,6 @@ abstract class BaseRepository<T> {
     );
   }
 
-  // Common CRUD operations
   Future<String> add(T item) async {
     try {
       final id = getId(item);
@@ -128,13 +118,10 @@ abstract class BaseRepository<T> {
 
   T? get(String id) {
     try {
-      // Check cache first
       if (isCacheValid()) {
         try {
           return _cachedItems?.firstWhere((item) => getId(item) == id);
-        } catch (_) {
-          // Not in cache, continue
-        }
+        } catch (_) {}
       }
 
       final data = _box.get(id);
@@ -155,13 +142,11 @@ abstract class BaseRepository<T> {
     String operationType = 'read',
   }) {
     try {
-      // Use operation-based cache validation
       final shouldRefresh =
           forceRefresh ||
           shouldRefreshFromBackground() ||
           !isCacheValidForOperation(operationType);
 
-      // Return cached if valid
       if (!shouldRefresh && _cachedItems != null && !includeDeleted) {
         DebugLogger.verbose(
           'Cache hit',
@@ -171,9 +156,8 @@ abstract class BaseRepository<T> {
         return _cachedItems!;
       }
 
-      // Load from storage
       final items = <T>[];
-      final keys = _box.keys.toList(); // Convert to list once
+      final keys = _box.keys.toList();
 
       for (final key in keys) {
         try {
@@ -196,7 +180,6 @@ abstract class BaseRepository<T> {
         }
       }
 
-      // Update cache only for non-deleted items
       if (!includeDeleted) {
         updateCache(items);
         _clearBackgroundChangeFlag();
@@ -213,7 +196,6 @@ abstract class BaseRepository<T> {
     } catch (e) {
       DebugLogger.error('Failed to get all items', tag: tag, error: e);
 
-      // Fallback to cache if available
       if (_cachedItems != null && !includeDeleted) {
         DebugLogger.warning('Returning stale cache due to error', tag: tag);
         return _cachedItems!;
@@ -257,7 +239,6 @@ abstract class BaseRepository<T> {
     }
   }
 
-  // Check if data changed in background
   bool shouldRefreshFromBackground() {
     try {
       final settingsBox = Hive.box(AppConstants.settingsBox);
@@ -280,17 +261,13 @@ abstract class BaseRepository<T> {
     try {
       final settingsBox = Hive.box(AppConstants.settingsBox);
       settingsBox.delete('_background_data_changed');
-    } catch (e) {
-      // Ignore error
-    }
+    } catch (e) {}
   }
 
-  // Batch operations for better performance
   Future<List<String>> addBatch(List<T> items) async {
     try {
       final ids = <String>[];
 
-      // Prepare all data first
       final dataMap = <String, Map<String, dynamic>>{};
       for (final item in items) {
         final id = getId(item);
@@ -298,7 +275,6 @@ abstract class BaseRepository<T> {
         ids.add(id);
       }
 
-      // Write in batch
       await _box.putAll(dataMap);
 
       invalidateCache();

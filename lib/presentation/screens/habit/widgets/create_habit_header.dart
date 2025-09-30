@@ -2,7 +2,7 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class CreateHabitHeader extends StatefulWidget {
+class CreateHabitHeader extends StatelessWidget {
   final bool isEditMode;
   final bool canSave;
   final VoidCallback onCancel;
@@ -15,35 +15,6 @@ class CreateHabitHeader extends StatefulWidget {
     required this.onCancel,
     required this.onSave,
   });
-
-  @override
-  State<CreateHabitHeader> createState() => _CreateHabitHeaderState();
-}
-
-class _CreateHabitHeaderState extends State<CreateHabitHeader>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-    _pulseController.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +41,7 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
         children: [
           CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: widget.onCancel,
+            onPressed: onCancel,
             child: Container(
               height: 40,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
@@ -110,7 +81,7 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      widget.isEditMode ? 'Edit Habit' : 'New Habit',
+                      isEditMode ? 'Edit Habit' : 'New Habit',
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -121,7 +92,7 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
                   ],
                 ),
 
-                if (!widget.canSave) ...[
+                if (!canSave) ...[
                   const SizedBox(height: 2),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -147,56 +118,41 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
             ),
           ),
 
-          AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: widget.canSave ? _pulseAnimation.value : 1.0,
-                child: AnimatedOpacity(
-                  opacity: widget.canSave ? 1.0 : 0.6,
-                  duration: const Duration(milliseconds: 200),
-                  child: CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: widget.canSave ? widget.onSave : null,
-                    child: Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            widget.canSave
-                                ? AppColors.accent
-                                : AppColors.accent.withAlpha(100),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow:
-                            widget.canSave
-                                ? [
-                                  BoxShadow(
-                                    color: AppColors.accent.withAlpha(50),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ]
-                                : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          widget.isEditMode ? 'Update' : 'Create',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            height: 1.0,
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: canSave ? onSave : null,
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    canSave
+                        ? AppColors.accent
+                        : AppColors.accent.withAlpha(100),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow:
+                    canSave
+                        ? [
+                          BoxShadow(
+                            color: AppColors.accent.withAlpha(50),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                      ),
-                    ),
+                        ]
+                        : null,
+              ),
+              child: Center(
+                child: Text(
+                  isEditMode ? 'Update' : 'Create',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    height: 1.0,
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ],
       ),

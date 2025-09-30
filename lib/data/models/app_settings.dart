@@ -11,7 +11,6 @@ class AppSettings {
   final bool notificationSound;
   final bool notificationVibration;
 
-  // Default values
   static const String defaultAccentColor = '#0A84FF';
   static const String defaultFirstDay = 'monday';
   static const int defaultPriority = 3;
@@ -20,7 +19,6 @@ class AppSettings {
   static const bool defaultSound = true;
   static const bool defaultVibration = true;
 
-  // Valid options
   static const List<String> validFirstDays = ['monday', 'saturday'];
   static const List<int> validMinutesOptions = [
     0,
@@ -34,7 +32,6 @@ class AppSettings {
     1440,
   ];
 
-  // Predefined accent colors for quick selection
   static const Map<String, String> predefinedColors = {
     'blue': '#0A84FF',
     'purple': '#6C63FF',
@@ -69,7 +66,7 @@ class AppSettings {
         ),
         'notificationSound': notificationSound,
         'notificationVibration': notificationVibration,
-        '_version': 1, // For future migrations
+        '_version': 1,
       };
 
       DebugLogger.verbose('Settings serialized', tag: _tag);
@@ -82,7 +79,6 @@ class AppSettings {
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
     try {
-      // Check version for future migrations
       final version = map['_version'] as int? ?? 0;
       if (version > 1) {
         DebugLogger.warning(
@@ -134,9 +130,7 @@ class AppSettings {
     return const AppSettings().toMap();
   }
 
-  // Enhanced validation with logging
   static String validateHexColor(String color) {
-    // Try predefined colors first
     final predefinedColor =
         predefinedColors.entries
             .firstWhere(
@@ -149,11 +143,9 @@ class AppSettings {
       return predefinedColor;
     }
 
-    // Validate hex format
     final hexRegex = RegExp(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$');
 
     if (hexRegex.hasMatch(color)) {
-      // Normalize 3-digit hex to 6-digit
       if (color.length == 4) {
         final r = color[1];
         final g = color[2];
@@ -195,7 +187,6 @@ class AppSettings {
   }
 
   static int validateMinutesBefore(int minutes) {
-    // Allow any value between 0 and 1440 (24 hours)
     final clamped = minutes.clamp(0, 1440);
 
     if (clamped != minutes) {
@@ -243,10 +234,8 @@ class AppSettings {
     );
   }
 
-  // Validation
   bool isValid() {
     try {
-      // Validate all fields
       validateHexColor(accentColor);
       validateFirstDay(firstDayOfWeek);
       validatePriority(defaultTaskPriority);
@@ -258,7 +247,6 @@ class AppSettings {
     }
   }
 
-  // Helper getters
   bool get isSaturdayFirst => firstDayOfWeek == 'saturday';
   bool get isMondayFirst => firstDayOfWeek == 'monday';
 
@@ -297,12 +285,11 @@ class AppSettings {
     }
   }
 
-  // Color helpers
   int get accentColorValue {
     try {
       return int.parse(accentColor.substring(1), radix: 16) | 0xFF000000;
     } catch (_) {
-      return 0xFF0A84FF; // Default blue
+      return 0xFF0A84FF;
     }
   }
 

@@ -15,22 +15,13 @@ import 'widgets/create_task_header.dart';
 import 'widgets/create_task_main_content.dart';
 import 'widgets/create_task_priority_section.dart';
 
-/// Screen for creating a new task or editing an existing one.
-///
-/// This screen provides a comprehensive interface for creating or editing tasks,
-/// including title, description, date/time selection, priority, color, and tags.
-/// It uses BLoC for state management and follows a clean architecture pattern.
 class CreateTaskScreen extends StatefulWidget {
-  /// Optional task to edit. If null, we're creating a new task.
   final TaskModel? taskToEdit;
 
-  /// Optional task ID, might be used for deep linking or specific scenarios.
   final String? taskId;
 
-  /// Optional pre-filled hour for convenience, e.g., from a calendar view.
   final int? prefilledHour;
 
-  /// Optional pre-filled date for convenience.
   final DateTime? prefilledDate;
 
   const CreateTaskScreen({
@@ -45,32 +36,23 @@ class CreateTaskScreen extends StatefulWidget {
   State<CreateTaskScreen> createState() => _CreateTaskScreenState();
 }
 
-/// State class for CreateTaskScreen.
-///
-/// This class manages the UI state and interactions for the task creation/editing screen,
-/// including handling form inputs and saving the task.
 class _CreateTaskScreenState extends State<CreateTaskScreen> {
-  // Text controllers for input fields
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _tagsController;
 
-  // Notification settings
   late bool _hasNotification;
   late int? _notificationMinutesBefore;
 
-  // Task properties
   late DateTime _selectedDate;
   late TimeOfDay? _selectedTime;
   late int _priority;
   late String _selectedColor;
   bool _hasTime = false;
 
-  // Focus nodes for text fields
   final FocusNode _titleFocus = FocusNode();
   final FocusNode _descriptionFocus = FocusNode();
 
-  // Getters
   bool get isEditMode => widget.taskToEdit != null;
 
   @override
@@ -81,7 +63,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     _setupAutoFocus();
   }
 
-  /// Initialize text controllers with appropriate values
   void _initializeControllers() {
     _titleController = TextEditingController(
       text: widget.taskToEdit?.title ?? '',
@@ -94,7 +75,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  /// Initialize form values based on edit mode or defaults
   void _initializeFormValues() {
     if (isEditMode && widget.taskToEdit != null) {
       _initializeEditModeValues();
@@ -103,7 +83,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  /// Initialize values for editing an existing task
   void _initializeEditModeValues() {
     final task = widget.taskToEdit!;
     _selectedDate = task.dueDate ?? DateTime.now();
@@ -118,9 +97,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     _notificationMinutesBefore = task.notificationMinutesBefore;
   }
 
-  /// Initialize values for creating a new task
   void _initializeNewTaskValues() {
-    // Set date and time
     _selectedDate = widget.prefilledDate ?? DateTime.now();
     if (widget.prefilledHour != null) {
       _selectedTime = TimeOfDay(hour: widget.prefilledHour!, minute: 0);
@@ -130,13 +107,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _hasTime = false;
     }
 
-    // Get default settings
     final settingsState = context.read<SettingsBloc>().state;
     _priority =
         settingsState is SettingsLoaded ? settingsState.defaultPriority : 3;
     _selectedColor = AppColors.toHex(AppColors.userColors[0]);
 
-    // Set notification defaults
     if (settingsState is SettingsLoaded) {
       _hasNotification = settingsState.settings.defaultNotificationEnabled;
       _notificationMinutesBefore =
@@ -148,14 +123,12 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  /// Debug print notification settings
   void _debugPrintNotificationSettings() {
     debugPrint('📱 Default notification settings loaded:');
     debugPrint('  - Enabled: $_hasNotification');
     debugPrint('  - Minutes before: $_notificationMinutesBefore');
   }
 
-  /// Setup auto-focus for new tasks
   void _setupAutoFocus() {
     if (!isEditMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -166,7 +139,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   @override
   void dispose() {
-    // Clean up controllers and focus nodes to prevent memory leaks
     _titleController.dispose();
     _descriptionController.dispose();
     _tagsController.dispose();
@@ -182,20 +154,19 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       body: Column(
         children: [
           const StatusBarPadding(),
-          // The header section with cancel and save buttons
+
           CreateTaskHeader(
             isEditMode: isEditMode,
             canSave: _canSave(),
             onCancel: () => context.pop(),
             onSave: _saveTask,
           ),
-          // The main scrollable content area for task details
+
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  // Section for task title and description
                   CreateTaskMainContent(
                     titleController: _titleController,
                     descriptionController: _descriptionController,
@@ -212,14 +183,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     onTimeTap: _showTimeSelection,
                   ),
                   const SizedBox(height: 8),
-                  // Section for choosing task priority
+
                   CreateTaskPrioritySection(
                     priority: _priority,
                     onPriorityChanged:
                         (priority) => setState(() => _priority = priority),
                   ),
                   const SizedBox(height: 8),
-                  // Section for notification settings
+
                   CreateTaskNotificationSection(
                     hasNotification: _hasNotification,
                     minutesBefore: _notificationMinutesBefore,
@@ -231,7 +202,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           () => _notificationMinutesBefore = minutes,
                         ),
                   ),
-                  const SizedBox(height: 100), // Extra space for keyboard
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -241,12 +212,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  /// Checks if the task can be saved (i.e., if the title is not empty)
   bool _canSave() {
     return _titleController.text.trim().isNotEmpty;
   }
 
-  /// Show time selection for task due time
   Future<void> _showTimeSelection() async {
     final selectedTime = await TimePickerModal.show(
       context: context,
@@ -268,7 +237,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  /// Show date selection modal
   Future<void> _showDateSelection() async {
     final selectedDate = await DatePickerModal.show(
       context: context,
@@ -283,7 +251,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  /// Handles saving or updating the task based on the current mode
   void _saveTask() {
     final title = _titleController.text.trim();
     if (title.isEmpty) return;
@@ -303,7 +270,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     context.pop();
   }
 
-  /// Debug print task details before saving
   void _debugPrintTaskDetails(String title) {
     debugPrint('\n💾 === SAVING TASK ===');
     debugPrint('Title: $title');
@@ -314,7 +280,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     debugPrint('Minutes Before: ${_notificationMinutesBefore ?? 0}');
   }
 
-  /// Parse tags from text input
   List<String> _parseTags() {
     return _tagsController.text
         .split(',')
@@ -323,7 +288,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         .toList();
   }
 
-  /// Create due datetime if time is set
   DateTime _createDueDateTime() {
     final now = DateTime.now();
 
@@ -353,12 +317,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     return dueDateTime;
   }
 
-  /// Helper method to check if same day
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// Update an existing task
   void _updateTask(
     TaskBloc taskBloc,
     String title,
@@ -380,7 +342,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     taskBloc.add(UpdateTask(updatedTask));
   }
 
-  /// Debug print updated task details
   void _debugPrintUpdatedTaskDetails(TaskModel updatedTask) {
     debugPrint('📝 Updated task notification settings:');
     debugPrint('  - hasNotification: ${updatedTask.hasNotification}');
@@ -389,7 +350,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  /// Create a new task
   void _createTask(
     TaskBloc taskBloc,
     String title,
@@ -411,7 +371,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     taskBloc.add(AddTask(newTask));
   }
 
-  /// Debug print new task details
   void _debugPrintNewTaskDetails(TaskModel newTask) {
     debugPrint('📝 New task notification settings:');
     debugPrint('  - hasNotification: ${newTask.hasNotification}');
@@ -421,7 +380,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     debugPrint('  - dueDate: ${newTask.dueDate}');
   }
 
-  /// Show color selection modal with preview
   Future<void> _showColorSelection() async {
     final selectedColor = await ColorPickerModal.show(
       context: context,
@@ -436,7 +394,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  /// Build task preview for color selection
   Widget _buildTaskPreview(String colorHex) {
     final sampleTask = TaskModel(
       title:

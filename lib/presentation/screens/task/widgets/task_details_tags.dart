@@ -1,12 +1,7 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Section displaying the task's tags.
-///
-/// This widget displays the task's tags in a visually appealing format,
-/// with appropriate styling and spacing.
 class TaskDetailsTags extends StatelessWidget {
-  /// The list of tags to display.
   final List<String> tags;
 
   const TaskDetailsTags({super.key, required this.tags});
@@ -14,10 +9,10 @@ class TaskDetailsTags extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity, // Full width.
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface, // Background color.
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -26,7 +21,7 @@ class TaskDetailsTags extends StatelessWidget {
           const Row(
             children: [
               Icon(
-                CupertinoIcons.tag, // Tag icon.
+                CupertinoIcons.tag,
                 size: 18,
                 color: AppColors.textSecondary,
               ),
@@ -43,8 +38,8 @@ class TaskDetailsTags extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Wrap(
-            spacing: 10, // Horizontal spacing between tags.
-            runSpacing: 10, // Vertical spacing between rows of tags.
+            spacing: 10,
+            runSpacing: 10,
             children:
                 tags.map((tag) {
                   return Container(
@@ -53,12 +48,8 @@ class TaskDetailsTags extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withAlpha(
-                        25,
-                      ), // Subtle accent background.
-                      borderRadius: BorderRadius.circular(
-                        20,
-                      ), // Capsule shape for tags.
+                      color: AppColors.accent.withAlpha(25),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: AppColors.accent.withAlpha(50),
                         width: 1,
@@ -68,14 +59,13 @@ class TaskDetailsTags extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          CupertinoIcons
-                              .number, // Number icon (could be a generic tag icon too).
+                          CupertinoIcons.number,
                           size: 14,
                           color: AppColors.accent,
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          tag, // The tag text.
+                          tag,
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.accent,

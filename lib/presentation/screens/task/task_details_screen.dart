@@ -19,13 +19,7 @@ import 'widgets/task_details_description.dart';
 import 'widgets/task_details_tags.dart';
 import 'widgets/task_details_metadata.dart';
 
-/// Screen for displaying detailed information of a single task.
-///
-/// Provides a comprehensive view of task details including title, description,
-/// schedule, priority, color, and tags. Offers actions for completing, editing,
-/// rescheduling, and deleting tasks with real-time updates via BLoC.
 class TaskDetailsScreen extends StatefulWidget {
-  /// The task object whose details are to be displayed.
   final TaskModel task;
 
   const TaskDetailsScreen({super.key, required this.task});
@@ -34,15 +28,9 @@ class TaskDetailsScreen extends StatefulWidget {
   State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
 }
 
-/// State management for TaskDetailsScreen.
-///
-/// Handles task state synchronization with BLoC, user interactions,
-/// and provides real-time updates for task modifications.
 class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
-  /// Current task data that may be updated through BLoC operations.
   late TaskModel _currentTask;
 
-  /// Tracks if the task was deleted to prevent unnecessary operations.
   bool _isTaskDeleted = false;
 
   @override
@@ -51,7 +39,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     _initializeTask();
   }
 
-  /// Initialize the current task from widget parameter.
   void _initializeTask() {
     _currentTask = widget.task;
   }
@@ -65,13 +52,13 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         body: Column(
           children: [
             const StatusBarPadding(),
-            // Header with navigation and options
+
             TaskDetailsHeader(
               task: _currentTask,
               onBackPressed: _handleBackNavigation,
               onMoreOptions: _showMoreOptions,
             ),
-            // Scrollable content area
+
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -84,14 +71,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Handle BLoC state changes and update local task state.
   void _handleTaskStateChanges(BuildContext context, TaskState state) {
     if (state is TaskLoaded && !_isTaskDeleted) {
       _updateTaskFromState(state);
     }
   }
 
-  /// Update local task state from BLoC state if task exists.
   void _updateTaskFromState(TaskLoaded state) {
     try {
       final updatedTask = state.tasks.firstWhere(
@@ -102,12 +87,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         setState(() => _currentTask = updatedTask);
       }
     } catch (e) {
-      // Task not found - likely deleted, handle gracefully
       _handleTaskNotFound();
     }
   }
 
-  /// Handle case where task is not found in the state.
   void _handleTaskNotFound() {
     if (!_isTaskDeleted && mounted) {
       _isTaskDeleted = true;
@@ -120,46 +103,36 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
   }
 
-  /// Handle back navigation with potential unsaved changes check.
   void _handleBackNavigation() {
     context.pop();
   }
 
-  /// Build the main task content sections.
   Widget _buildTaskContent() {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Primary action buttons section
           _buildPrimaryActionsSection(),
 
           const SizedBox(height: 20),
 
-          // Task information section
           _buildTaskInfoSection(),
 
-          // Optional description section
           _buildDescriptionSection(),
 
-          // Optional tags section
           _buildTagsSection(),
 
           const SizedBox(height: 16),
 
-          // Task metadata section
           _buildMetadataSection(),
 
-          const SizedBox(
-            height: 100,
-          ), // Bottom padding for comfortable scrolling
+          const SizedBox(height: 100),
         ],
       ),
     );
   }
 
-  /// Build primary actions section (complete, edit, delete).
   Widget _buildPrimaryActionsSection() {
     return TaskDetailsPrimaryActions(
       task: _currentTask,
@@ -169,7 +142,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Build task information section (date, priority, color).
   Widget _buildTaskInfoSection() {
     return TaskDetailsInfoSection(
       task: _currentTask,
@@ -179,7 +151,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Build description section if description exists.
   Widget _buildDescriptionSection() {
     if (_currentTask.description?.isNotEmpty != true) {
       return const SizedBox.shrink();
@@ -193,7 +164,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Build tags section if tags exist.
   Widget _buildTagsSection() {
     if (_currentTask.tags.isEmpty) {
       return const SizedBox.shrink();
@@ -207,17 +177,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Build metadata section (created at, completed at).
   Widget _buildMetadataSection() {
     return TaskDetailsMetadata(task: _currentTask);
   }
 
-  /// Toggle task completion status with optimistic UI updates.
   void _handleToggleComplete() {
     final wasCompleted = _currentTask.isCompleted;
     final newCompletionStatus = !wasCompleted;
 
-    // Optimistic UI update
     setState(() {
       _currentTask = _currentTask.copyWith(
         isCompleted: newCompletionStatus,
@@ -225,25 +192,20 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       );
     });
 
-    // Dispatch BLoC event
     context.read<TaskBloc>().add(ToggleTaskComplete(_currentTask.id));
 
-    // Show success feedback
     _showCompletionFeedback(newCompletionStatus);
   }
 
-  /// Show appropriate feedback message for completion toggle.
   void _showCompletionFeedback(bool isCompleted) {
     final message = isCompleted ? 'Task completed!' : 'Task marked as pending';
     CustomSnackBar.success(context, message);
   }
 
-  /// Navigate to edit task screen with current task data.
   void _handleEditTask() {
     context.push('/edit-task', extra: _currentTask);
   }
 
-  /// Show confirmation dialog and handle task deletion.
   Future<void> _handleDeleteTask() async {
     final confirmed = await _showDeleteConfirmation();
 
@@ -252,7 +214,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
   }
 
-  /// Show delete confirmation dialog.
   Future<bool?> _showDeleteConfirmation() {
     return showCupertinoDialog<bool>(
       context: context,
@@ -261,7 +222,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Execute task deletion and provide feedback.
   void _executeTaskDeletion() {
     _isTaskDeleted = true;
     context.read<TaskBloc>().add(DeleteTask(_currentTask.id));
@@ -269,7 +229,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     context.pop();
   }
 
-  /// Show modal for quick task rescheduling.
   Future<void> _handleQuickReschedule() async {
     final selectedDate = await showCupertinoModalPopup<DateTime>(
       context: context,
@@ -285,14 +244,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
   }
 
-  /// Update task date and refresh UI.
   void _updateTaskDate(DateTime date) {
     setState(() {
       _currentTask = _currentTask.copyWith(dueDate: date);
     });
   }
 
-  /// Show modal for quick priority change.
   void _handleQuickChangePriority() {
     showCupertinoModalPopup(
       context: context,
@@ -304,7 +261,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Update task priority and save changes.
   void _updateTaskPriority(int priority) {
     setState(() {
       _currentTask = _currentTask.copyWith(priority: priority);
@@ -312,7 +268,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     _saveTaskUpdate('Priority updated');
   }
 
-  /// Show modal for quick color change.
   void _handleQuickChangeColor() {
     showCupertinoModalPopup(
       context: context,
@@ -324,7 +279,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Update task color and save changes.
   void _updateTaskColor(String color) {
     setState(() {
       _currentTask = _currentTask.copyWith(color: color);
@@ -332,7 +286,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     _saveTaskUpdate('Color updated');
   }
 
-  /// Save task updates to BLoC and show feedback.
   void _saveTaskUpdate(String successMessage) {
     if (mounted && !_isTaskDeleted) {
       context.read<TaskBloc>().add(UpdateTask(_currentTask));
@@ -340,7 +293,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
   }
 
-  /// Show options modal with additional task actions.
   void _showMoreOptions() {
     showCupertinoModalPopup(
       context: context,
@@ -352,18 +304,16 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Create a duplicate of the current task.
   void _handleDuplicateTask() {
     final duplicatedTask = _createDuplicateTask();
 
     if (mounted) {
       context.read<TaskBloc>().add(AddTask(duplicatedTask));
       CustomSnackBar.success(context, 'Task duplicated!');
-      context.pop(); // Close details screen to show new task
+      context.pop();
     }
   }
 
-  /// Create a new task based on current task with modified title.
   TaskModel _createDuplicateTask() {
     return TaskModel(
       title: '${_currentTask.title} (Copy)',
@@ -377,7 +327,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     );
   }
 
-  /// Handle task sharing (placeholder for future implementation).
   void _handleShareTask() {
     CustomSnackBar.info(context, 'Share feature coming soon!');
   }

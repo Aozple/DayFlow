@@ -63,10 +63,8 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     _controller.addListener(_onTextChanged);
     _controller.addListener(_onSelectionChanged);
 
-    // Listen to focus changes
     widget.focusNode.addListener(_onFocusChange);
 
-    // Initial checks
     _checkForMarkdown();
     _updateTextDirection(widget.block.text);
   }
@@ -91,7 +89,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     }
   }
 
-  // Check if text contains markdown formatting
   void _checkForMarkdown() {
     final text = widget.block.text;
     setState(() {
@@ -106,14 +103,12 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     });
   }
 
-  // Smart RTL/LTR detection
   void _updateTextDirection(String text) {
     if (text.isEmpty) {
       setState(() => _textDirection = TextDirection.ltr);
       return;
     }
 
-    // Get first non-whitespace, non-markdown character
     final cleanText = _stripMarkdown(text).trim();
     if (cleanText.isEmpty) {
       setState(() => _textDirection = TextDirection.ltr);
@@ -128,7 +123,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     });
   }
 
-  // Strip markdown for direction detection
   String _stripMarkdown(String text) {
     return text
         .replaceAll(RegExp(r'\*{1,3}'), '')
@@ -141,13 +135,12 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
         );
   }
 
-  // Check if character is RTL (Arabic/Persian/Hebrew)
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms-B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
   void _onFocusChange() {
@@ -195,13 +188,11 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Format indicators bar
           if (_isEditing || _hasMarkdown || _controller.text.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  // Markdown indicator
                   if (_hasMarkdown)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -245,7 +236,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
 
                   const Spacer(),
 
-                  // Text direction indicator
                   if (_controller.text.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(6),
@@ -266,7 +256,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
                       ),
                     ),
 
-                  // Format hint
                   if (_showFormatHint && _isEditing)
                     AnimatedOpacity(
                       opacity: _showFormatHint ? 1.0 : 0.0,
@@ -295,14 +284,11 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
               ),
             ),
 
-          // Main content area
           Stack(
             children: [
-              // Rendered markdown view when not editing
               if (!_isEditing && _hasMarkdown && widget.block.text.isNotEmpty)
                 _buildRenderedText(),
 
-              // Editable text field
               AnimatedOpacity(
                 opacity:
                     (!_isEditing &&
@@ -320,7 +306,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     );
   }
 
-  // Build editable text field with RTL support
   Widget _buildEditableField() {
     return TextField(
       controller: _controller,
@@ -332,7 +317,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
               ? TextAlign.right
               : TextAlign.left,
 
-      // Disable native context menu
       selectionControls: EmptyTextSelectionControls(),
 
       decoration: InputDecoration(
@@ -355,7 +339,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     );
   }
 
-  // Build rendered markdown text with RTL support
   Widget _buildRenderedText() {
     return GestureDetector(
       onTap: () {
@@ -394,7 +377,6 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
     );
   }
 
-  // Get bilingual placeholder text
   String _getPlaceholderText() {
     if (_textDirection == TextDirection.rtl) {
       return 'اینجا تایپ کنید...';

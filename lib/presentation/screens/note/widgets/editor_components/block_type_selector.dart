@@ -24,7 +24,6 @@ class BlockTypeSelector extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Text blocks section
         _buildCategorySection(context, 'Text', [
           const _BlockOption(
             BlockType.text,
@@ -42,7 +41,6 @@ class BlockTypeSelector extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        // List blocks section
         _buildCategorySection(context, 'Lists', [
           const _BlockOption(
             BlockType.todoList,
@@ -66,7 +64,6 @@ class BlockTypeSelector extends StatelessWidget {
 
         const SizedBox(height: 24),
 
-        // Special blocks section
         _buildCategorySection(context, 'Special', [
           const _BlockOption(
             BlockType.quote,
@@ -94,13 +91,11 @@ class BlockTypeSelector extends StatelessWidget {
           ),
         ]),
 
-        // Bottom padding
         SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
       ],
     );
   }
 
-  // Build category section with title and options
   Widget _buildCategorySection(
     BuildContext context,
     String title,
@@ -124,7 +119,6 @@ class BlockTypeSelector extends StatelessWidget {
     );
   }
 
-  // Build individual block option
   Widget _buildBlockOption(BuildContext context, _BlockOption option) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -148,7 +142,6 @@ class BlockTypeSelector extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Icon with colored background
                 Container(
                   width: 40,
                   height: 40,
@@ -165,7 +158,6 @@ class BlockTypeSelector extends StatelessWidget {
 
                 const SizedBox(width: 16),
 
-                // Text content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +184,6 @@ class BlockTypeSelector extends StatelessWidget {
                   ),
                 ),
 
-                // Arrow
                 const Icon(
                   Icons.arrow_forward_ios,
                   size: 14,
@@ -206,7 +197,6 @@ class BlockTypeSelector extends StatelessWidget {
     );
   }
 
-  // Get color for different block types
   Color _getBlockTypeColor(BlockType type) {
     switch (type) {
       case BlockType.text:
@@ -233,7 +223,6 @@ class BlockTypeSelector extends StatelessWidget {
   }
 }
 
-// Helper class for block options
 class _BlockOption {
   final BlockType type;
   final IconData icon;

@@ -21,9 +21,8 @@ class FrostedGlassImageEditor extends StatefulWidget {
 }
 
 class FrostedGlassImageEditorState extends State<FrostedGlassImageEditor> {
-  final bool _useMaterialDesign = true; // or false for Cupertino
+  final bool _useMaterialDesign = true;
 
-  /// Opens the sticker/emoji editor.
   void _openStickerEditor(ProImageEditorState editor) async {
     Layer? layer = await editor.openPage(
       FrostedGlassStickerPage(
@@ -41,7 +40,6 @@ class FrostedGlassImageEditorState extends State<FrostedGlassImageEditor> {
     editor.addLayer(layer);
   }
 
-  /// Calculates the number of columns for the EmojiPicker.
   int _calculateEmojiColumns(BoxConstraints constraints) =>
       max(
         1,
@@ -62,11 +60,7 @@ class FrostedGlassImageEditorState extends State<FrostedGlassImageEditor> {
               Navigator.of(context).pop();
             },
             mainEditorCallbacks: MainEditorCallbacks(
-              helperLines: HelperLinesCallbacks(
-                onLineHit: () {
-                  // Add vibration if needed
-                },
-              ),
+              helperLines: HelperLinesCallbacks(onLineHit: () {}),
             ),
             stickerEditorCallbacks: StickerEditorCallbacks(
               onSearchChanged: (value) {
@@ -264,7 +258,7 @@ class FrostedGlassImageEditorState extends State<FrostedGlassImageEditor> {
                 ),
               ),
             ),
-            // Add sticker editor if needed
+
             layerInteraction: const LayerInteractionConfigs(
               style: LayerInteractionStyle(
                 removeAreaBackgroundInactive: Colors.black12,
@@ -285,7 +279,6 @@ class FrostedGlassImageEditorState extends State<FrostedGlassImageEditor> {
     );
   }
 
-  // Build methods
   List<ReactiveWidget> _buildMainBodyWidgets(
     ProImageEditorState editor,
     Stream<dynamic> rebuildStream,

@@ -10,17 +10,14 @@ class UniversalFilterOptions {
   final bool showHabits;
   final bool showNotes;
 
-  // Shared filters
   final List<String> tagFilters;
   final TimeRangeFilter? timeRange;
   final SortBy sortBy;
   final bool sortAscending;
 
-  // Task-specific filters
   final List<int> priorities;
   final bool? isCompleted;
 
-  // Habit-specific filters
   final List<HabitFrequency> frequencies;
   final bool? isActive;
   final int? minStreak;
@@ -204,7 +201,6 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
           children: [
             _buildContentTypeSection(),
 
-            // Shared filters
             if (widget.availableTags.isNotEmpty) ...[
               const SizedBox(height: 16),
               _buildTagsSection(),
@@ -212,7 +208,6 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
             const SizedBox(height: 16),
             _buildTimeRangeSection(),
 
-            // Task-specific filters
             if (showTaskFilters) ...[
               const SizedBox(height: 16),
               _buildTaskStatusSection(),
@@ -220,7 +215,6 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
               _buildPrioritySection(),
             ],
 
-            // Habit-specific filters
             if (showHabitFilters) ...[
               const SizedBox(height: 16),
               _buildHabitStatusSection(),
@@ -230,7 +224,6 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
               _buildStreakSection(),
             ],
 
-            // Sort section
             const SizedBox(height: 16),
             _buildSortSection(),
             const SizedBox(height: 72),
@@ -811,7 +804,6 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
           _buildSectionHeader(icon: CupertinoIcons.sort_down, title: 'Sort'),
           const SizedBox(height: 12),
 
-          // Sort by options
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -831,7 +823,6 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
                 }).toList(),
           ),
 
-          // Sort direction
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(2),

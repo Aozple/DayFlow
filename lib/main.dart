@@ -14,7 +14,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:get_it/get_it.dart';
 import 'core/themes/app_theme.dart';
 
-// MARK: - Main Entry Point
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,7 +49,6 @@ void main() async {
   runApp(const DayFlowApp());
 }
 
-// MARK: - DayFlowApp Widget
 class DayFlowApp extends StatelessWidget {
   const DayFlowApp({super.key});
 

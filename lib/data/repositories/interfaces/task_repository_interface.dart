@@ -1,7 +1,6 @@
 import 'package:dayflow/data/models/task_model.dart';
 
 abstract class ITaskRepository {
-  // CRUD operations
   Future<String> addTask(TaskModel task);
   TaskModel? getTask(String id);
   List<TaskModel> getAllTasks();
@@ -11,10 +10,8 @@ abstract class ITaskRepository {
   Future<void> toggleTaskComplete(String id);
   Future<void> clearAllTasks();
 
-  // Statistics
   Map<String, dynamic> getStatistics();
 
-  // Cache management
   void invalidateCache();
   bool isCacheValid();
 }

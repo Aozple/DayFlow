@@ -114,19 +114,15 @@ class _ImportSelectionDialogState extends State<ImportSelectionDialog>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Source selection
             _buildSourceSection(),
             const SizedBox(height: 24),
 
-            // Content selection
             _buildContentSection(),
             const SizedBox(height: 24),
 
-            // Import method
             _buildMethodSection(),
             const SizedBox(height: 24),
 
-            // Warning info
             _buildWarningSection(),
             const SizedBox(height: 72),
           ],

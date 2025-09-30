@@ -27,9 +27,6 @@ class ImportService {
     _settingsImporter = SettingsImporter(repository: _settingsRepository);
   }
 
-  // MARK: - Validation
-
-  /// Validates the format and content of import data.
   Future<ImportValidation> validateImport(String data) async {
     try {
       if (data.trim().startsWith('{')) {
@@ -68,9 +65,6 @@ class ImportService {
     }
   }
 
-  // MARK: - Import Methods
-
-  /// Imports data from a JSON string.
   Future<ImportResult> importFromJson(
     String jsonString, {
     bool merge = true,
@@ -149,7 +143,6 @@ class ImportService {
     }
   }
 
-  /// Imports data from a CSV string based on the specified type.
   Future<ImportResult> importFromCsv(String csvString, ImportType type) async {
     switch (type) {
       case ImportType.tasks:
@@ -165,9 +158,6 @@ class ImportService {
     }
   }
 
-  // MARK: - Helper Methods
-
-  /// Counts the total number of items (tasks and habits) in the import data.
   int _countItems(Map<String, dynamic> data) {
     int count = 0;
     if (data['tasks'] != null) {

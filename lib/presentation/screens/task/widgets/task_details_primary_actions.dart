@@ -2,21 +2,13 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Row of primary action buttons (Complete/Undo, Edit, Delete).
-///
-/// This widget provides the main actions for a task, including toggling
-/// completion status, editing, and deleting the task.
 class TaskDetailsPrimaryActions extends StatelessWidget {
-  /// The task to display actions for.
   final TaskModel task;
 
-  /// Callback function when the complete/undo button is pressed.
   final VoidCallback onToggleComplete;
 
-  /// Callback function when the edit button is pressed.
   final VoidCallback onEdit;
 
-  /// Callback function when the delete button is pressed.
   final VoidCallback onDelete;
 
   const TaskDetailsPrimaryActions({
@@ -31,56 +23,42 @@ class TaskDetailsPrimaryActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface, // Background color for the action bar.
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          // Button to mark task as complete or undo completion.
           Expanded(
             child: _buildPrimaryButton(
               icon:
                   task.isCompleted
-                      ? CupertinoIcons
-                          .arrow_uturn_left // Undo icon.
-                      : CupertinoIcons.checkmark_circle, // Complete icon.
+                      ? CupertinoIcons.arrow_uturn_left
+                      : CupertinoIcons.checkmark_circle,
               label: task.isCompleted ? 'Undo' : 'Complete',
-              color:
-                  task.isCompleted
-                      ? AppColors
-                          .warning // Warning color for undo.
-                      : AppColors.success, // Success color for complete.
-              onTap: onToggleComplete, // Toggles completion status.
-              isFirst: true, // Marks as the first button for styling.
+              color: task.isCompleted ? AppColors.warning : AppColors.success,
+              onTap: onToggleComplete,
+              isFirst: true,
             ),
           ),
-          Container(
-            width: 1,
-            height: 60,
-            color: AppColors.divider,
-          ), // Vertical divider.
-          // Button to edit the task.
+          Container(width: 1, height: 60, color: AppColors.divider),
+
           Expanded(
             child: _buildPrimaryButton(
-              icon: CupertinoIcons.pencil_circle, // Pencil icon.
+              icon: CupertinoIcons.pencil_circle,
               label: 'Edit',
-              color: AppColors.warning, // Accent color.
-              onTap: onEdit, // Navigates to edit screen.
+              color: AppColors.warning,
+              onTap: onEdit,
               isFirst: false,
             ),
           ),
-          Container(
-            width: 1,
-            height: 60,
-            color: AppColors.divider,
-          ), // Vertical divider.
-          // Button to delete the task.
+          Container(width: 1, height: 60, color: AppColors.divider),
+
           Expanded(
             child: _buildPrimaryButton(
-              icon: CupertinoIcons.trash_circle, // Trash icon.
+              icon: CupertinoIcons.trash_circle,
               label: 'Delete',
-              color: AppColors.error, // Error color for destructive action.
-              onTap: onDelete, // Shows delete confirmation.
+              color: AppColors.error,
+              onTap: onDelete,
               isFirst: false,
             ),
           ),
@@ -89,28 +67,26 @@ class TaskDetailsPrimaryActions extends StatelessWidget {
     );
   }
 
-  /// Helper widget to build a single primary action button.
   Widget _buildPrimaryButton({
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
-    required bool
-    isFirst, // Not directly used for styling here, but good for consistency.
+    required bool isFirst,
   }) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onTap,
       child: Container(
-        height: 80, // Fixed height for consistent layout.
+        height: 80,
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 28), // Icon.
+            Icon(icon, color: color, size: 28),
             const SizedBox(height: 6),
             Text(
-              label, // Button label.
+              label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

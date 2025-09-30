@@ -4,21 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
-/// Section displaying task's schedule, priority, and color.
-///
-/// This widget provides a visual representation of the task's key information,
-/// including due date, priority level, and assigned color.
 class TaskDetailsInfoSection extends StatelessWidget {
-  /// The task to display information for.
   final TaskModel task;
 
-  /// Callback function when the reschedule button is pressed.
   final VoidCallback onReschedule;
 
-  /// Callback function when the change priority button is pressed.
   final VoidCallback onChangePriority;
 
-  /// Callback function when the change color button is pressed.
   final VoidCallback onChangeColor;
 
   const TaskDetailsInfoSection({
@@ -31,69 +23,59 @@ class TaskDetailsInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final taskColor = AppColors.fromHex(
-      task.color,
-    ); // Convert hex string to Color object.
+    final taskColor = AppColors.fromHex(task.color);
 
     return Container(
-      width: double.infinity, // Takes full available width.
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface, // Background color.
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: taskColor, width: 4),
-        ), // Left border with task's color.
+        border: Border(left: BorderSide(color: taskColor, width: 4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Date & Time information with an edit button.
           _buildInfoItem(
-            icon: CupertinoIcons.calendar, // Calendar icon.
+            icon: CupertinoIcons.calendar,
             label: 'Schedule',
             value:
                 task.dueDate != null
-                    ? DateFormat('EEE, MMM d • HH:mm').format(
-                      task.dueDate!,
-                    ) // Format date and time.
-                    : 'No date set', // Display if no due date.
-            onEdit: onReschedule, // Opens date/time picker.
+                    ? DateFormat('EEE, MMM d • HH:mm').format(task.dueDate!)
+                    : 'No date set',
+            onEdit: onReschedule,
           ),
-          const Divider(height: 24, color: AppColors.divider), // Divider.
-          // Priority information with an edit button.
+          const Divider(height: 24, color: AppColors.divider),
+
           _buildInfoItem(
-            icon: CupertinoIcons.flag_fill, // Flag icon.
+            icon: CupertinoIcons.flag_fill,
             label: 'Priority',
             value: 'Level ${task.priority}',
-            valueColor: AppColors.getPriorityColor(
-              task.priority,
-            ), // Color based on priority.
-            onEdit: onChangePriority, // Opens priority picker.
+            valueColor: AppColors.getPriorityColor(task.priority),
+            onEdit: onChangePriority,
           ),
-          const Divider(height: 24, color: AppColors.divider), // Divider.
-          // Color information with an edit button.
+          const Divider(height: 24, color: AppColors.divider),
+
           _buildInfoItem(
-            icon: CupertinoIcons.paintbrush_fill, // Paintbrush icon.
+            icon: CupertinoIcons.paintbrush_fill,
             label: 'Color',
-            value: null, // No text value, using custom widget.
+            value: null,
             customWidget: Container(
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: taskColor, // Display task's color.
+                color: taskColor,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.divider, width: 2),
               ),
             ),
-            onEdit: onChangeColor, // Opens color picker.
+            onEdit: onChangeColor,
           ),
         ],
       ),
     );
   }
 
-  /// Helper widget to build a single info item (icon, label, value, edit button).
   Widget _buildInfoItem({
     required IconData icon,
     required String label,
@@ -104,18 +86,14 @@ class TaskDetailsInfoSection extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: valueColor ?? AppColors.textSecondary,
-        ), // Icon.
+        Icon(icon, size: 20, color: valueColor ?? AppColors.textSecondary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label, // Label (e.g., "Schedule").
+                label,
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.textTertiary,
@@ -124,7 +102,7 @@ class TaskDetailsInfoSection extends StatelessWidget {
               if (value != null) ...[
                 const SizedBox(height: 2),
                 Text(
-                  value, // Value (e.g., "Mon, Aug 21 • 14:30").
+                  value,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -134,7 +112,7 @@ class TaskDetailsInfoSection extends StatelessWidget {
               ],
               if (customWidget != null) ...[
                 const SizedBox(height: 4),
-                customWidget, // Custom widget if provided (e.g., color circle).
+                customWidget,
               ],
             ],
           ),
@@ -142,17 +120,15 @@ class TaskDetailsInfoSection extends StatelessWidget {
         CupertinoButton(
           padding: EdgeInsets.zero,
           minimumSize: const Size(32, 32),
-          onPressed: onEdit, // Edit button action.
+          onPressed: onEdit,
           child: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(
-                20,
-              ), // Subtle accent background.
+              color: AppColors.accent.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              CupertinoIcons.pencil, // Pencil icon.
+              CupertinoIcons.pencil,
               size: 16,
               color: AppColors.accent,
             ),

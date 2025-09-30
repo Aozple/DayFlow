@@ -55,7 +55,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
   bool _showLineNumbers = true;
   bool _wordWrap = false;
 
-  // Language configurations
   late final Map<String, LanguageConfig> _languages;
 
   @override
@@ -69,7 +68,7 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
     _controller.addListener(() {
       widget.onChanged(widget.block.copyWith(code: _controller.text));
       widget.onTextChange(_controller.text, widget.block.id);
-      setState(() {}); // Rebuild for syntax highlighting
+      setState(() {});
     });
   }
 
@@ -298,7 +297,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
       ),
       child: Column(
         children: [
-          // Professional header bar
           Container(
             height: 40,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -308,7 +306,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
             ),
             child: Row(
               children: [
-                // Language selector with icon
                 InkWell(
                   onTap: () => _showLanguageSelector(context),
                   borderRadius: BorderRadius.circular(8),
@@ -351,7 +348,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
 
                 const Spacer(),
 
-                // Editor actions
                 Row(
                   children: [
                     _buildActionButton(
@@ -393,7 +389,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
             ),
           ),
 
-          // Code editor area
           Container(
             constraints: const BoxConstraints(minHeight: 150, maxHeight: 400),
             decoration: const BoxDecoration(
@@ -403,7 +398,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Line numbers column
                 if (_showLineNumbers)
                   Container(
                     width: 50,
@@ -442,17 +436,14 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
                     ),
                   ),
 
-                // Code text field with syntax highlighting
                 Expanded(
                   child: SingleChildScrollView(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(12),
                     child: Stack(
                       children: [
-                        // Syntax highlighted text
                         _buildSyntaxHighlightedText(config),
 
-                        // Transparent input field on top
                         TextField(
                           controller: _controller,
                           focusNode: widget.focusNode,
@@ -498,7 +489,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
       );
     }
 
-    // Process text line by line for proper comment handling
     final lines = text.split('\n');
     final List<TextSpan> allSpans = [];
 
@@ -525,7 +515,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
   List<TextSpan> _highlightLine(String line, LanguageConfig config) {
     final spans = <TextSpan>[];
 
-    // Check if line contains comment
     int commentIndex = -1;
     if (_selectedLanguage == 'python') {
       commentIndex = line.indexOf('#');
@@ -535,15 +524,12 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
       commentIndex = line.indexOf('//');
     }
 
-    // If comment found, split line into code and comment parts
     if (commentIndex != -1) {
       final codePart = line.substring(0, commentIndex);
       final commentPart = line.substring(commentIndex);
 
-      // Highlight code part
       spans.addAll(_highlightCode(codePart, config));
 
-      // Add comment part with comment color
       spans.add(
         TextSpan(
           text: commentPart,
@@ -554,7 +540,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
         ),
       );
     } else {
-      // No comment, highlight entire line
       spans.addAll(_highlightCode(line, config));
     }
 
@@ -564,7 +549,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
   List<TextSpan> _highlightCode(String code, LanguageConfig config) {
     final spans = <TextSpan>[];
 
-    // Split by word boundaries but preserve spaces
     final pattern = RegExp(r'(\b\w+\b|\s+|[^\w\s]+)');
     final matches = pattern.allMatches(code);
 
@@ -572,10 +556,8 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
       final token = match.group(0)!;
 
       if (token.trim().isEmpty) {
-        // Preserve spaces
         spans.add(TextSpan(text: token));
       } else if (config.keywords.contains(token)) {
-        // Keyword
         spans.add(
           TextSpan(
             text: token,
@@ -586,17 +568,14 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
           ),
         );
       } else if (_isString(token)) {
-        // String
         spans.add(
           TextSpan(text: token, style: TextStyle(color: config.stringColor)),
         );
       } else if (_isNumber(token)) {
-        // Number
         spans.add(
           TextSpan(text: token, style: TextStyle(color: config.numberColor)),
         );
       } else {
-        // Default text
         spans.add(TextSpan(text: token));
       }
     }
@@ -718,7 +697,6 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
   }
 }
 
-// Language configuration class
 class LanguageConfig {
   final String name;
   final IconData icon;

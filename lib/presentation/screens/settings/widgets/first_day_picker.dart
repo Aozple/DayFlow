@@ -3,15 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Modal for picking the first day of the week.
-///
-/// This widget provides a simple interface for selecting whether the week
-/// should start on Saturday or Monday, with descriptions of each option.
 class FirstDayPicker extends StatelessWidget {
-  /// The currently selected day ('saturday' or 'monday').
   final String currentDay;
 
-  /// Callback function when a day is selected.
   final Function(String) onDaySelected;
 
   const FirstDayPicker({
@@ -29,12 +23,9 @@ class FirstDayPicker extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Material(
-        type:
-            MaterialType
-                .transparency, // Needed for InkWell/ListTile to work correctly.
+        type: MaterialType.transparency,
         child: Column(
           children: [
-            // Header for the picker.
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
@@ -47,19 +38,19 @@ class FirstDayPicker extends StatelessWidget {
                 children: [
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => Navigator.pop(context), // Cancel button.
+                    onPressed: () => Navigator.pop(context),
                     child: const Text(
                       'Cancel',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                   const Text(
-                    'First Day of Week', // Title.
+                    'First Day of Week',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   CupertinoButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () => Navigator.pop(context), // Done button.
+                    onPressed: () => Navigator.pop(context),
                     child: Text(
                       'Done',
                       style: TextStyle(
@@ -71,13 +62,12 @@ class FirstDayPicker extends StatelessWidget {
                 ],
               ),
             ),
-            // Options for Saturday and Monday.
+
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Saturday option.
                     ListTile(
                       leading: const Icon(
                         CupertinoIcons.calendar,
@@ -101,21 +91,20 @@ class FirstDayPicker extends StatelessWidget {
                       trailing:
                           currentDay == 'saturday'
                               ? Icon(
-                                CupertinoIcons
-                                    .checkmark_circle_fill, // Checkmark if selected.
+                                CupertinoIcons.checkmark_circle_fill,
                                 color: AppColors.accent,
                                 size: 24,
                               )
                               : null,
                       onTap: () {
-                        onDaySelected('saturday'); // Dispatch update event.
-                        Navigator.pop(context); // Close modal.
-                        HapticFeedback.selectionClick(); // Provide haptic feedback.
+                        onDaySelected('saturday');
+                        Navigator.pop(context);
+                        HapticFeedback.selectionClick();
                       },
                     ),
-                    // Divider between options.
+
                     const Divider(height: 1, color: AppColors.divider),
-                    // Monday option.
+
                     ListTile(
                       leading: const Icon(
                         CupertinoIcons.calendar,
@@ -145,9 +134,9 @@ class FirstDayPicker extends StatelessWidget {
                               )
                               : null,
                       onTap: () {
-                        onDaySelected('monday'); // Dispatch update event.
-                        Navigator.pop(context); // Close modal.
-                        HapticFeedback.selectionClick(); // Provide haptic feedback.
+                        onDaySelected('monday');
+                        Navigator.pop(context);
+                        HapticFeedback.selectionClick();
                       },
                     ),
                   ],

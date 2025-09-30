@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
   final String tag;
 
-  // Processing control
   bool _isProcessing = false;
   DateTime? _lastLoadTime;
   static const Duration minLoadInterval = Duration(milliseconds: 500);
@@ -12,7 +11,6 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
   BaseBloc({required this.tag, required State initialState})
     : super(initialState);
 
-  // Check if can process request
   bool canProcess({bool forceRefresh = false}) {
     if (_isProcessing && !forceRefresh) {
       logWarning('Operation in progress');
@@ -30,7 +28,6 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
     return true;
   }
 
-  // Processing lifecycle
   void startProcessing() {
     _isProcessing = true;
     _lastLoadTime = DateTime.now();
@@ -40,10 +37,8 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
     _isProcessing = false;
   }
 
-  // Check processing state
   bool get isProcessing => _isProcessing;
 
-  // Logging shortcuts
   void logInfo(String message, {dynamic data}) {
     DebugLogger.info(message, tag: tag, data: data);
   }
@@ -64,7 +59,6 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
     DebugLogger.verbose(message, tag: tag, data: data);
   }
 
-  // Common error handling
   Future<void> handleError(
     dynamic error,
     Emitter<State> emit,
@@ -81,7 +75,6 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
     }
   }
 
-  // Common operation wrapper
   Future<void> performOperation<T>({
     required String operationName,
     required Future<T> Function() operation,

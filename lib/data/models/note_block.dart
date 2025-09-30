@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Enum representing all possible block types
 enum BlockType {
   text,
   heading,
@@ -14,7 +13,6 @@ enum BlockType {
   picture,
 }
 
-/// Base class for all note blocks
 abstract class NoteBlock extends Equatable {
   final String id;
   final BlockType type;
@@ -24,14 +22,11 @@ abstract class NoteBlock extends Equatable {
   @override
   List<Object> get props => [id, type];
 
-  /// Convert block to JSON for storage
   Map<String, dynamic> toJson();
 
-  /// Create a copy of the block with optional new values
   NoteBlock copyWith({String? id});
 }
 
-/// Text block - a simple paragraph
 class TextBlock extends NoteBlock {
   final String text;
 
@@ -56,10 +51,9 @@ class TextBlock extends NoteBlock {
   }
 }
 
-/// Heading block - with levels 1-6
 class HeadingBlock extends NoteBlock {
   final String text;
-  final int level; // 1-6
+  final int level;
 
   const HeadingBlock({
     required super.id,
@@ -93,7 +87,6 @@ class HeadingBlock extends NoteBlock {
   }
 }
 
-/// Base class for list blocks
 abstract class ListBlock extends NoteBlock {
   final List<String> items;
 
@@ -112,7 +105,6 @@ abstract class ListBlock extends NoteBlock {
   }
 }
 
-/// Bullet list block
 class BulletListBlock extends ListBlock {
   const BulletListBlock({required super.id, required super.items})
     : super(type: BlockType.bulletList);
@@ -130,7 +122,6 @@ class BulletListBlock extends ListBlock {
   }
 }
 
-/// Numbered list block
 class NumberedListBlock extends ListBlock {
   const NumberedListBlock({required super.id, required super.items})
     : super(type: BlockType.numberedList);
@@ -148,7 +139,6 @@ class NumberedListBlock extends ListBlock {
   }
 }
 
-/// Todo list block with checked/unchecked items
 class TodoListBlock extends ListBlock {
   final List<bool> checked;
 
@@ -188,7 +178,6 @@ class TodoListBlock extends ListBlock {
   }
 }
 
-/// Quote block
 class QuoteBlock extends NoteBlock {
   final String text;
 
@@ -213,7 +202,6 @@ class QuoteBlock extends NoteBlock {
   }
 }
 
-/// Code block
 class CodeBlock extends NoteBlock {
   final String code;
   final String? language;
@@ -247,7 +235,6 @@ class CodeBlock extends NoteBlock {
   }
 }
 
-/// Toggle block (collapsible section)
 class ToggleBlock extends NoteBlock {
   final String title;
   final List<NoteBlock> children;
@@ -302,10 +289,9 @@ class ToggleBlock extends NoteBlock {
   }
 }
 
-/// Callout block (highlighted information box)
 class CalloutBlock extends NoteBlock {
   final String text;
-  final String calloutType; // 'info', 'warning', 'error', 'success'
+  final String calloutType;
 
   const CalloutBlock({
     required super.id,
@@ -344,14 +330,13 @@ class CalloutBlock extends NoteBlock {
   }
 }
 
-/// Picture block for images
 class PictureBlock extends NoteBlock {
-  final String? imagePath; // Local path
-  final String? imageUrl; // Remote URL
+  final String? imagePath;
+  final String? imageUrl;
   final String? caption;
   final double? width;
   final double? height;
-  final String? alignment; // 'left', 'center', 'right'
+  final String? alignment;
 
   const PictureBlock({
     required super.id,
@@ -424,7 +409,6 @@ class PictureBlock extends NoteBlock {
   bool get hasImage => imagePath != null || imageUrl != null;
 }
 
-/// Factory to create blocks from JSON
 NoteBlock blockFromJson(Map<String, dynamic> json) {
   final type = BlockType.values.byName(json['type']);
 

@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 
-/// Professional image editor with real crop, draw, and text features
 class ImageEditor extends StatefulWidget {
   final Uint8List imageBytes;
   final Function(Uint8List) onSave;
@@ -25,35 +24,29 @@ class ImageEditor extends StatefulWidget {
 
 class _ImageEditorState extends State<ImageEditor>
     with TickerProviderStateMixin {
-  // Controllers
   late AnimationController _toolbarAnimationController;
   late Animation<double> _toolbarAnimation;
   final GlobalKey _repaintKey = GlobalKey();
   final TransformationController _transformController =
       TransformationController();
 
-  // Image data
   ui.Image? _originalImage;
   ui.Image? _currentImage;
   bool _isLoading = true;
   Size _imageSize = Size.zero;
 
-  // Editing mode
   EditMode _currentMode = EditMode.none;
 
-  // Crop data
   Rect? _cropRect;
   bool _isCropping = false;
   CropHandle _activeCropHandle = CropHandle.none;
   Offset? _dragStartPos;
   Rect? _dragStartRect;
 
-  // Drawing data
   List<DrawingPoint> _drawingPoints = [];
   Color _drawColor = Colors.white;
   double _strokeWidth = 3.0;
 
-  // Text overlays
   List<TextOverlay> _textOverlays = [];
   TextOverlay? _draggingText;
   final TextEditingController _textController = TextEditingController();
@@ -63,7 +56,6 @@ class _ImageEditorState extends State<ImageEditor>
   DateTime? _lastTapTime;
   Offset? _dragOffset;
 
-  // Undo/Redo stacks
   final List<EditAction> _undoStack = [];
   final List<EditAction> _redoStack = [];
 
@@ -131,7 +123,6 @@ class _ImageEditorState extends State<ImageEditor>
 
   void _switchMode(EditMode mode) {
     setState(() {
-      // Save current crop if switching from crop mode
       if (_currentMode == EditMode.crop &&
           _cropRect != null &&
           mode != EditMode.crop) {
@@ -148,11 +139,10 @@ class _ImageEditorState extends State<ImageEditor>
     HapticFeedback.lightImpact();
   }
 
-  // CROP FUNCTIONALITY
   void _startCrop() {
     setState(() {
       _isCropping = true;
-      // Start with full image
+
       _cropRect = Rect.fromLTWH(0, 0, _imageSize.width, _imageSize.height);
     });
   }
@@ -160,13 +150,11 @@ class _ImageEditorState extends State<ImageEditor>
   CropHandle _getCropHandle(Offset localPosition, double scale) {
     if (_cropRect == null) return CropHandle.none;
 
-    const handleRadius = 30.0; // Touch sensitive area
+    const handleRadius = 30.0;
     final rect = _cropRect!;
 
-    // Convert position to image coordinates
     final imagePos = localPosition / scale;
 
-    // Check corners
     if ((imagePos - rect.topLeft).distance < handleRadius) {
       return CropHandle.topLeft;
     }
@@ -180,7 +168,6 @@ class _ImageEditorState extends State<ImageEditor>
       return CropHandle.bottomRight;
     }
 
-    // Check mid-points
     final centerTop = Offset(rect.center.dx, rect.top);
     final centerBottom = Offset(rect.center.dx, rect.bottom);
     final centerLeft = Offset(rect.left, rect.center.dy);
@@ -195,7 +182,6 @@ class _ImageEditorState extends State<ImageEditor>
       return CropHandle.right;
     }
 
-    // Check inside rectangle for move
     if (rect.contains(imagePos)) return CropHandle.move;
 
     return CropHandle.none;
@@ -210,7 +196,6 @@ class _ImageEditorState extends State<ImageEditor>
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
 
-      // Draw only the cropped portion
       canvas.drawImageRect(
         _currentImage!,
         _cropRect!,
@@ -224,7 +209,6 @@ class _ImageEditorState extends State<ImageEditor>
         _cropRect!.height.toInt(),
       );
 
-      // Update current image and size
       setState(() {
         _currentImage?.dispose();
         _currentImage = croppedImage;
@@ -234,7 +218,6 @@ class _ImageEditorState extends State<ImageEditor>
         _isLoading = false;
       });
 
-      // Add to undo stack
       _addToUndoStack(EditAction(type: ActionType.crop, image: croppedImage));
 
       DebugLogger.success('Crop applied', tag: 'ImageEditor');
@@ -251,7 +234,6 @@ class _ImageEditorState extends State<ImageEditor>
     });
   }
 
-  // TEXT FUNCTIONALITY
   void _showAddTextDialog({TextOverlay? existingText}) {
     if (existingText != null) {
       _textController.text = existingText.text;
@@ -295,7 +277,6 @@ class _ImageEditorState extends State<ImageEditor>
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Title
                           Text(
                             existingText != null ? 'Edit Text' : 'Add Text',
                             style: const TextStyle(
@@ -307,7 +288,6 @@ class _ImageEditorState extends State<ImageEditor>
 
                           const SizedBox(height: 20),
 
-                          // Text input
                           TextField(
                             controller: _textController,
                             autofocus: true,
@@ -340,7 +320,6 @@ class _ImageEditorState extends State<ImageEditor>
 
                           const SizedBox(height: 24),
 
-                          // Font size with visual feedback
                           Row(
                             children: [
                               Icon(
@@ -356,7 +335,7 @@ class _ImageEditorState extends State<ImageEditor>
                                 ),
                               ),
                               const Spacer(),
-                              // Size preview
+
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -382,7 +361,6 @@ class _ImageEditorState extends State<ImageEditor>
                           ),
                           const SizedBox(height: 12),
 
-                          // Improved slider with snap points
                           SliderTheme(
                             data: SliderThemeData(
                               activeTrackColor: AppColors.accent,
@@ -399,7 +377,7 @@ class _ImageEditorState extends State<ImageEditor>
                               value: _textFontSize,
                               min: 16,
                               max: 64,
-                              divisions: 12, // Creates snap points
+                              divisions: 12,
                               label: _textFontSize.round().toString(),
                               onChanged: (value) {
                                 setModalState(() {
@@ -414,7 +392,6 @@ class _ImageEditorState extends State<ImageEditor>
 
                           const SizedBox(height: 24),
 
-                          // Color selector with labels
                           Text(
                             'Color',
                             style: TextStyle(
@@ -485,7 +462,6 @@ class _ImageEditorState extends State<ImageEditor>
 
                           const SizedBox(height: 24),
 
-                          // Action buttons
                           Row(
                             children: [
                               if (existingText != null)
@@ -522,7 +498,6 @@ class _ImageEditorState extends State<ImageEditor>
                                     if (_textController.text.isNotEmpty) {
                                       setState(() {
                                         if (existingText != null) {
-                                          // Update existing text
                                           final index = _textOverlays.indexOf(
                                             existingText,
                                           );
@@ -533,7 +508,6 @@ class _ImageEditorState extends State<ImageEditor>
                                             fontSize: _textFontSize,
                                           );
                                         } else {
-                                          // Add new text
                                           _textOverlays.add(
                                             TextOverlay(
                                               text: _textController.text,
@@ -582,7 +556,6 @@ class _ImageEditorState extends State<ImageEditor>
     );
   }
 
-  // DRAWING FUNCTIONALITY
   void _startDrawing(Offset position) {
     setState(() {
       _drawingPoints.add(
@@ -614,7 +587,6 @@ class _ImageEditorState extends State<ImageEditor>
     }
   }
 
-  // UNDO/REDO FUNCTIONALITY
   void _addToUndoStack(EditAction action) {
     setState(() {
       _undoStack.add(action);
@@ -654,7 +626,6 @@ class _ImageEditorState extends State<ImageEditor>
           }
           break;
         case ActionType.crop:
-          // Revert to previous image if available
           break;
       }
     });
@@ -670,13 +641,11 @@ class _ImageEditorState extends State<ImageEditor>
           _textOverlays = List.from(action.textOverlays ?? []);
           break;
         case ActionType.crop:
-          // Apply cropped image
           break;
       }
     });
   }
 
-  // SAVE FUNCTIONALITY
   Future<void> _saveImage() async {
     setState(() => _isLoading = true);
 
@@ -685,10 +654,8 @@ class _ImageEditorState extends State<ImageEditor>
       final canvas = Canvas(recorder);
 
       if (_currentImage != null) {
-        // Draw the current image
         canvas.drawImage(_currentImage!, Offset.zero, Paint());
 
-        // Draw all drawing strokes
         for (final drawing in _drawingPoints) {
           final paint =
               Paint()
@@ -709,7 +676,6 @@ class _ImageEditorState extends State<ImageEditor>
           }
         }
 
-        // Draw all text overlays
         for (final overlay in _textOverlays) {
           final textPainter = TextPainter(
             text: TextSpan(
@@ -733,14 +699,12 @@ class _ImageEditorState extends State<ImageEditor>
           textPainter.paint(canvas, overlay.position);
         }
 
-        // Convert to image
         final picture = recorder.endRecording();
         final finalImage = await picture.toImage(
           _imageSize.width.toInt(),
           _imageSize.height.toInt(),
         );
 
-        // Convert to bytes
         final byteData = await finalImage.toByteData(
           format: ui.ImageByteFormat.png,
         );
@@ -772,16 +736,12 @@ class _ImageEditorState extends State<ImageEditor>
               : Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Main canvas
                   _buildCanvas(),
 
-                  // Top controls
                   _buildTopControls(),
 
-                  // Bottom toolbar
                   _buildBottomToolbar(),
 
-                  // Mode-specific overlays
                   if (_currentMode == EditMode.draw) _buildDrawControls(),
 
                   if (_isCropping) _buildCropControls(),
@@ -808,7 +768,6 @@ class _ImageEditorState extends State<ImageEditor>
               (constraints.maxHeight - scaledHeight) / 2,
             );
 
-            // Helper function to convert screen to image coordinates
             Offset screenToImage(Offset screenPos) {
               return (screenPos - imageOffset) / scale;
             }
@@ -850,10 +809,8 @@ class _ImageEditorState extends State<ImageEditor>
                   if (_lastTapTime != null &&
                       now.difference(_lastTapTime!).inMilliseconds < 300 &&
                       _selectedText == tappedText) {
-                    // Double tap
                     _showAddTextDialog(existingText: tappedText);
                   } else {
-                    // Single tap
                     setState(() {
                       _selectedText = tappedText;
                     });
@@ -883,7 +840,6 @@ class _ImageEditorState extends State<ImageEditor>
                   return;
                 }
 
-                // Text dragging - prioritize selected text
                 if (_selectedText != null) {
                   final textPainter = TextPainter(
                     text: TextSpan(
@@ -908,7 +864,6 @@ class _ImageEditorState extends State<ImageEditor>
                   }
                 }
 
-                // If no selected text, check all texts
                 for (final text in _textOverlays) {
                   final textPainter = TextPainter(
                     text: TextSpan(
@@ -931,7 +886,7 @@ class _ImageEditorState extends State<ImageEditor>
                     });
                     _draggingText = text;
                     _dragStartPos = text.position;
-                    _dragOffset = imagePos - text.position; // مهم!
+                    _dragOffset = imagePos - text.position;
                     break;
                   }
                 }
@@ -948,7 +903,6 @@ class _ImageEditorState extends State<ImageEditor>
                     _cropRect != null &&
                     _dragStartRect != null &&
                     _dragStartPos != null) {
-                  // Handle crop resize
                   setState(() {
                     final delta = imagePos - _dragStartPos!;
 
@@ -1074,7 +1028,6 @@ class _ImageEditorState extends State<ImageEditor>
                   return;
                 }
 
-                // Text dragging
                 if (_draggingText != null && _dragOffset != null) {
                   setState(() {
                     final index = _textOverlays.indexOf(_draggingText!);
@@ -1139,7 +1092,6 @@ class _ImageEditorState extends State<ImageEditor>
                 }
               },
               onPanCancel: () {
-                // Restore original position if drag cancelled
                 if (_draggingText != null && _dragStartPos != null) {
                   setState(() {
                     final index = _textOverlays.indexOf(_draggingText!);
@@ -1204,13 +1156,11 @@ class _ImageEditorState extends State<ImageEditor>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Cancel button
             _buildIconButton(
               icon: CupertinoIcons.xmark,
               onPressed: widget.onCancel,
             ),
 
-            // Undo/Redo
             Row(
               children: [
                 _buildIconButton(
@@ -1225,7 +1175,6 @@ class _ImageEditorState extends State<ImageEditor>
               ],
             ),
 
-            // Save button
             _buildIconButton(
               icon: CupertinoIcons.checkmark,
               onPressed: _saveImage,
@@ -1322,7 +1271,6 @@ class _ImageEditorState extends State<ImageEditor>
             ),
             child: Column(
               children: [
-                // Color selector
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children:
@@ -1359,7 +1307,6 @@ class _ImageEditorState extends State<ImageEditor>
 
                 const SizedBox(height: 12),
 
-                // Stroke width slider
                 Row(
                   children: [
                     Icon(
@@ -1529,7 +1476,6 @@ class _ImageEditorState extends State<ImageEditor>
   }
 }
 
-// Custom painter for rendering
 class ImageEditorPainter extends CustomPainter {
   final ui.Image? image;
   final Rect? cropRect;
@@ -1551,7 +1497,6 @@ class ImageEditorPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (image == null) return;
 
-    // Calculate scale to fit image in canvas
     final scale = math.min(
       size.width / imageSize.width,
       size.height / imageSize.height,
@@ -1568,21 +1513,16 @@ class ImageEditorPainter extends CustomPainter {
     canvas.translate(offset.dx, offset.dy);
     canvas.scale(scale);
 
-    // Draw the image
     canvas.drawImage(image!, Offset.zero, Paint());
 
-    // Draw crop overlay if in crop mode
     if (cropRect != null) {
-      // Darken everything outside crop rect
       final paint = Paint()..color = Colors.black.withAlpha(128);
 
-      // Top
       canvas.drawRect(
         Rect.fromLTWH(0, 0, imageSize.width, cropRect!.top),
         paint,
       );
 
-      // Bottom
       canvas.drawRect(
         Rect.fromLTWH(
           0,
@@ -1593,13 +1533,11 @@ class ImageEditorPainter extends CustomPainter {
         paint,
       );
 
-      // Left
       canvas.drawRect(
         Rect.fromLTWH(0, cropRect!.top, cropRect!.left, cropRect!.height),
         paint,
       );
 
-      // Right
       canvas.drawRect(
         Rect.fromLTWH(
           cropRect!.right,
@@ -1610,7 +1548,6 @@ class ImageEditorPainter extends CustomPainter {
         paint,
       );
 
-      // Draw crop border
       canvas.drawRect(
         cropRect!,
         Paint()
@@ -1619,7 +1556,6 @@ class ImageEditorPainter extends CustomPainter {
           ..strokeWidth = 2,
       );
 
-      // Draw resize handles
       final handlePaint =
           Paint()
             ..color = AppColors.accent
@@ -1627,7 +1563,6 @@ class ImageEditorPainter extends CustomPainter {
 
       const handleSize = 12.0;
 
-      // Helper function to draw handle
       void drawHandle(Offset position) {
         canvas.drawCircle(position, handleSize / 2, handlePaint);
         canvas.drawCircle(
@@ -1640,26 +1575,22 @@ class ImageEditorPainter extends CustomPainter {
         );
       }
 
-      // Corner handles
       drawHandle(cropRect!.topLeft);
       drawHandle(cropRect!.topRight);
       drawHandle(cropRect!.bottomLeft);
       drawHandle(cropRect!.bottomRight);
 
-      // Mid-point handles
       drawHandle(Offset(cropRect!.center.dx, cropRect!.top));
       drawHandle(Offset(cropRect!.center.dx, cropRect!.bottom));
       drawHandle(Offset(cropRect!.left, cropRect!.center.dy));
       drawHandle(Offset(cropRect!.right, cropRect!.center.dy));
 
-      // Draw grid lines
       final gridPaint =
           Paint()
             ..color = Colors.white.withAlpha(50)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 0.5;
 
-      // Vertical lines
       final thirdWidth = cropRect!.width / 3;
       canvas.drawLine(
         Offset(cropRect!.left + thirdWidth, cropRect!.top),
@@ -1672,7 +1603,6 @@ class ImageEditorPainter extends CustomPainter {
         gridPaint,
       );
 
-      // Horizontal lines
       final thirdHeight = cropRect!.height / 3;
       canvas.drawLine(
         Offset(cropRect!.left, cropRect!.top + thirdHeight),
@@ -1686,7 +1616,6 @@ class ImageEditorPainter extends CustomPainter {
       );
     }
 
-    // Draw drawing strokes
     for (final drawing in drawingPoints) {
       if (drawing.points.length > 1) {
         final paint =
@@ -1707,7 +1636,6 @@ class ImageEditorPainter extends CustomPainter {
       }
     }
 
-    // Draw text overlays
     for (final overlay in textOverlays) {
       final textPainter = TextPainter(
         text: TextSpan(
@@ -1729,14 +1657,12 @@ class ImageEditorPainter extends CustomPainter {
       );
       textPainter.layout();
 
-      // Draw text centered at position
       textPainter.paint(
         canvas,
         overlay.position -
             Offset(textPainter.width / 2, textPainter.height / 2),
       );
 
-      // Draw selection border if selected
       if (selectedText == overlay) {
         final rect = Rect.fromCenter(
           center: overlay.position,
@@ -1761,7 +1687,6 @@ class ImageEditorPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// Models
 enum EditMode { none, crop, draw, text }
 
 enum ActionType { crop, draw, text }

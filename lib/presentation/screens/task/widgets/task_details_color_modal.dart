@@ -4,15 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Modal for quickly changing task color.
-///
-/// This widget provides a visual interface for changing the color of a task,
-/// with a grid of color options and selection indicators.
 class TaskDetailsColorModal extends StatelessWidget {
-  /// The current task being modified.
   final TaskModel currentTask;
 
-  /// Callback function when the color changes.
   final Function(String) onColorChanged;
 
   const TaskDetailsColorModal({
@@ -23,14 +17,14 @@ class TaskDetailsColorModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String selectedColorHex = currentTask.color; // Local state for the picker.
+    String selectedColorHex = currentTask.color;
 
     return StatefulBuilder(
       builder: (context, setModalState) {
         return Container(
           height: 320,
           decoration: const BoxDecoration(
-            color: AppColors.surface, // Background color.
+            color: AppColors.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -40,7 +34,6 @@ class TaskDetailsColorModal extends StatelessWidget {
             type: MaterialType.transparency,
             child: Column(
               children: [
-                // Drag handle.
                 Container(
                   margin: const EdgeInsets.only(top: 12),
                   width: 40,
@@ -50,7 +43,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                // Header for the color picker modal.
+
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -61,8 +54,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                     children: [
                       CupertinoButton(
                         padding: EdgeInsets.zero,
-                        onPressed:
-                            () => Navigator.pop(context), // Cancel button.
+                        onPressed: () => Navigator.pop(context),
                         child: const Text(
                           'Cancel',
                           style: TextStyle(
@@ -72,7 +64,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                         ),
                       ),
                       const Text(
-                        'Select Color', // Title.
+                        'Select Color',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
@@ -82,10 +74,8 @@ class TaskDetailsColorModal extends StatelessWidget {
                       CupertinoButton(
                         padding: EdgeInsets.zero,
                         onPressed: () {
-                          onColorChanged(
-                            selectedColorHex,
-                          ); // Update task with selected color.
-                          Navigator.pop(context); // Close modal.
+                          onColorChanged(selectedColorHex);
+                          Navigator.pop(context);
                         },
                         child: Text(
                           'Done',
@@ -99,39 +89,35 @@ class TaskDetailsColorModal extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Divider.
+
                 Container(height: 1, color: AppColors.divider),
-                // Grid of color options.
+
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        // Calculate item size dynamically.
                         final itemSize = (constraints.maxWidth - (3 * 16)) / 4;
                         return Wrap(
-                          spacing: 16, // Horizontal spacing.
-                          runSpacing: 16, // Vertical spacing.
+                          spacing: 16,
+                          runSpacing: 16,
                           children:
                               AppColors.userColors.map((color) {
                                 final colorHex = AppColors.toHex(color);
-                                final isSelected =
-                                    selectedColorHex ==
-                                    colorHex; // Check if this color is selected.
+                                final isSelected = selectedColorHex == colorHex;
                                 return GestureDetector(
                                   onTap: () {
                                     setModalState(() {
-                                      selectedColorHex =
-                                          colorHex; // Update local selection.
+                                      selectedColorHex = colorHex;
                                     });
-                                    HapticFeedback.lightImpact(); // Provide haptic feedback.
+                                    HapticFeedback.lightImpact();
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
                                     width: itemSize,
                                     height: itemSize,
                                     decoration: BoxDecoration(
-                                      color: color, // The actual color.
+                                      color: color,
                                       shape: BoxShape.circle,
                                       boxShadow:
                                           isSelected
@@ -142,25 +128,21 @@ class TaskDetailsColorModal extends StatelessWidget {
                                                   spreadRadius: 2,
                                                 ),
                                               ]
-                                              : [], // No shadow if not selected.
+                                              : [],
                                       border: Border.all(
                                         color:
                                             isSelected
-                                                ? Colors
-                                                    .white // White border if selected.
+                                                ? Colors.white
                                                 : AppColors.divider.withAlpha(
                                                   50,
-                                                ), // Subtle border otherwise.
+                                                ),
                                         width: isSelected ? 3 : 1,
                                       ),
                                     ),
                                     child:
                                         isSelected
                                             ? TweenAnimationBuilder<double>(
-                                              tween: Tween(
-                                                begin: 0,
-                                                end: 1,
-                                              ), // Scale animation for checkmark.
+                                              tween: Tween(begin: 0, end: 1),
                                               duration: const Duration(
                                                 milliseconds: 200,
                                               ),
@@ -168,8 +150,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                                                 return Transform.scale(
                                                   scale: value,
                                                   child: const Icon(
-                                                    CupertinoIcons
-                                                        .checkmark, // Checkmark icon.
+                                                    CupertinoIcons.checkmark,
                                                     color: Colors.white,
                                                     size: 20,
                                                     weight: 700,
@@ -177,7 +158,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                                                 );
                                               },
                                             )
-                                            : null, // No child if not selected.
+                                            : null,
                                   ),
                                 );
                               }).toList(),
@@ -186,7 +167,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Bottom safe area padding.
+
                 SizedBox(height: MediaQuery.of(context).padding.bottom),
               ],
             ),

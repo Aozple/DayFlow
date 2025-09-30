@@ -37,7 +37,6 @@ class HabitLoaded extends HabitState {
     required this.lastUpdated,
   });
 
-  // Runtime constructor
   HabitLoaded.create({
     required this.habits,
     required this.todayInstances,
@@ -84,7 +83,6 @@ class HabitLoaded extends HabitState {
         ((lastUpdated.difference(other.lastUpdated).abs().inSeconds) < 2);
   }
 
-  // Computed properties
   List<HabitModel> get activeHabits =>
       _filterHabits(predicate: (habit) => habit.isActive);
 
@@ -97,7 +95,6 @@ class HabitLoaded extends HabitState {
   List<HabitInstanceModel> get pendingToday =>
       _filterInstances(predicate: (instance) => instance.isPending);
 
-  // Optimized filter helpers
   List<HabitModel> _filterHabits({
     required bool Function(HabitModel) predicate,
   }) {
@@ -146,7 +143,6 @@ class HabitLoaded extends HabitState {
     return grouped;
   }
 
-  // Helper methods
   HabitInstanceModel? getInstanceForHabit(String habitId) {
     try {
       return todayInstances.firstWhere(
@@ -163,7 +159,6 @@ class HabitLoaded extends HabitState {
 
     var filtered = habits.where((habit) => !habit.isDeleted).toList();
 
-    // Apply filters
     if (f.frequencies != null && f.frequencies!.isNotEmpty) {
       filtered =
           filtered.where((h) => f.frequencies!.contains(h.frequency)).toList();
@@ -197,7 +192,6 @@ class HabitLoaded extends HabitState {
               .toList();
     }
 
-    // Apply sorting
     filtered = _sortHabits(filtered, f.sortBy, f.sortAscending);
 
     return filtered;
@@ -249,7 +243,6 @@ class HabitLoaded extends HabitState {
     );
   }
 
-  // Generate efficient signature for habits content
   String _generateHabitsSignature() {
     if (habits.isEmpty) return 'empty';
 
@@ -261,7 +254,6 @@ class HabitLoaded extends HabitState {
     return buffer.toString();
   }
 
-  // Generate efficient signature for instances content
   String _generateInstancesSignature() {
     if (todayInstances.isEmpty) return 'empty';
 
@@ -273,7 +265,6 @@ class HabitLoaded extends HabitState {
     return buffer.toString();
   }
 
-  // Efficient habit content comparison
   bool _habitsContentEqual(List<HabitModel> otherHabits) {
     if (habits.length != otherHabits.length) return false;
 
@@ -290,7 +281,6 @@ class HabitLoaded extends HabitState {
     return true;
   }
 
-  // Efficient instance content comparison
   bool _instancesContentEqual(List<HabitInstanceModel> otherInstances) {
     if (todayInstances.length != otherInstances.length) return false;
 
@@ -364,7 +354,6 @@ class HabitStatistics {
     final completed = todayInstances.where((i) => i.isCompleted).length;
     final pending = todayInstances.where((i) => i.isPending).length;
 
-    // Calculate average streak
     double avgStreak = 0;
     int maxStreak = 0;
     if (activeHabits.isNotEmpty) {
@@ -378,13 +367,11 @@ class HabitStatistics {
           .reduce((a, b) => a > b ? a : b);
     }
 
-    // Group by frequency
     final byFrequency = <HabitFrequency, int>{};
     for (final habit in activeHabits) {
       byFrequency[habit.frequency] = (byFrequency[habit.frequency] ?? 0) + 1;
     }
 
-    // Group by tag
     final byTag = <String, int>{};
     for (final habit in activeHabits) {
       for (final tag in habit.tags) {

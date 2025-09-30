@@ -6,11 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// Compact task display widget optimized for timeline view.
-///
-/// Provides an efficient and visually appealing interface for displaying
-/// and interacting with tasks, including completion tracking and metadata
-/// display with minimal space usage.
 class HomeTaskBlock extends StatefulWidget {
   final TaskModel task;
   final Function(TaskModel) onToggleComplete;
@@ -30,7 +25,6 @@ class HomeTaskBlock extends StatefulWidget {
 class _HomeTaskBlockState extends State<HomeTaskBlock> {
   @override
   Widget build(BuildContext context) {
-    // Determine color scheme based on task color
     final isDefaultColor =
         widget.task.color == '#2C2C2E' || widget.task.color == '#8E8E93';
     final taskColor =
@@ -38,7 +32,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
             ? AppColors.textSecondary
             : AppColors.fromHex(widget.task.color);
 
-    // Safety check for note type
     if (widget.task.isNote) {
       return const SizedBox.shrink();
     }
@@ -50,16 +43,15 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
         decoration: _buildContainerDecoration(taskColor, isDefaultColor),
         child: Row(
           children: [
-            // Color indicator
             _buildColorIndicator(taskColor),
             const SizedBox(width: 12),
-            // Main content
+
             Expanded(child: _buildMainContent(taskColor)),
             const SizedBox(width: 8),
-            // Options button as vertical dots
+
             _buildVerticalOptionsButton(taskColor),
             const SizedBox(width: 8),
-            // Completion checkbox
+
             _buildCompletionCheckbox(taskColor),
           ],
         ),
@@ -67,7 +59,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build container decoration based on task state
   BoxDecoration _buildContainerDecoration(
     Color taskColor,
     bool isDefaultColor,
@@ -103,7 +94,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build vertical options button with three dots
   Widget _buildVerticalOptionsButton(Color taskColor) {
     return GestureDetector(
       onTap: () {
@@ -143,7 +133,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build single dot for options button
   Widget _buildDot(Color color) {
     return Container(
       width: 4,
@@ -152,7 +141,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build color indicator on the left side with priority gradient
   Widget _buildColorIndicator(Color taskColor) {
     final priorityColor = AppColors.getPriorityColor(widget.task.priority);
 
@@ -176,15 +164,13 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build main content area with title and metadata
   Widget _buildMainContent(Color taskColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Title row with priority indicator
         _buildTitleRow(taskColor),
-        // Metadata row
+
         if (_shouldShowMetadata()) ...[
           const SizedBox(height: 6),
           _buildMetadataRow(taskColor),
@@ -193,7 +179,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build title row with priority badge
   Widget _buildTitleRow(Color taskColor) {
     final textColor =
         widget.task.isCompleted
@@ -202,10 +187,9 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
 
     return Row(
       children: [
-        // Priority badge
         _buildPriorityBadge(),
         const SizedBox(width: 8),
-        // Title
+
         Expanded(
           child: Text(
             widget.task.title,
@@ -227,7 +211,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build priority badge with appropriate icon
   Widget _buildPriorityBadge() {
     final priorityColor = AppColors.getPriorityColor(widget.task.priority);
     final isHighPriority = widget.task.priority >= 4;
@@ -249,7 +232,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build metadata row with time and tags
   Widget _buildMetadataRow(Color taskColor) {
     final metadataColor =
         widget.task.isCompleted
@@ -258,7 +240,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
 
     return Row(
       children: [
-        // Time and notification
         if (widget.task.dueDate != null) ...[
           Icon(CupertinoIcons.clock, size: 10, color: metadataColor),
           const SizedBox(width: 4),
@@ -283,7 +264,7 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
           ],
           if (widget.task.tags.isNotEmpty) const SizedBox(width: 12),
         ],
-        // Tags count
+
         if (widget.task.tags.isNotEmpty) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -311,7 +292,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Build completion checkbox with visual feedback
   Widget _buildCompletionCheckbox(Color taskColor) {
     return GestureDetector(
       onTap: () {
@@ -349,7 +329,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     );
   }
 
-  /// Check if metadata should be displayed
   bool _shouldShowMetadata() {
     return widget.task.dueDate != null || widget.task.tags.isNotEmpty;
   }

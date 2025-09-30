@@ -3,11 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Title section widget for note creation and editing.
-///
-/// Provides an interface for entering note title, selecting colors, setting
-/// date/time, and adding tags. Features RTL support and responsive design
-/// for optimal user experience.
 class CreateNoteTitleSection extends StatefulWidget {
   final TextEditingController titleController;
   final FocusNode titleFocus;
@@ -39,11 +34,9 @@ class CreateNoteTitleSection extends StatefulWidget {
 }
 
 class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
-  // Text direction state for RTL support
   TextDirection _titleDirection = TextDirection.ltr;
   TextDirection _tagsDirection = TextDirection.ltr;
 
-  // Focus states for enhanced visual feedback
   bool _isTitleFocused = false;
   final bool _isTagsFocused = false;
 
@@ -61,42 +54,35 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     super.dispose();
   }
 
-  /// Setup text change listeners for RTL detection
   void _setupListeners() {
     widget.titleController.addListener(_onTitleTextChange);
     widget.tagsController.addListener(_onTagsTextChange);
   }
 
-  /// Setup focus listeners for visual feedback
   void _setupFocusListeners() {
     widget.titleFocus.addListener(() {
       setState(() => _isTitleFocused = widget.titleFocus.hasFocus);
     });
   }
 
-  /// Remove listeners to prevent memory leaks
   void _removeListeners() {
     widget.titleController.removeListener(_onTitleTextChange);
     widget.tagsController.removeListener(_onTagsTextChange);
   }
 
-  /// Handle title text changes with direction detection
   void _onTitleTextChange() {
     _updateTextDirection(widget.titleController.text, isTitle: true);
   }
 
-  /// Handle tags text changes with direction detection
   void _onTagsTextChange() {
     _updateTextDirection(widget.tagsController.text, isTitle: false);
   }
 
-  /// Detect and set initial text directions
   void _updateTextDirections() {
     _updateTextDirection(widget.titleController.text, isTitle: true);
     _updateTextDirection(widget.tagsController.text, isTitle: false);
   }
 
-  /// Update text direction based on character analysis
   void _updateTextDirection(String text, {required bool isTitle}) {
     if (text.isEmpty) return;
 
@@ -111,36 +97,30 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     }
   }
 
-  /// Detect RTL characters using Unicode ranges
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms A
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
-  /// Get selected color as Color object
   Color get _selectedColor => AppColors.fromHex(widget.selectedColor);
 
-  /// Get contextual placeholder text for title
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl
           ? 'عنوان یادداشت...'
           : 'Note title...';
 
-  /// Get contextual placeholder text for tags
   String get _tagsPlaceholder =>
       _tagsDirection == TextDirection.rtl
           ? 'برچسب (با کاما جدا کنید)...'
           : 'Add tags (comma separated)...';
 
-  /// Format time for display
   String _formatTime(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
-  /// Format date for display
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}';
   }
@@ -178,7 +158,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build title section with color indicator and date/time controls
   Widget _buildTitleSection() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -193,7 +172,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build color indicator with enhanced styling
   Widget _buildColorIndicator() {
     return GestureDetector(
       onTap: () {
@@ -229,7 +207,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build title input field with focus styling
   Widget _buildTitleField() {
     return Expanded(
       child: Container(
@@ -269,7 +246,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build date and time selection buttons
   Widget _buildDateTimeButtons() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -277,7 +253,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build date selection button
   Widget _buildDateButton() {
     return CupertinoButton(
       padding: EdgeInsets.zero,
@@ -329,7 +304,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build time selection button
   Widget _buildTimeButton() {
     return CupertinoButton(
       padding: EdgeInsets.zero,
@@ -381,7 +355,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build tags section with icon
   Widget _buildTagsSection() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -431,7 +404,6 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
     );
   }
 
-  /// Build section divider with gradient
   Widget _buildDivider() {
     return Container(
       height: 2,

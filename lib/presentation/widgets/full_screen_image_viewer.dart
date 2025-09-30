@@ -23,14 +23,12 @@ class FullScreenImageViewer extends StatefulWidget {
 
 class _FullScreenImageViewerState extends State<FullScreenImageViewer>
     with TickerProviderStateMixin {
-  // Controllers
   late TransformationController _transformationController;
   late AnimationController _overlayAnimationController;
   late AnimationController _transformAnimationController;
   late Animation<double> _overlayAnimation;
   late Animation<Matrix4> _transformAnimation;
 
-  // State
   bool _showOverlay = true;
   bool _isLoading = true;
   double _currentScale = 1.0;
@@ -148,7 +146,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
     final isZoomedIn = _currentScale > 1.5;
 
     if (isZoomedIn) {
-      // Reset zoom
       _transformAnimationController.reset();
       _transformAnimation = Matrix4Tween(
         begin: _transformationController.value,
@@ -187,24 +184,19 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
         return;
       }
 
-      // Zoom in at tap location
       final tapPosition = _doubleTapDetails!.localPosition;
       const targetScale = 2.5;
 
-      // Get current matrix values
       final currentMatrix = _transformationController.value;
       final currentScale = currentMatrix.getMaxScaleOnAxis();
       final currentTranslation = currentMatrix.getTranslation();
 
-      // Calculate the position of the tap in the scaled coordinate system
       final scaledTapX = (tapPosition.dx - currentTranslation.x) / currentScale;
       final scaledTapY = (tapPosition.dy - currentTranslation.y) / currentScale;
 
-      // Calculate new translation to center the tap point
       final newTranslationX = tapPosition.dx - (scaledTapX * targetScale);
       final newTranslationY = tapPosition.dy - (scaledTapY * targetScale);
 
-      // Create target matrix
       final targetMatrix =
           Matrix4.identity()
             ..translateByDouble(newTranslationX, newTranslationY, 0.0, 0.0)
@@ -478,7 +470,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Main image with zoom capabilities
             Hero(
               tag: widget.heroTag,
               child: GestureDetector(
@@ -556,7 +547,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
               ),
             ),
 
-            // Loading indicator
             if (_isLoading)
               const Center(
                 child: CupertinoActivityIndicator(
@@ -565,7 +555,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                 ),
               ),
 
-            // Top buttons - positioned individually
             AnimatedBuilder(
               animation: _overlayAnimation,
               builder: (context, child) {
@@ -577,7 +566,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                     child: SafeArea(
                       child: Stack(
                         children: [
-                          // Close button (top left)
                           Positioned(
                             top: 16,
                             left: 16,
@@ -594,7 +582,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                             ),
                           ),
 
-                          // Top right buttons
                           Positioned(
                             top: 16,
                             right: 16,
@@ -631,7 +618,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
               },
             ),
 
-            // Bottom info
             AnimatedBuilder(
               animation: _overlayAnimation,
               builder: (context, child) {
@@ -692,7 +678,6 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
               },
             ),
 
-            // Zoom indicator (top right)
             Positioned(
               top: 125,
               right: 16,

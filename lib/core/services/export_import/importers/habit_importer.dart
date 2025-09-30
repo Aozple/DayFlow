@@ -10,9 +10,6 @@ class HabitImporter extends BaseImporter {
 
   HabitImporter({required this.repository}) : super(tag: 'HabitImporter');
 
-  // MARK: - Import Methods
-
-  /// Imports habits from a JSON list.
   Future<ImportResult> importFromJson(
     List<dynamic> habitsData, {
     List<dynamic>? instancesData,
@@ -78,7 +75,6 @@ class HabitImporter extends BaseImporter {
     }
   }
 
-  /// Imports habits from a CSV string.
   Future<ImportResult> importFromCsv(String csvString) async {
     try {
       logInfo('Starting CSV import');

@@ -15,7 +15,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
   final NotificationService _notificationService =
       GetIt.I<NotificationService>();
 
-  // Last processed values to avoid duplicate processing
   String? _lastSearchQuery;
 
   TaskBloc() : super(tag: 'TaskBloc', initialState: const TaskInitial()) {
@@ -30,7 +29,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     on<FilterTasks>(_onFilterTasks);
   }
 
-  // Refresh current state with optimized repository calls
   Future<TaskLoaded> _refreshTasksState({DateTime? selectedDate}) async {
     final tasks = _repository.getAll(operationType: 'read');
 
@@ -74,7 +72,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     try {
       logInfo('Loading by date: ${event.date.toString().split(' ')[0]}');
 
-      // Load all tasks with new selected date
       final refreshedState = await _refreshTasksState(selectedDate: event.date);
 
       emit(refreshedState);
@@ -87,7 +84,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     } catch (e) {
       logError('Date filter failed', error: e);
 
-      // Fallback: keep current state but update date
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
         emit(currentState.copyWith(selectedDate: event.date));
@@ -169,7 +165,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     SearchTasks event,
     Emitter<TaskState> emit,
   ) async {
-    // Skip if same query
     if (_lastSearchQuery == event.query) {
       logVerbose('Skipping duplicate search query');
       return;
@@ -181,13 +176,11 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
 
-        // Create search filter efficiently
         final searchFilter =
             event.query.trim().isNotEmpty
                 ? TaskFilter(searchQuery: event.query.trim())
                 : null;
 
-        // Only emit if filter actually changed
         if (_filterActuallyChanged(currentState.activeFilter, searchFilter)) {
           emit(currentState.copyWith(activeFilter: searchFilter));
           logSuccess('Search filter applied');
@@ -210,7 +203,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
 
-        // Only emit if filter actually changed
         if (_filterActuallyChanged(currentState.activeFilter, event.filter)) {
           emit(currentState.copyWith(activeFilter: event.filter));
           logSuccess('Filter applied');
@@ -228,7 +220,6 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     add(const LoadTasks());
   }
 
-  // Helper to check if filter actually changed
   bool _filterActuallyChanged(TaskFilter? oldFilter, TaskFilter? newFilter) {
     if (oldFilter == null && newFilter == null) return false;
     if (oldFilter == null || newFilter == null) return true;

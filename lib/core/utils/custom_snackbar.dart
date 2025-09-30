@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 class CustomSnackBar {
   CustomSnackBar._();
 
-  // MARK: - General SnackBar
-
-  /// Shows a customizable snackbar notification.
   static void show({
     required BuildContext context,
     required String message,
@@ -120,19 +117,14 @@ class CustomSnackBar {
     );
   }
 
-  // MARK: - Specific SnackBar Types
-
-  /// Shows a success snackbar.
   static void success(BuildContext context, String message) {
     show(context: context, message: message, isSuccess: true);
   }
 
-  /// Shows an error snackbar.
   static void error(BuildContext context, String message) {
     show(context: context, message: message, isSuccess: false);
   }
 
-  /// Shows an info snackbar with a primary color gradient.
   static void info(BuildContext context, String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
 
@@ -215,7 +207,6 @@ class CustomSnackBar {
     );
   }
 
-  /// Shows a warning snackbar with an orange gradient.
   static void warning(BuildContext context, String message) {
     ScaffoldMessenger.of(context).clearSnackBars();
 
@@ -295,14 +286,10 @@ class CustomSnackBar {
     );
   }
 
-  // MARK: - Control Methods
-
-  /// Hides the current snackbar with animation.
   static void hide(BuildContext context) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 
-  /// Hides all snackbars immediately.
   static void hideImmediately(BuildContext context) {
     ScaffoldMessenger.of(context).clearSnackBars();
   }

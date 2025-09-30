@@ -3,7 +3,6 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/note_block.dart';
 import 'base_block_widget.dart';
 
-// Shared list item widget for better code reuse with RTL support
 class _ListItemWidget extends StatelessWidget {
   final int index;
   final TextEditingController controller;
@@ -49,7 +48,6 @@ class _ListItemWidget extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Prefix (bullet, number, or checkbox) - auto positioned by Directionality
             Container(
               width: 36,
               padding: const EdgeInsets.only(top: 14),
@@ -57,7 +55,6 @@ class _ListItemWidget extends StatelessWidget {
               child: prefix,
             ),
 
-            // Text field
             Expanded(
               child: TextField(
                 controller: controller,
@@ -95,7 +92,6 @@ class _ListItemWidget extends StatelessWidget {
               ),
             ),
 
-            // Remove button - auto positioned by Directionality
             if (showRemoveButton)
               Container(
                 margin: const EdgeInsets.only(top: 8, right: 8),
@@ -124,7 +120,6 @@ class _ListItemWidget extends StatelessWidget {
   }
 }
 
-// Base class for all list widgets with RTL support
 abstract class _BaseListWidget<T extends NoteBlock> extends StatefulWidget {
   final T block;
   final FocusNode focusNode;
@@ -186,7 +181,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
   void didUpdateWidget(W oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (items.length != _controllers.length) {
-      // Rebuild controllers if items count changed
       for (final controller in _controllers) {
         controller.dispose();
       }
@@ -217,7 +211,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
     }
   }
 
-  // Detect text direction based on first character
   TextDirection _detectTextDirection(String text) {
     if (text.isEmpty) return TextDirection.ltr;
 
@@ -228,7 +221,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
     return _isRTLCharacter(firstChar) ? TextDirection.rtl : TextDirection.ltr;
   }
 
-  // Strip markdown and formatting for direction detection
   String _stripMarkdown(String text) {
     return text
         .replaceAll(RegExp(r'\*{1,3}'), '')
@@ -237,18 +229,15 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
         .replaceAll(RegExp(r'<[^>]+>'), '');
   }
 
-  // Check if character belongs to RTL script (Arabic/Persian/Hebrew)
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms A
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
-  // Get bilingual hint text based on predominant direction
   String _getBilingualHintText() {
-    // Check if any item has RTL content
     final hasRTLContent = _textDirections.any(
       (dir) => dir == TextDirection.rtl,
     );
@@ -275,7 +264,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // List type indicator with item count
           Container(
             margin: const EdgeInsets.only(bottom: 8),
             child: Row(
@@ -322,7 +310,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
             ),
           ),
 
-          // List items with stable structure
           for (int i = 0; i < items.length; i++)
             _ListItemWidget(
               index: i,
@@ -346,7 +333,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
                       : TextDirection.ltr,
             ),
 
-          // Add item button
           Container(
             margin: const EdgeInsets.only(top: 8),
             child: InkWell(
@@ -412,7 +398,6 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
   }
 }
 
-// Bullet List Implementation
 class BulletListBlockWidget extends BaseBlockWidget {
   final BulletListBlock block;
   final Function(BulletListBlock) onChanged;
@@ -474,7 +459,6 @@ class _BulletListWidgetState
     final newItems = List<String>.from(widget.block.items)..add('');
     widget.onChanged(widget.block.copyWith(items: newItems));
 
-    // Focus new item after rebuild
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _focusNodes.isNotEmpty) {
         _focusNodes.last.requestFocus();
@@ -502,7 +486,6 @@ class _BulletListWidgetState
   }
 }
 
-// Numbered List Implementation
 class NumberedListBlockWidget extends BaseBlockWidget {
   final NumberedListBlock block;
   final Function(NumberedListBlock) onChanged;
@@ -564,7 +547,6 @@ class _NumberedListWidgetState
     final newItems = List<String>.from(widget.block.items)..add('');
     widget.onChanged(widget.block.copyWith(items: newItems));
 
-    // Focus new item after rebuild
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _focusNodes.isNotEmpty) {
         _focusNodes.last.requestFocus();
@@ -603,7 +585,6 @@ class _NumberedListWidgetState
   }
 }
 
-// Todo List Implementation
 class TodoListBlockWidget extends BaseBlockWidget {
   final TodoListBlock block;
   final Function(TodoListBlock) onChanged;
@@ -668,7 +649,6 @@ class _TodoListWidgetState
       widget.block.copyWith(items: newItems, checked: newChecked),
     );
 
-    // Focus new item after rebuild
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _focusNodes.isNotEmpty) {
         _focusNodes.last.requestFocus();

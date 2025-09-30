@@ -2,7 +2,6 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Single date item in the date selector
 class HomeDateItem extends StatelessWidget {
   final DateTime date;
   final DateTime selectedDate;
@@ -64,7 +63,6 @@ class HomeDateItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Day name (MON, TUE, etc.)
               Text(
                 _getDayName(date),
                 style: TextStyle(
@@ -80,7 +78,7 @@ class HomeDateItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              // Day number
+
               Text(
                 date.day.toString(),
                 style: TextStyle(
@@ -94,7 +92,7 @@ class HomeDateItem extends StatelessWidget {
                           : AppColors.textPrimary,
                 ),
               ),
-              // Today indicator dot
+
               if (isToday && !isSelected) ...[
                 const SizedBox(height: 2),
                 Container(
@@ -114,10 +112,8 @@ class HomeDateItem extends StatelessWidget {
     );
   }
 
-  /// Get 3-letter day name based on first day of week setting
   String _getDayName(DateTime date) {
     if (isSaturdayFirst) {
-      // Custom day names for Saturday-first week
       switch (date.weekday) {
         case 6:
           return 'SAT';
@@ -137,12 +133,10 @@ class HomeDateItem extends StatelessWidget {
           return DateFormat('E').format(date).substring(0, 3).toUpperCase();
       }
     } else {
-      // Standard 3-letter day names
       return DateFormat('E').format(date).substring(0, 3).toUpperCase();
     }
   }
 
-  /// Check if two dates are the same day
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }

@@ -58,16 +58,14 @@ class _PictureBlockContent extends StatefulWidget {
 
 class _PictureBlockContentState extends State<_PictureBlockContent>
     with SingleTickerProviderStateMixin {
-  // Image picker and controllers
   final ImagePicker _picker = ImagePicker();
   late TextEditingController _captionController;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  // State management
   bool _isLoading = false;
   bool _isEditingCaption = false;
-  bool _isEditingImage = false; // New flag to prevent multiple editor opens
+  bool _isEditingImage = false;
   TextDirection _captionDirection = TextDirection.ltr;
   File? _imageFile;
 
@@ -91,7 +89,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     super.dispose();
   }
 
-  // Initialize all controllers and animations
   void _initializeControllers() {
     DebugLogger.debug('Initializing controllers', tag: 'PictureBlock');
 
@@ -113,7 +110,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     _animationController.forward();
   }
 
-  // Load existing image from storage
   void _loadImage() {
     if (widget.block.imagePath != null && widget.block.imagePath!.isNotEmpty) {
       final imageFile = File(widget.block.imagePath!);
@@ -136,7 +132,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     }
   }
 
-  // Detect text direction for RTL languages
   void _updateCaptionDirection() {
     final text = _captionController.text;
     if (text.isEmpty) return;
@@ -155,16 +150,14 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     }
   }
 
-  // Check if character is RTL (Arabic, Hebrew, etc.)
   bool _isRTLCharacter(int char) {
-    return (char >= 0x0600 && char <= 0x06FF) || // Arabic
-        (char >= 0x0750 && char <= 0x077F) || // Arabic Supplement
-        (char >= 0xFB50 && char <= 0xFDFF) || // Arabic Presentation Forms
-        (char >= 0xFE70 && char <= 0xFEFF) || // Arabic Presentation Forms-B
-        (char >= 0x0590 && char <= 0x05FF); // Hebrew
+    return (char >= 0x0600 && char <= 0x06FF) ||
+        (char >= 0x0750 && char <= 0x077F) ||
+        (char >= 0xFB50 && char <= 0xFDFF) ||
+        (char >= 0xFE70 && char <= 0xFEFF) ||
+        (char >= 0x0590 && char <= 0x05FF);
   }
 
-  // Pick image from camera or gallery
   Future<void> _pickImage(ImageSource source) async {
     if (_isLoading || _isEditingImage) {
       DebugLogger.warning(
@@ -213,7 +206,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     }
   }
 
-  // Open ProImageEditor with proper error handling
   Future<void> _openImageEditor(String imagePath) async {
     if (_isEditingImage) {
       DebugLogger.warning('Image editor already open', tag: 'ImageEditor');
@@ -248,7 +240,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
           return;
         }
 
-        // Open image editor with Frosted Glass design
         await Navigator.push<Uint8List?>(
           context,
           MaterialPageRoute(
@@ -261,7 +252,7 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
                       tag: 'ImageEditor',
                       data: '${bytes.length} bytes',
                     );
-                    // Save the edited image when user confirms
+
                     await _saveEditedImage(bytes);
                   },
                 ),
@@ -288,7 +279,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     });
   }
 
-  // Save edited image to app directory
   Future<void> _saveEditedImage(Uint8List imageBytes) async {
     DebugLogger.debug(
       'Starting to save edited image',
@@ -322,7 +312,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     }
   }
 
-  // Edit existing image
   Future<void> _editExistingImage() async {
     if (_imageFile != null && _imageFile!.existsSync() && !_isEditingImage) {
       DebugLogger.info(
@@ -341,7 +330,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     }
   }
 
-  // Show image source selection dialog
   void _showImageSourceDialog() {
     if (_isLoading || _isEditingImage) {
       DebugLogger.warning(
@@ -403,7 +391,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Remove image with confirmation
   void _removeImage() {
     if (_isLoading || _isEditingImage) {
       DebugLogger.warning(
@@ -454,7 +441,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Update caption and exit edit mode
   void _updateCaption() {
     DebugLogger.debug(
       'Updating caption',
@@ -469,7 +455,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     DebugLogger.success('Caption updated successfully', tag: 'PictureBlock');
   }
 
-  // Show error message to user
   void _showError(String message) {
     if (!mounted) return;
 
@@ -484,7 +469,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Build main image content area
   Widget _buildImageContent() {
     if (_imageFile == null || !_imageFile!.existsSync()) {
       return _buildEmptyState();
@@ -492,7 +476,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
 
     return Stack(
       children: [
-        // Main image with hero animation
         Hero(
           tag: 'image_${widget.block.id}',
           child: GestureDetector(
@@ -528,7 +511,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
           ),
         ),
 
-        // Action buttons overlay
         Positioned(
           top: 8,
           left: 8,
@@ -573,7 +555,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Build empty state when no image is selected
   Widget _buildEmptyState() {
     return GestureDetector(
       onTap: (_isLoading || _isEditingImage) ? null : _showImageSourceDialog,
@@ -626,7 +607,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Build error widget when image fails to load
   Widget _buildErrorWidget() {
     return Container(
       height: 200,
@@ -678,7 +658,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Build caption input field
   Widget _buildCaptionField() {
     if (!widget.block.hasImage && !_isEditingCaption) {
       return const SizedBox.shrink();
@@ -795,7 +774,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Build action button with proper state handling
   Widget _buildActionButton({
     required IconData icon,
     required String tooltip,
@@ -844,7 +822,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
     );
   }
 
-  // Show full screen image viewer
   void _showFullScreenImage() {
     if (_imageFile == null || !_imageFile!.existsSync()) return;
 
@@ -875,7 +852,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Loading indicator or image content
             if (_isLoading)
               Container(
                 height: 200,
@@ -903,7 +879,6 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
             else
               _buildImageContent(),
 
-            // Caption input field
             _buildCaptionField(),
           ],
         ),

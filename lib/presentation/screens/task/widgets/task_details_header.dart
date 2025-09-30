@@ -3,21 +3,11 @@ import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Header widget for task details screen.
-///
-/// Provides navigation controls and displays task status information
-/// with consistent styling matching other app headers.
 class TaskDetailsHeader extends StatelessWidget {
-  /// The task to display in the header.
   final TaskModel task;
-
-  /// Callback function when the back button is pressed.
   final VoidCallback onBackPressed;
-
-  /// Callback function when the more options button is pressed.
   final VoidCallback onMoreOptions;
 
-  // Button dimensions
   static const double _buttonHeight = 40.0;
 
   const TaskDetailsHeader({
@@ -50,27 +40,21 @@ class TaskDetailsHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Back button
           _buildBackButton(),
-
-          // Title and status section
           _buildTitleSection(),
-
-          // More options button
           _buildMoreOptionsButton(),
         ],
       ),
     );
   }
 
-  /// Build back navigation button
   Widget _buildBackButton() {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onBackPressed,
       child: Container(
         height: _buttonHeight,
-        width: _buttonHeight, // Square button
+        width: _buttonHeight,
         decoration: BoxDecoration(
           color: AppColors.textSecondary.withAlpha(10),
           borderRadius: BorderRadius.circular(8),
@@ -90,13 +74,11 @@ class TaskDetailsHeader extends StatelessWidget {
     );
   }
 
-  /// Build title section with task name and completion status
   Widget _buildTitleSection() {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Task title
           Text(
             task.title,
             style: const TextStyle(
@@ -110,14 +92,12 @@ class TaskDetailsHeader extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 2),
-          // Completion status indicator
           _buildStatusIndicator(),
         ],
       ),
     );
   }
 
-  /// Build status indicator showing completion state
   Widget _buildStatusIndicator() {
     final isCompleted = task.isCompleted;
     final statusColor = isCompleted ? AppColors.success : AppColors.accent;
@@ -152,14 +132,13 @@ class TaskDetailsHeader extends StatelessWidget {
     );
   }
 
-  /// Build more options button
   Widget _buildMoreOptionsButton() {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onMoreOptions,
       child: Container(
         height: _buttonHeight,
-        width: _buttonHeight, // Square button
+        width: _buttonHeight,
         decoration: BoxDecoration(
           color: AppColors.accent.withAlpha(15),
           borderRadius: BorderRadius.circular(8),

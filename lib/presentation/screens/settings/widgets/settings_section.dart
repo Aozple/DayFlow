@@ -1,18 +1,11 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// A reusable widget to build a section container with a title and icon.
-///
-/// This widget provides a consistent container for grouping related settings
-/// options together, with a section header that includes an icon and title.
 class SettingsSection extends StatelessWidget {
-  /// The title of the section.
   final String title;
 
-  /// The icon to display in the section header.
   final IconData icon;
 
-  /// The list of widgets to display as children in the section.
   final List<Widget> children;
   const SettingsSection({
     super.key,
@@ -33,7 +26,6 @@ class SettingsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section header with icon and title
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -70,7 +62,7 @@ class SettingsSection extends StatelessWidget {
               ],
             ),
           ),
-          // The content of the section (list of tiles)
+
           ...children,
         ],
       ),

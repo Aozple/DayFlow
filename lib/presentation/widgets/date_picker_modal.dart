@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Clean date picker modal optimized for performance and design
 class DatePickerModal extends StatefulWidget {
   final DateTime selectedDate;
   final Function(DateTime) onDateSelected;
@@ -58,12 +57,10 @@ class _DatePickerModalState extends State<DatePickerModal> {
     _setupDates();
   }
 
-  /// Setup and normalize dates to prevent assertion errors
   void _setupDates() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Normalize all dates to midnight to avoid time comparison issues
     _effectiveMinDate =
         widget.minDate != null
             ? _normalizeToMidnight(widget.minDate!)
@@ -74,10 +71,8 @@ class _DatePickerModalState extends State<DatePickerModal> {
             ? _normalizeToMidnight(widget.maxDate!)
             : today.add(const Duration(days: 365 * 2));
 
-    // Normalize current date
     _currentDate = _normalizeToMidnight(widget.selectedDate);
 
-    // Ensure current date is within bounds
     if (_currentDate.isBefore(_effectiveMinDate)) {
       _currentDate = _effectiveMinDate;
     } else if (_currentDate.isAfter(_effectiveMaxDate)) {
@@ -85,7 +80,6 @@ class _DatePickerModalState extends State<DatePickerModal> {
     }
   }
 
-  /// Normalize datetime to midnight (00:00:00)
   DateTime _normalizeToMidnight(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
@@ -108,7 +102,6 @@ class _DatePickerModalState extends State<DatePickerModal> {
   bool get _hasChanges => !_isSameDay(_currentDate, widget.selectedDate);
 
   bool _isSameDay(DateTime a, DateTime b) {
-    // Normalize both dates before comparison
     final normalizedA = DateTime(a.year, a.month, a.day);
     final normalizedB = DateTime(b.year, b.month, b.day);
 
@@ -220,14 +213,12 @@ class _DatePickerModalState extends State<DatePickerModal> {
   Widget _buildQuickOptions() {
     final now = DateTime.now();
 
-    // Create normalized dates for comparison
     final todayDate = DateTime(now.year, now.month, now.day);
     final tomorrowDate = DateTime(now.year, now.month, now.day + 1);
     final nextWeekDate = DateTime(now.year, now.month, now.day + 7);
 
     final quickDates = <(DateTime, String)>[];
 
-    // Check if each date is within bounds and add to list
     if (!todayDate.isBefore(_effectiveMinDate) &&
         !todayDate.isAfter(_effectiveMaxDate)) {
       quickDates.add((todayDate, 'Today'));

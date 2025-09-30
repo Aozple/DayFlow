@@ -1,7 +1,6 @@
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 
-/// Action sheet for note operations
 class HomeNoteOptionsSheet extends StatelessWidget {
   final TaskModel note;
   final VoidCallback onEdit;
@@ -22,7 +21,6 @@ class HomeNoteOptionsSheet extends StatelessWidget {
       title: Text(note.title, style: const TextStyle(fontSize: 16)),
       message: const Text('What would you like to do with this note?'),
       actions: [
-        // Edit option
         CupertinoActionSheetAction(
           onPressed: onEdit,
           child: const Row(
@@ -34,7 +32,7 @@ class HomeNoteOptionsSheet extends StatelessWidget {
             ],
           ),
         ),
-        // Duplicate option
+
         CupertinoActionSheetAction(
           onPressed: onDuplicate,
           child: const Row(
@@ -46,7 +44,7 @@ class HomeNoteOptionsSheet extends StatelessWidget {
             ],
           ),
         ),
-        // Delete option (red)
+
         CupertinoActionSheetAction(
           isDestructiveAction: true,
           onPressed: onDelete,
@@ -60,7 +58,7 @@ class HomeNoteOptionsSheet extends StatelessWidget {
           ),
         ),
       ],
-      // Cancel button
+
       cancelButton: CupertinoActionSheetAction(
         isDefaultAction: true,
         onPressed: () => Navigator.pop(context),
