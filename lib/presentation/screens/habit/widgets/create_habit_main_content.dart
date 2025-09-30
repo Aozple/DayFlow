@@ -3,11 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Main content widget for habit creation and editing.
-///
-/// Provides an intuitive interface for entering habit details including title,
-/// description, tags, start date, and time scheduling options. Features RTL support,
-/// flexible time options, and responsive design for optimal user experience.
 class CreateHabitMainContent extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
@@ -45,12 +40,10 @@ class CreateHabitMainContent extends StatefulWidget {
 }
 
 class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
-  // Text direction state for RTL support
   TextDirection _titleDirection = TextDirection.ltr;
   TextDirection _descriptionDirection = TextDirection.ltr;
   TextDirection _tagsDirection = TextDirection.ltr;
 
-  // Focus states for enhanced visual feedback
   bool _isTitleFocused = false;
   bool _isDescriptionFocused = false;
   final bool _isTagsFocused = false;
@@ -69,14 +62,12 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     super.dispose();
   }
 
-  /// Setup text change listeners for dynamic updates
   void _setupTextListeners() {
     widget.titleController.addListener(_onTitleChanged);
     widget.descriptionController.addListener(_onDescriptionChanged);
     widget.tagsController.addListener(_onTagsChanged);
   }
 
-  /// Setup focus listeners for enhanced visual feedback
   void _setupFocusListeners() {
     widget.titleFocus.addListener(() {
       setState(() => _isTitleFocused = widget.titleFocus.hasFocus);
@@ -87,14 +78,12 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     });
   }
 
-  /// Remove listeners to prevent memory leaks
   void _removeTextListeners() {
     widget.titleController.removeListener(_onTitleChanged);
     widget.descriptionController.removeListener(_onDescriptionChanged);
     widget.tagsController.removeListener(_onTagsChanged);
   }
 
-  /// Handle title text changes with direction detection
   void _onTitleChanged() {
     _updateTextDirection(
       widget.titleController.text,
@@ -103,7 +92,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     widget.onChanged();
   }
 
-  /// Handle description text changes with direction detection
   void _onDescriptionChanged() {
     _updateTextDirection(
       widget.descriptionController.text,
@@ -112,7 +100,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     widget.onChanged();
   }
 
-  /// Handle tags text changes with direction detection
   void _onTagsChanged() {
     _updateTextDirection(
       widget.tagsController.text,
@@ -121,7 +108,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     widget.onChanged();
   }
 
-  /// Detect and set initial text directions
   void _detectTextDirections() {
     _updateTextDirection(
       widget.titleController.text,
@@ -137,7 +123,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Update text direction based on character analysis
   void _updateTextDirection(String text, {required _TextFieldType field}) {
     if (text.isEmpty) return;
 
@@ -163,43 +148,34 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     }
   }
 
-  /// Detect RTL text using Unicode ranges
   bool _isRTLText(String text) {
     final firstChar = text.trim().runes.first;
-    return (firstChar >= 0x0600 && firstChar <= 0x06FF) || // Arabic
-        (firstChar >= 0x0750 && firstChar <= 0x077F) || // Arabic Supplement
-        (firstChar >= 0xFB50 &&
-            firstChar <= 0xFDFF) || // Arabic Presentation Forms A
-        (firstChar >= 0xFE70 &&
-            firstChar <= 0xFEFF) || // Arabic Presentation Forms B
-        (firstChar >= 0x0590 && firstChar <= 0x05FF); // Hebrew
+    return (firstChar >= 0x0600 && firstChar <= 0x06FF) ||
+        (firstChar >= 0x0750 && firstChar <= 0x077F) ||
+        (firstChar >= 0xFB50 && firstChar <= 0xFDFF) ||
+        (firstChar >= 0xFE70 && firstChar <= 0xFEFF) ||
+        (firstChar >= 0x0590 && firstChar <= 0x05FF);
   }
 
-  /// Get selected color as Color object
   Color get _selectedColor => AppColors.fromHex(widget.selectedColor);
 
-  /// Get contextual placeholder text for title
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl ? 'عنوان عادت...' : 'Habit title *';
 
-  /// Get contextual placeholder text for description
   String get _descriptionPlaceholder =>
       _descriptionDirection == TextDirection.rtl
           ? 'توضیحات (اختیاری)...'
           : 'Add description (optional)';
 
-  /// Get contextual placeholder text for tags
   String get _tagsPlaceholder =>
       _tagsDirection == TextDirection.rtl
           ? 'برچسب (با کاما جدا کنید)...'
           : 'Add tags (comma separated)...';
 
-  /// Format time with consistent 24-hour display
   String _formatTime(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
-  /// Format date with intelligent relative formatting
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -255,7 +231,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build title section with color indicator and controls
   Widget _buildTitleSection() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -271,7 +246,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build color indicator with enhanced styling
   Widget _buildColorIndicator() {
     return GestureDetector(
       onTap: () {
@@ -303,7 +277,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build title input field with focus styling
   Widget _buildTitleField() {
     return Expanded(
       child: Container(
@@ -343,7 +316,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build start date selection button
   Widget _buildStartDateButton() {
     final hasStartDate = widget.selectedStartDate != null;
 
@@ -417,7 +389,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build time selection button with flexible time support
   Widget _buildTimeButton() {
     if (widget.isFlexibleTime) {
       return Container(
@@ -532,7 +503,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build description section with focus styling
   Widget _buildDescriptionSection() {
     return Container(
       padding: EdgeInsets.symmetric(
@@ -599,7 +569,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build tags section with icon
   Widget _buildTagsSection() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -649,7 +618,6 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
     );
   }
 
-  /// Build section divider with gradient
   Widget _buildDivider() {
     return Container(
       height: 2,
@@ -667,5 +635,4 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
   }
 }
 
-/// Enumeration for text field types to support RTL detection
 enum _TextFieldType { title, description, tags }

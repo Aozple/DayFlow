@@ -19,7 +19,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dayflow/core/constants/app_colors.dart';
 
-/// Comprehensive habit creation and editing screen
 class CreateHabitScreen extends StatefulWidget {
   final HabitModel? habitToEdit;
   final int? prefilledHour;
@@ -31,14 +30,12 @@ class CreateHabitScreen extends StatefulWidget {
 }
 
 class _CreateHabitScreenState extends State<CreateHabitScreen> {
-  // Controllers
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _tagsController;
   final FocusNode _titleFocus = FocusNode();
   final FocusNode _descriptionFocus = FocusNode();
 
-  // Form state
   late HabitFrequency _frequency;
   late List<int> _selectedWeekdays;
   late int _monthDay;
@@ -56,7 +53,6 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
   late bool _hasNotification;
   late int _notificationMinutesBefore;
 
-  // Constants
   static const _defaultWeekdays = [1, 2, 3, 4, 5];
   static const _defaultCustomInterval = 2;
   static const _sectionSpacing = SizedBox(height: 8);
@@ -94,20 +90,16 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
   void _initializeFormValues() {
     final habit = widget.habitToEdit;
 
-    // Get default settings from BLoC
     final settingsState = context.read<SettingsBloc>().state;
 
-    // Initialize frequency settings
     _frequency = habit?.frequency ?? HabitFrequency.daily;
     _selectedWeekdays = habit?.weekdays ?? _defaultWeekdays;
     _monthDay = habit?.monthDay ?? DateTime.now().day;
     _customInterval = habit?.customInterval ?? _defaultCustomInterval;
 
-    // Initialize time settings
     _initializeTimeSettings(habit);
     _startDate = habit?.startDate ?? DateTime.now();
 
-    // Initialize other settings
     _endCondition = habit?.endCondition ?? HabitEndCondition.never;
     _endDate = habit?.endDate;
     _targetCount = habit?.targetCount;
@@ -130,18 +122,15 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
 
   void _initializeTimeSettings(HabitModel? habit) {
     if (habit != null) {
-      // Editing existing habit
       _isFlexibleTime =
           habit.preferredTime == null ||
           (habit.preferredTime!.hour == 0 && habit.preferredTime!.minute == 0);
       _preferredTime =
           habit.preferredTime ?? const TimeOfDay(hour: 0, minute: 0);
     } else if (widget.prefilledHour != null) {
-      // New habit with prefilled hour
       _isFlexibleTime = false;
       _preferredTime = TimeOfDay(hour: widget.prefilledHour!, minute: 0);
     } else {
-      // New habit without prefilled hour - default to current time
       _isFlexibleTime = false;
       _preferredTime = TimeOfDay.now();
     }

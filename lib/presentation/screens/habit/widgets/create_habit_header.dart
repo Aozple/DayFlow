@@ -2,10 +2,6 @@ import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// Header widget for habit creation and editing screen.
-///
-/// Provides navigation controls and visual feedback based on form validity.
-/// Features a pulsing animation on the save button when enabled.
 class CreateHabitHeader extends StatefulWidget {
   final bool isEditMode;
   final bool canSave;
@@ -32,7 +28,7 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
   @override
   void initState() {
     super.initState();
-    // Initialize pulse animation for save button
+
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -72,7 +68,6 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Cancel button
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: widget.onCancel,
@@ -101,7 +96,6 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
             ),
           ),
 
-          // Header title with status indicator
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -126,7 +120,7 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
                     ),
                   ],
                 ),
-                // Validation warning indicator
+
                 if (!widget.canSave) ...[
                   const SizedBox(height: 2),
                   Container(
@@ -153,7 +147,6 @@ class _CreateHabitHeaderState extends State<CreateHabitHeader>
             ),
           ),
 
-          // Save button with pulse animation
           AnimatedBuilder(
             animation: _pulseAnimation,
             builder: (context, child) {

@@ -3,14 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Notification settings widget with scrollable timing options
 class CreateHabitNotificationSection extends StatelessWidget {
   final bool hasNotification;
   final int minutesBefore;
   final Function(bool) onNotificationToggle;
   final Function(int) onMinutesChanged;
 
-  // Predefined timing options
   static const List<TimingOption> _timings = [
     TimingOption(0, 'At time'),
     TimingOption(5, '5 min'),
@@ -52,7 +50,6 @@ class CreateHabitNotificationSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // Icon
           Container(
             width: 40,
             height: 40,
@@ -71,7 +68,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Text
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +92,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
               ],
             ),
           ),
-          // Switch
+
           Transform.scale(
             scale: 0.9,
             child: CupertinoSwitch(
@@ -123,7 +120,6 @@ class CreateHabitNotificationSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           Row(
             children: [
               Icon(CupertinoIcons.clock, size: 16, color: AppColors.accent),
@@ -148,13 +144,13 @@ class CreateHabitNotificationSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Scrollable options
+
           SizedBox(
             height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
-              itemCount: _timings.length + 1, // +1 for custom
+              itemCount: _timings.length + 1,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 if (index == _timings.length) {
@@ -219,11 +215,10 @@ class CreateHabitNotificationSection extends StatelessWidget {
   }
 
   String _formatMinutes(int minutes) {
-    // Check predefined first
     for (final t in _timings) {
       if (t.minutes == minutes) return t.label;
     }
-    // Format custom
+
     if (minutes >= 60) {
       final h = minutes ~/ 60;
       final m = minutes % 60;
@@ -233,14 +228,12 @@ class CreateHabitNotificationSection extends StatelessWidget {
   }
 }
 
-// Simple timing data class
 class TimingOption {
   final int minutes;
   final String label;
   const TimingOption(this.minutes, this.label);
 }
 
-/// Inline custom timing input
 class _CustomTimingInput extends StatefulWidget {
   final int currentMinutes;
   final bool isSelected;
@@ -293,7 +286,6 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
   @override
   Widget build(BuildContext context) {
     if (_isEditing) {
-      // Input mode
       return Container(
         width: 86,
         height: 36,
@@ -342,7 +334,6 @@ class _CustomTimingInputState extends State<_CustomTimingInput> {
       );
     }
 
-    // Display mode
     return GestureDetector(
       onTap: _startEditing,
       child: Container(

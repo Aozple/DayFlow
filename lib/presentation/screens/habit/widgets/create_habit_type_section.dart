@@ -4,11 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Compact habit type selection widget with minimal space usage.
-///
-/// Provides an efficient interface for selecting habit type and configuring
-/// target values with optimized vertical space consumption while maintaining
-/// visual appeal and usability.
 class CreateHabitTypeSection extends StatefulWidget {
   final HabitType habitType;
   final int? targetValue;
@@ -35,11 +30,9 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
   late TextEditingController _targetController;
   late TextEditingController _unitController;
 
-  // Focus states for visual feedback
   bool _isTargetFocused = false;
   bool _isUnitFocused = false;
 
-  // Focus nodes for input fields
   final FocusNode _targetFocus = FocusNode();
   final FocusNode _unitFocus = FocusNode();
 
@@ -59,7 +52,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     super.dispose();
   }
 
-  /// Initialize text controllers with current values
   void _initializeControllers() {
     _targetController = TextEditingController(
       text: widget.targetValue?.toString() ?? '',
@@ -67,7 +59,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     _unitController = TextEditingController(text: widget.unit ?? '');
   }
 
-  /// Setup focus listeners for visual feedback
   void _setupFocusListeners() {
     _targetFocus.addListener(() {
       setState(() => _isTargetFocused = _targetFocus.hasFocus);
@@ -109,7 +100,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build main row with type selection and header info
   Widget _buildMainRow() {
     return Row(
       children: [
@@ -122,7 +112,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build type icon with current selection styling
   Widget _buildTypeIcon() {
     final isQuantifiable = widget.habitType == HabitType.quantifiable;
 
@@ -160,7 +149,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build header information section
   Widget _buildHeaderInfo() {
     final isQuantifiable = widget.habitType == HabitType.quantifiable;
 
@@ -189,7 +177,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build compact type selector with icons
   Widget _buildTypeSelector() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -211,7 +198,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build individual type selection button
   Widget _buildTypeButton({
     required HabitType type,
     required IconData icon,
@@ -283,7 +269,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build target configuration row for quantifiable habits
   Widget _buildTargetRow() {
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -335,7 +320,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build compact target value input
   Widget _buildCompactTargetInput() {
     return Container(
       width: 60,
@@ -398,7 +382,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build compact unit input
   Widget _buildCompactUnitInput() {
     return Expanded(
       child: Container(
@@ -453,7 +436,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Build example icon with tooltip
   Widget _buildExampleIcon() {
     return GestureDetector(
       onTap: () {
@@ -475,7 +457,6 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
     );
   }
 
-  /// Show example tooltip when help icon is tapped
   void _showExampleTooltip() {
     showCupertinoDialog(
       context: context,

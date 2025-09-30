@@ -6,11 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-/// Compact habit end condition selection widget with minimal space usage.
-///
-/// Provides an efficient interface for setting habit termination conditions
-/// including never-ending, date-based, and count-based endings with optimized
-/// vertical space consumption while maintaining visual clarity.
 class CreateHabitEndConditionSection extends StatefulWidget {
   final HabitEndCondition endCondition;
   final DateTime? endDate;
@@ -36,7 +31,6 @@ class CreateHabitEndConditionSection extends StatefulWidget {
 
 class _CreateHabitEndConditionSectionState
     extends State<CreateHabitEndConditionSection> {
-  // Controller for target count input
   late TextEditingController _countController;
 
   @override
@@ -51,7 +45,6 @@ class _CreateHabitEndConditionSectionState
     super.dispose();
   }
 
-  /// Initialize text controller with current value
   void _initializeController() {
     _countController = TextEditingController(
       text: widget.targetCount?.toString() ?? '',
@@ -90,7 +83,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build main row with icon, title, and condition options
   Widget _buildMainRow() {
     return Row(
       children: [
@@ -103,7 +95,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build end condition icon with current selection styling
   Widget _buildEndIcon() {
     final color = _getConditionColor(widget.endCondition);
 
@@ -133,7 +124,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build header information section
   Widget _buildHeaderInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +150,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build compact condition selection options
   Widget _buildConditionOptions() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -186,7 +175,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build individual condition selection button
   Widget _buildConditionButton({
     required HabitEndCondition condition,
     required IconData icon,
@@ -258,7 +246,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build details row for specific condition configurations
   Widget _buildDetailsRow() {
     return Container(
       margin: const EdgeInsets.only(top: 12),
@@ -282,7 +269,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build condition-specific content based on selection
   Widget _buildConditionSpecificContent() {
     switch (widget.endCondition) {
       case HabitEndCondition.onDate:
@@ -295,7 +281,6 @@ class _CreateHabitEndConditionSectionState
     }
   }
 
-  /// Build compact date selector
   Widget _buildDateSelector() {
     return Row(
       children: [
@@ -372,7 +357,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Build compact count selector
   Widget _buildCountSelector() {
     return Row(
       children: [
@@ -448,7 +432,6 @@ class _CreateHabitEndConditionSectionState
     );
   }
 
-  /// Show date picker modal for end date selection
   void _showDatePicker(BuildContext context) async {
     final selectedDate = await DatePickerModal.show(
       context: context,
@@ -463,7 +446,6 @@ class _CreateHabitEndConditionSectionState
     }
   }
 
-  /// Get color for specific end condition type
   Color _getConditionColor(HabitEndCondition condition) {
     switch (condition) {
       case HabitEndCondition.never:
@@ -477,7 +459,6 @@ class _CreateHabitEndConditionSectionState
     }
   }
 
-  /// Get description text for current condition
   String _getConditionDescription() {
     switch (widget.endCondition) {
       case HabitEndCondition.never:

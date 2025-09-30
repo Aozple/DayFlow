@@ -3,11 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Compact widget for managing habit time flexibility preferences.
-///
-/// Provides a streamlined interface for toggling between scheduled and
-/// flexible timing modes with minimal space usage while maintaining
-/// clear visual feedback about the current state.
 class CreateHabitFlexibleTimeSection extends StatelessWidget {
   final bool isFlexibleTime;
   final Function(bool) onFlexibleTimeToggle;
@@ -52,7 +47,6 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  /// Build time icon with current state styling
   Widget _buildTimeIcon() {
     final color = isFlexibleTime ? AppColors.success : AppColors.accent;
 
@@ -82,7 +76,6 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  /// Build main content section with title and description
   Widget _buildContentSection() {
     return Expanded(
       child: Column(
@@ -119,7 +112,6 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  /// Build status badge showing current mode
   Widget _buildStatusBadge() {
     final color = isFlexibleTime ? AppColors.success : AppColors.accent;
 
@@ -142,7 +134,6 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  /// Build flexible time hint for additional information
   Widget _buildFlexibleHint() {
     return Container(
       margin: const EdgeInsets.only(top: 6),
@@ -175,7 +166,6 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  /// Build toggle switch with enhanced styling
   Widget _buildToggleSwitch() {
     return Transform.scale(
       scale: 0.9,
@@ -192,7 +182,6 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  /// Get description text based on current state
   String _getDescriptionText() {
     return isFlexibleTime
         ? 'Complete anytime during the day'
