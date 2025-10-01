@@ -51,6 +51,7 @@ dependencies:
   path: ^1.9.1
   google_fonts: ^6.3.1
   get_it: ^7.6.7
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -58,8 +59,13 @@ dev_dependencies:
 
   # Code quality
   flutter_lints: ^4.0.0
-  test: ^1.25.2  # unit testing
-  mocktail: ^1.0.3  # mocking in tests
+  test: ^1.25.2
+  mocktail: ^1.0.3
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/logo.png"
 
 flutter:
   uses-material-design: true
