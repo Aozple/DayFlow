@@ -51,6 +51,19 @@ jobs:
           storeFile=app/upload-keystore.jks
           EOF
 
+      - name: Set versionName and versionCode
+        id: version
+        run: |
+          TAG_NAME=${GITHUB_REF##*/}
+          VERSION_NAME=${TAG_NAME#v}
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          echo "versionName=$VERSION_NAME" >> $GITHUB_ENV
+          echo "versionCode=$BUILD_NUMBER" >> $GITHUB_ENV
+
+      - name: Update pubspec.yaml version
+        run: |
+          yq e -i ".version = env(versionName) + \"+\" + env(versionCode)" pubspec.yaml
+
       - name: Build Split APKs
         run: flutter build apk --release --split-per-abi
       
@@ -67,7 +80,7 @@ jobs:
             
             ## Installation
             Download the APK matching your device:
-            - **arm64-v8a**: Modern 64-bit Android devices (most common)
+            - **arm64-v8a**: Modern 64-bit Android devices
             - **armeabi-v7a**: Older 32-bit Android devices
             - **x86_64**: Android emulators and some tablets
           generateReleaseNotes: true
