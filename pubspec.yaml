@@ -66,6 +66,8 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/icons/logo.png"
+  adaptive_icon_foreground: "assets/icons/logo.png"
+  adaptive_icon_background: "#f5f0f5"
 
 flutter:
   uses-material-design: true
