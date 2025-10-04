@@ -177,10 +177,10 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: canExport ? AppColors.accent : AppColors.surface,
+            color: canExport ? Theme.of(context).colorScheme.primary : AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: canExport ? AppColors.accent : AppColors.divider,
+              color: canExport ? Theme.of(context).colorScheme.primary : AppColors.divider,
               width: 1,
             ),
           ),
@@ -216,25 +216,25 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.accent.withAlpha(10),
-            AppColors.accent.withAlpha(5),
+            Theme.of(context).colorScheme.primary.withAlpha(10),
+            Theme.of(context).colorScheme.primary.withAlpha(5),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(30), width: 1),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(20),
+              color: Theme.of(context).colorScheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               CupertinoIcons.arrow_counterclockwise,
               size: 18,
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -252,7 +252,7 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
                 ),
                 Text(
                   'Last export: ${widget.lastExportResult!.itemCount} items',
-                  style: TextStyle(fontSize: 13, color: AppColors.accent),
+                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.primary),
                 ),
               ],
             ),
@@ -266,7 +266,7 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.accent,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
@@ -324,11 +324,11 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
               decoration: BoxDecoration(
                 color:
                     isSelected
-                        ? AppColors.accent.withAlpha(15)
+                        ? Theme.of(context).colorScheme.primary.withAlpha(15)
                         : AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? AppColors.accent : AppColors.divider,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.divider,
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -338,7 +338,7 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
                     _getFormatIcon(format),
                     size: 28,
                     color:
-                        isSelected ? AppColors.accent : AppColors.textSecondary,
+                        isSelected ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -347,7 +347,7 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color:
-                          isSelected ? AppColors.accent : AppColors.textPrimary,
+                          isSelected ? Theme.of(context).colorScheme.primary : AppColors.textPrimary,
                     ),
                   ),
                   Text(
@@ -416,7 +416,7 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
           Icon(
             icon,
             size: 20,
-            color: value ? AppColors.accent : AppColors.textSecondary,
+            color: value ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -445,7 +445,7 @@ class _ExportSelectionDialogState extends State<ExportSelectionDialog>
           CupertinoSwitch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: AppColors.accent,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
           ),
         ],
       ),

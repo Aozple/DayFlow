@@ -54,7 +54,7 @@ class FirstDayPicker extends StatelessWidget {
                     child: Text(
                       'Done',
                       style: TextStyle(
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -92,7 +92,7 @@ class FirstDayPicker extends StatelessWidget {
                           currentDay == 'saturday'
                               ? Icon(
                                 CupertinoIcons.checkmark_circle_fill,
-                                color: AppColors.accent,
+                                color: Theme.of(context).colorScheme.primary,
                                 size: 24,
                               )
                               : null,
@@ -129,7 +129,7 @@ class FirstDayPicker extends StatelessWidget {
                           currentDay == 'monday'
                               ? Icon(
                                 CupertinoIcons.checkmark_circle_fill,
-                                color: AppColors.accent,
+                                color: Theme.of(context).colorScheme.primary,
                                 size: 24,
                               )
                               : null,

@@ -42,10 +42,10 @@ class SettingsSection extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withAlpha(20),
+                    color: Theme.of(context).colorScheme.primary.withAlpha(20),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, size: 18, color: AppColors.accent),
+                  child: Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

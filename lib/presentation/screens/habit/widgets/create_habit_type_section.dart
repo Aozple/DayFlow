@@ -124,7 +124,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
           end: Alignment.bottomRight,
           colors:
               isQuantifiable
-                  ? [AppColors.accent, AppColors.accent.withAlpha(220)]
+                  ? [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withAlpha(220)]
                   : [AppColors.success, AppColors.success.withAlpha(220)],
         ),
         borderRadius: BorderRadius.circular(10),
@@ -132,7 +132,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
           BoxShadow(
             color:
                 isQuantifiable
-                    ? AppColors.accent.withAlpha(30)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(30)
                     : AppColors.success.withAlpha(30),
             blurRadius: 6,
             offset: const Offset(0, 2),
@@ -192,7 +192,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
           type: HabitType.quantifiable,
           icon: CupertinoIcons.chart_bar,
           label: 'Track',
-          color: AppColors.accent,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ],
     );
@@ -278,25 +278,25 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.accent.withAlpha(8),
-            AppColors.accent.withAlpha(5),
+            Theme.of(context).colorScheme.primary.withAlpha(8),
+            Theme.of(context).colorScheme.primary.withAlpha(5),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(30), width: 1),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(20),
+              color: Theme.of(context).colorScheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               CupertinoIcons.number_circle_fill,
               size: 18,
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -330,7 +330,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
         border: Border.all(
           color:
               _isTargetFocused
-                  ? AppColors.accent.withAlpha(60)
+                  ? Theme.of(context).colorScheme.primary.withAlpha(60)
                   : AppColors.divider.withAlpha(40),
           width: _isTargetFocused ? 1.5 : 1,
         ),
@@ -338,7 +338,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
             _isTargetFocused
                 ? [
                   BoxShadow(
-                    color: AppColors.accent.withAlpha(20),
+                    color: Theme.of(context).colorScheme.primary.withAlpha(20),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),
@@ -392,7 +392,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
           border: Border.all(
             color:
                 _isUnitFocused
-                    ? AppColors.accent.withAlpha(60)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(60)
                     : AppColors.divider.withAlpha(40),
             width: _isUnitFocused ? 1.5 : 1,
           ),
@@ -400,7 +400,7 @@ class _CreateHabitTypeSectionState extends State<CreateHabitTypeSection> {
               _isUnitFocused
                   ? [
                     BoxShadow(
-                      color: AppColors.accent.withAlpha(20),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(20),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),

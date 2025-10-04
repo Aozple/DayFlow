@@ -256,7 +256,7 @@ class _QuoteFieldWidgetState extends State<_QuoteFieldWidget> {
                   height: 24,
                   margin: const EdgeInsets.only(top: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

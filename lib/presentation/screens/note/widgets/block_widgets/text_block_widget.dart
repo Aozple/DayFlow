@@ -202,13 +202,13 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.accent.withAlpha(20),
-                            AppColors.accent.withAlpha(10),
+                            Theme.of(context).colorScheme.primary.withAlpha(20),
+                            Theme.of(context).colorScheme.primary.withAlpha(10),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: AppColors.accent.withAlpha(40),
+                          color: Theme.of(context).colorScheme.primary.withAlpha(40),
                           width: 0.5,
                         ),
                       ),
@@ -218,7 +218,7 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
                           Icon(
                             Icons.auto_fix_high,
                             size: 11,
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -226,7 +226,7 @@ class _TextFieldWidgetState extends State<_TextFieldWidget> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.accent,
+                              color: Theme.of(context).colorScheme.primary,
                               letterSpacing: 0.3,
                             ),
                           ),

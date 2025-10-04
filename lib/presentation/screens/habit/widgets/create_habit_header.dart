@@ -20,7 +20,7 @@ class CreateHabitHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface.withAlpha(200),
+        color: AppColors.surface,
         border: Border(
           bottom: BorderSide(
             color: AppColors.divider.withAlpha(30),
@@ -127,14 +127,14 @@ class CreateHabitHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color:
                     canSave
-                        ? AppColors.accent
-                        : AppColors.accent.withAlpha(100),
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.primary.withAlpha(100),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow:
                     canSave
                         ? [
                           BoxShadow(
-                            color: AppColors.accent.withAlpha(50),
+                            color: Theme.of(context).colorScheme.primary.withAlpha(50),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),

@@ -80,7 +80,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                         child: Text(
                           'Done',
                           style: TextStyle(
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

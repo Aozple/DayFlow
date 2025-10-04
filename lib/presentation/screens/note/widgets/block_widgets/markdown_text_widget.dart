@@ -16,12 +16,16 @@ class MarkdownTextWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RichText(
-      text: _buildTextSpan(text, baseStyle),
+      text: _buildTextSpan(context, text, baseStyle),
       textDirection: textDirection,
     );
   }
 
-  TextSpan _buildTextSpan(String text, TextStyle baseStyle) {
+  TextSpan _buildTextSpan(
+    BuildContext context,
+    String text,
+    TextStyle baseStyle,
+  ) {
     final List<InlineSpan> spans = [];
 
     final RegExp markdownRegex = RegExp(
@@ -48,7 +52,7 @@ class MarkdownTextWidget extends StatelessWidget {
       }
 
       final matchText = match.group(0)!;
-      spans.add(_createFormattedSpan(matchText, baseStyle));
+      spans.add(_createFormattedSpan(context, matchText, baseStyle));
 
       lastIndex = match.end;
     }
@@ -63,7 +67,11 @@ class MarkdownTextWidget extends StatelessWidget {
     return TextSpan(children: spans, style: baseStyle);
   }
 
-  InlineSpan _createFormattedSpan(String text, TextStyle baseStyle) {
+  InlineSpan _createFormattedSpan(
+    BuildContext context,
+    String text,
+    TextStyle baseStyle,
+  ) {
     if (text.startsWith('***') && text.endsWith('***')) {
       return TextSpan(
         text: text.substring(3, text.length - 3),
@@ -126,7 +134,7 @@ class MarkdownTextWidget extends StatelessWidget {
             style: baseStyle.copyWith(
               fontFamily: 'monospace',
               fontSize: baseStyle.fontSize! * 0.85,
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 0,
             ),
           ),
@@ -156,9 +164,11 @@ class MarkdownTextWidget extends StatelessWidget {
                 child: Text(
                   linkText,
                   style: baseStyle.copyWith(
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     decoration: TextDecoration.underline,
-                    decorationColor: AppColors.accent.withAlpha(100),
+                    decorationColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withAlpha(100),
                     decorationStyle: TextDecorationStyle.dotted,
                   ),
                 ),
@@ -192,7 +202,7 @@ class MarkdownTextWidget extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
-                color: AppColors.accent.withAlpha(100),
+                color: Theme.of(context).colorScheme.primary.withAlpha(100),
                 width: 3,
               ),
             ),

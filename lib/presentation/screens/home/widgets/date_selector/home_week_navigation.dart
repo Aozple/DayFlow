@@ -62,10 +62,10 @@ class HomeWeekNavigation extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withAlpha(25),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(25),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: AppColors.accent.withAlpha(60),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(60),
                         width: 0.5,
                       ),
                     ),
@@ -75,7 +75,7 @@ class HomeWeekNavigation extends StatelessWidget {
                         Icon(
                           CupertinoIcons.chart_bar,
                           size: 10,
-                          color: AppColors.accent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -83,7 +83,7 @@ class HomeWeekNavigation extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                             letterSpacing: 0.5,
                           ),
                         ),

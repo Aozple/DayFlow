@@ -44,9 +44,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return BlocListener<SettingsBloc, SettingsState>(
       listener: (context, state) {
-        if (state is SettingsOperationSuccess) {
-          CustomSnackBar.success(context, state.message);
-        }
         if (state is SettingsError) {
           CustomSnackBar.error(context, state.message);
         }
@@ -72,6 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       children: [
+                        const SizedBox(height: 16),
                         _buildPersonalizationSection(settings),
                         const SizedBox(height: 16),
                         _buildPreferencesSection(settings),
@@ -112,14 +110,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color:
                       settings != null
                           ? AppColors.fromHex(settings.accentColor)
-                          : AppColors.accent,
+                          : Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.divider, width: 2),
                   boxShadow: [
                     BoxShadow(
                       color: (settings != null
                               ? AppColors.fromHex(settings.accentColor)
-                              : AppColors.accent)
+                              : Theme.of(context).colorScheme.primary)
                           .withAlpha(100),
                       blurRadius: 8,
                       spreadRadius: 1,
@@ -158,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 settings?.firstDayOfWeek == 'saturday' ? 'Saturday' : 'Monday',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -238,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 UpdateNotificationEnabled(value),
               );
             },
-            activeTrackColor: AppColors.accent,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
           ),
           onTap: () {},
           icon: CupertinoIcons.bell,
@@ -256,10 +254,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withAlpha(20),
+                    color: Theme.of(context).colorScheme.primary.withAlpha(20),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppColors.accent.withAlpha(50),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(50),
                       width: 1,
                     ),
                   ),
@@ -270,7 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.accent,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
@@ -296,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (value) {
               context.read<SettingsBloc>().add(UpdateNotificationSound(value));
             },
-            activeTrackColor: AppColors.accent,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
           ),
           onTap: () {},
           icon: CupertinoIcons.speaker_2_fill,
@@ -311,7 +311,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 UpdateNotificationVibration(value),
               );
             },
-            activeTrackColor: AppColors.accent,
+            activeTrackColor: Theme.of(context).colorScheme.primary,
           ),
           onTap: () {},
           icon: CupertinoIcons.waveform,
@@ -340,7 +340,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               const SizedBox(width: 8),
-              Icon(CupertinoIcons.share, size: 18, color: AppColors.accent),
+              Icon(
+                CupertinoIcons.share,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ],
           ),
           onTap: _showExportOptions,
@@ -352,7 +356,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           trailing: Icon(
             CupertinoIcons.arrow_down,
             size: 18,
-            color: AppColors.accent,
+            color: Theme.of(context).colorScheme.primary,
           ),
           onTap: _showImportOptions,
           icon: CupertinoIcons.arrow_down_doc,
@@ -389,7 +393,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           trailing: Icon(
             CupertinoIcons.mail,
             size: 18,
-            color: AppColors.accent,
+            color: Theme.of(context).colorScheme.primary,
           ),
           onTap: _sendFeedback,
           icon: CupertinoIcons.chat_bubble_fill,

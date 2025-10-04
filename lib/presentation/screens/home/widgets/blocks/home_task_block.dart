@@ -259,7 +259,7 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
               color:
                   widget.task.isCompleted
                       ? AppColors.textTertiary.withAlpha(100)
-                      : AppColors.accent.withAlpha(150),
+                      : Theme.of(context).colorScheme.primary.withAlpha(150),
             ),
           ],
           if (widget.task.tags.isNotEmpty) const SizedBox(width: 12),
@@ -303,18 +303,18 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
         height: 32,
         decoration: BoxDecoration(
           color:
-              widget.task.isCompleted ? AppColors.accent : Colors.transparent,
+              widget.task.isCompleted ? Theme.of(context).colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color:
-                widget.task.isCompleted ? AppColors.accent : AppColors.divider,
+                widget.task.isCompleted ? Theme.of(context).colorScheme.primary : AppColors.divider,
             width: 2,
           ),
           boxShadow:
               widget.task.isCompleted
                   ? [
                     BoxShadow(
-                      color: AppColors.accent.withAlpha(30),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(30),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

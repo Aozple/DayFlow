@@ -173,7 +173,7 @@ class _SearchResultsViewState extends State<SearchResultsView> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -199,7 +199,7 @@ class _SearchResultsViewState extends State<SearchResultsView> {
                         text: '$totalResults',
                         style:  TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.accent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       const TextSpan(text: ' results found'),

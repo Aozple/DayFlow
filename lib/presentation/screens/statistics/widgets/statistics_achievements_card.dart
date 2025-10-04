@@ -102,7 +102,7 @@ class _StatisticsAchievementsCardState
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.accent,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
@@ -146,10 +146,10 @@ class _StatisticsAchievementsCardState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.accent : AppColors.surface,
+                color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isSelected ? AppColors.accent : AppColors.divider,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.divider,
                 ),
               ),
               child: Text(
@@ -402,7 +402,7 @@ class _StatisticsAchievementsCardState
               _buildDetailStat(
                 'Progress',
                 '${(achievement.progress * 100).round()}%',
-                AppColors.accent,
+                Theme.of(context).colorScheme.primary,
               ),
             ],
           ),
@@ -486,7 +486,7 @@ class _StatisticsAchievementsCardState
       case AchievementCategory.streaks:
         return AppColors.warning;
       case AchievementCategory.special:
-        return AppColors.accent;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 

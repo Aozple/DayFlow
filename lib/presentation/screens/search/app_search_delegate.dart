@@ -142,7 +142,7 @@ class AppSearchDelegate extends SearchDelegate<void> {
         border: Border.all(
           color:
               _focusNode.hasFocus
-                  ? AppColors.accent.withAlpha(60)
+                  ? Theme.of(context).colorScheme.primary.withAlpha(60)
                   : AppColors.divider.withAlpha(50),
           width: 1,
         ),

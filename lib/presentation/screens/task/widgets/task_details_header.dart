@@ -21,7 +21,7 @@ class TaskDetailsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface.withAlpha(200),
+        color: AppColors.surface,
         border: Border(
           bottom: BorderSide(
             color: AppColors.divider.withAlpha(30),
@@ -41,8 +41,8 @@ class TaskDetailsHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildBackButton(),
-          _buildTitleSection(),
-          _buildMoreOptionsButton(),
+          _buildTitleSection(context),
+          _buildMoreOptionsButton(context),
         ],
       ),
     );
@@ -74,7 +74,7 @@ class TaskDetailsHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleSection() {
+  Widget _buildTitleSection(BuildContext context) {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -92,15 +92,16 @@ class TaskDetailsHeader extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 2),
-          _buildStatusIndicator(),
+          _buildStatusIndicator(context),
         ],
       ),
     );
   }
 
-  Widget _buildStatusIndicator() {
+  Widget _buildStatusIndicator(BuildContext context) {
     final isCompleted = task.isCompleted;
-    final statusColor = isCompleted ? AppColors.success : AppColors.accent;
+    final statusColor =
+        isCompleted ? AppColors.success : Theme.of(context).colorScheme.primary;
     final statusText = isCompleted ? 'Completed' : 'In Progress';
     final statusIcon =
         isCompleted
@@ -132,7 +133,7 @@ class TaskDetailsHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildMoreOptionsButton() {
+  Widget _buildMoreOptionsButton(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: onMoreOptions,
@@ -140,14 +141,17 @@ class TaskDetailsHeader extends StatelessWidget {
         height: _buttonHeight,
         width: _buttonHeight,
         decoration: BoxDecoration(
-          color: AppColors.accent.withAlpha(15),
+          color: Theme.of(context).colorScheme.primary.withAlpha(15),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.accent.withAlpha(40), width: 1),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withAlpha(40),
+            width: 1,
+          ),
         ),
         child: Center(
           child: Icon(
             CupertinoIcons.ellipsis,
-            color: AppColors.accent,
+            color: Theme.of(context).colorScheme.primary,
             size: 18,
           ),
         ),

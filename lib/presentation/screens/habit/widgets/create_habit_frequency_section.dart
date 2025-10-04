@@ -95,12 +95,12 @@ class _CreateHabitFrequencySectionState
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withAlpha(20),
+                  color: Theme.of(context).colorScheme.primary.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   CupertinoIcons.repeat,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 18,
                 ),
               ),
@@ -156,7 +156,7 @@ class _CreateHabitFrequencySectionState
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(30), width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -164,14 +164,14 @@ class _CreateHabitFrequencySectionState
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_getFrequencyIcon(), size: 14, color: AppColors.accent),
+              Icon(_getFrequencyIcon(), size: 14, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 6),
               Text(
                 _getSummaryText(),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -199,7 +199,7 @@ class _CreateHabitFrequencySectionState
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? AppColors.accent
+                    ? Theme.of(context).colorScheme.primary
                     : AppColors.textTertiary.withAlpha(30),
             borderRadius: BorderRadius.circular(3),
           ),
@@ -257,11 +257,11 @@ class _CreateHabitFrequencySectionState
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.surface,
+          color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
-                isSelected ? AppColors.accent : AppColors.divider.withAlpha(50),
+                isSelected ? Theme.of(context).colorScheme.primary : AppColors.divider.withAlpha(50),
             width: 1,
           ),
         ),
@@ -294,9 +294,9 @@ class _CreateHabitFrequencySectionState
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.accent.withAlpha(5),
+        color: Theme.of(context).colorScheme.primary.withAlpha(5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(30), width: 1),
       ),
       child: _buildFrequencyDetails(),
     );
@@ -322,7 +322,7 @@ class _CreateHabitFrequencySectionState
       children: [
         Row(
           children: [
-            Icon(CupertinoIcons.calendar, size: 16, color: AppColors.accent),
+            Icon(CupertinoIcons.calendar, size: 16, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
             const Text(
               'Select days',
@@ -356,12 +356,12 @@ class _CreateHabitFrequencySectionState
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.accent : AppColors.surface,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color:
                         isSelected
-                            ? AppColors.accent
+                            ? Theme.of(context).colorScheme.primary
                             : AppColors.divider.withAlpha(50),
                     width: 1,
                   ),
@@ -389,7 +389,7 @@ class _CreateHabitFrequencySectionState
         Icon(
           CupertinoIcons.calendar_badge_plus,
           size: 16,
-          color: AppColors.accent,
+          color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(width: 8),
         const Text(
@@ -450,7 +450,7 @@ class _CreateHabitFrequencySectionState
   Widget _buildCustomIntervalInput() {
     return Row(
       children: [
-        Icon(CupertinoIcons.timer, size: 16, color: AppColors.accent),
+        Icon(CupertinoIcons.timer, size: 16, color: Theme.of(context).colorScheme.primary),
         const SizedBox(width: 8),
         const Text(
           'Every',

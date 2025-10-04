@@ -5,6 +5,7 @@ import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/screens/search/app_search_delegate.dart';
 import 'package:dayflow/presentation/widgets/speed_dial_fab.dart';
+import 'package:dayflow/presentation/widgets/status_bar_padding.dart';
 import 'package:dayflow/presentation/widgets/universal_filter_modal.dart';
 import 'package:flutter/material.dart' hide SearchDelegate;
 import 'package:flutter/cupertino.dart';
@@ -669,12 +670,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: AppColors.background,
           body: Column(
             children: [
-              Container(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top,
-                ),
-                color: AppColors.surface.withAlpha(200),
-              ),
+              const StatusBarPadding(),
               HomeHeader(
                 selectedDate: _selectedDate,
                 onDateSelected: (date) {

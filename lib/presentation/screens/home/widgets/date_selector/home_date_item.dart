@@ -33,15 +33,15 @@ class HomeDateItem extends StatelessWidget {
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? AppColors.accent
+                    ? Theme.of(context).colorScheme.primary
                     : isToday
-                    ? AppColors.accent.withAlpha(25)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(25)
                     : AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border:
                 isToday && !isSelected
                     ? Border.all(
-                      color: AppColors.accent.withAlpha(60),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(60),
                       width: 0.5,
                     )
                     : Border.all(
@@ -52,7 +52,7 @@ class HomeDateItem extends StatelessWidget {
                 isSelected
                     ? [
                       BoxShadow(
-                        color: AppColors.accent.withAlpha(30),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(30),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -73,7 +73,7 @@ class HomeDateItem extends StatelessWidget {
                       isSelected
                           ? Colors.white
                           : isToday
-                          ? AppColors.accent
+                          ? Theme.of(context).colorScheme.primary
                           : AppColors.textSecondary,
                 ),
               ),
@@ -88,7 +88,7 @@ class HomeDateItem extends StatelessWidget {
                       isSelected
                           ? Colors.white
                           : isToday
-                          ? AppColors.accent
+                          ? Theme.of(context).colorScheme.primary
                           : AppColors.textPrimary,
                 ),
               ),
@@ -99,7 +99,7 @@ class HomeDateItem extends StatelessWidget {
                   width: 4,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                 ),

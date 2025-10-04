@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 
 class FullScreenImageViewer extends StatefulWidget {
@@ -316,7 +315,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                     Expanded(
                       child: CupertinoButton(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        color: AppColors.accent.withAlpha(50),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(50),
                         borderRadius: BorderRadius.circular(12),
                         onPressed: () {
                           Navigator.pop(context);
@@ -325,11 +324,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(CupertinoIcons.share, color: AppColors.accent),
+                            Icon(CupertinoIcons.share, color: Theme.of(context).colorScheme.primary),
                             const SizedBox(width: 8),
                             Text(
                               'Share',
-                              style: TextStyle(color: AppColors.accent),
+                              style: TextStyle(color: Theme.of(context).colorScheme.primary),
                             ),
                           ],
                         ),
@@ -592,7 +591,7 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                                     icon: CupertinoIcons.zoom_out,
                                     tooltip: 'Reset Zoom',
                                     onPressed: _resetZoom,
-                                    iconColor: AppColors.accent,
+                                    iconColor: Theme.of(context).colorScheme.primary,
                                   ),
                                   const SizedBox(width: 8),
                                 ],

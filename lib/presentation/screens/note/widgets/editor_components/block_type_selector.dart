@@ -146,13 +146,16 @@ class BlockTypeSelector extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _getBlockTypeColor(option.type).withAlpha(20),
+                    color: _getBlockTypeColor(
+                      context,
+                      option.type,
+                    ).withAlpha(20),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     option.icon,
                     size: 20,
-                    color: _getBlockTypeColor(option.type),
+                    color: _getBlockTypeColor(context, option.type),
                   ),
                 ),
 
@@ -197,12 +200,12 @@ class BlockTypeSelector extends StatelessWidget {
     );
   }
 
-  Color _getBlockTypeColor(BlockType type) {
+  Color _getBlockTypeColor(BuildContext context, BlockType type) {
     switch (type) {
       case BlockType.text:
         return AppColors.textSecondary;
       case BlockType.heading:
-        return AppColors.accent;
+        return Theme.of(context).colorScheme.primary;
       case BlockType.bulletList:
         return Colors.orange;
       case BlockType.numberedList:

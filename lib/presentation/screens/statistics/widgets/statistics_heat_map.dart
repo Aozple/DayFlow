@@ -84,7 +84,7 @@ class _StatisticsHeatMapState extends State<StatisticsHeatMap> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.accent,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         Text(
@@ -343,7 +343,7 @@ class _StatisticsHeatMapState extends State<StatisticsHeatMap> {
               const SizedBox(width: 16),
               _buildStatItem('Habits', habits, AppColors.info),
               const SizedBox(width: 16),
-              _buildStatItem('Total', activities, AppColors.accent),
+              _buildStatItem('Total', activities, Theme.of(context).colorScheme.primary),
             ],
           ),
         ],
@@ -501,8 +501,8 @@ class _StatisticsHeatMapState extends State<StatisticsHeatMap> {
   }
 
   Border? _getBorder(bool isToday, bool isPerfect, bool isSelected) {
-    if (isSelected) return Border.all(color: AppColors.accent, width: 2);
-    if (isToday) return Border.all(color: AppColors.accent, width: 1);
+    if (isSelected) return Border.all(color: Theme.of(context).colorScheme.primary, width: 2);
+    if (isToday) return Border.all(color: Theme.of(context).colorScheme.primary, width: 1);
     if (isPerfect) return Border.all(color: AppColors.warning, width: 1);
     return null;
   }

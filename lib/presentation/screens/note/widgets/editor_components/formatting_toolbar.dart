@@ -87,12 +87,12 @@ class _FormattingToolbarState extends State<FormattingToolbar>
         elevation: 16,
         borderRadius: BorderRadius.circular(16),
         color: AppColors.surface,
-        shadowColor: AppColors.accent.withAlpha(20),
+        shadowColor: Theme.of(context).colorScheme.primary.withAlpha(20),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.accent.withAlpha(30), width: 1),
+            border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(30), width: 1),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

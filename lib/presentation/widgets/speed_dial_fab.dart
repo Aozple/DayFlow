@@ -303,7 +303,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
       key: _fabKey,
       heroTag: 'main_fab',
       onPressed: _toggle,
-      backgroundColor: AppColors.accent,
+      backgroundColor: Theme.of(context).colorScheme.primary,
       elevation: 8,
       child: AnimatedBuilder(
         animation: _animationController,

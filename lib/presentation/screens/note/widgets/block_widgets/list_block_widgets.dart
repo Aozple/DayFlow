@@ -38,7 +38,7 @@ class _ListItemWidget extends StatelessWidget {
         border: Border.all(
           color:
               focusNode?.hasFocus == true
-                  ? AppColors.accent.withAlpha(50)
+                  ? Theme.of(context).colorScheme.primary.withAlpha(50)
                   : AppColors.divider.withAlpha(20),
           width: 0.5,
         ),
@@ -354,14 +354,14 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add_rounded, size: 16, color: AppColors.accent),
+                    Icon(Icons.add_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 6),
                     Text(
                       'Add item',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ],
@@ -387,7 +387,7 @@ abstract class _BaseListState<T extends NoteBlock, W extends _BaseListWidget<T>>
     if (widget is _BulletListWidget) return Colors.orange;
     if (widget is _NumberedListWidget) return Colors.blue;
     if (widget is _TodoListWidget) return Colors.green;
-    return AppColors.accent;
+    return Theme.of(context).colorScheme.primary;
   }
 
   String _getListTypeName() {

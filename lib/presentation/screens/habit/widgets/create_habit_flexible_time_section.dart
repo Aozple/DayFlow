@@ -37,18 +37,21 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _buildTimeIcon(),
+          _buildTimeIcon(context),
           const SizedBox(width: 12),
-          _buildContentSection(),
+          _buildContentSection(context),
           const SizedBox(width: 16),
-          _buildToggleSwitch(),
+          _buildToggleSwitch(context),
         ],
       ),
     );
   }
 
-  Widget _buildTimeIcon() {
-    final color = isFlexibleTime ? AppColors.success : AppColors.accent;
+  Widget _buildTimeIcon(BuildContext context) {
+    final color =
+        isFlexibleTime
+            ? AppColors.success
+            : Theme.of(context).colorScheme.primary;
 
     return Container(
       width: 40,
@@ -76,7 +79,7 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  Widget _buildContentSection() {
+  Widget _buildContentSection(BuildContext context) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +96,7 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              _buildStatusBadge(),
+              _buildStatusBadge(context),
             ],
           ),
           const SizedBox(height: 4),
@@ -112,8 +115,11 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge() {
-    final color = isFlexibleTime ? AppColors.success : AppColors.accent;
+  Widget _buildStatusBadge(BuildContext context) {
+    final color =
+        isFlexibleTime
+            ? AppColors.success
+            : Theme.of(context).colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -166,7 +172,7 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
     );
   }
 
-  Widget _buildToggleSwitch() {
+  Widget _buildToggleSwitch(BuildContext context) {
     return Transform.scale(
       scale: 0.9,
       child: CupertinoSwitch(
@@ -176,7 +182,9 @@ class CreateHabitFlexibleTimeSection extends StatelessWidget {
           onFlexibleTimeToggle(value);
         },
         activeTrackColor: AppColors.success,
-        inactiveTrackColor: AppColors.accent.withAlpha(100),
+        inactiveTrackColor: Theme.of(
+          context,
+        ).colorScheme.primary.withAlpha(100),
         thumbColor: Colors.white,
       ),
     );

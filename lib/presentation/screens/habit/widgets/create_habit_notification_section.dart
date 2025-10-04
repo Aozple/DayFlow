@@ -38,14 +38,14 @@ class CreateHabitNotificationSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildToggleSection(),
-          if (hasNotification) _buildTimingSection(),
+          _buildToggleSection(context),
+          if (hasNotification) _buildTimingSection(context),
         ],
       ),
     );
   }
 
-  Widget _buildToggleSection() {
+  Widget _buildToggleSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -56,14 +56,16 @@ class CreateHabitNotificationSection extends StatelessWidget {
             decoration: BoxDecoration(
               color:
                   hasNotification
-                      ? AppColors.accent.withAlpha(20)
+                      ? Theme.of(context).colorScheme.primary.withAlpha(20)
                       : AppColors.textSecondary.withAlpha(20),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               hasNotification ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
               color:
-                  hasNotification ? AppColors.accent : AppColors.textSecondary,
+                  hasNotification
+                      ? Theme.of(context).colorScheme.primary
+                      : AppColors.textSecondary,
               size: 18,
             ),
           ),
@@ -101,7 +103,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
                 HapticFeedback.lightImpact();
                 onNotificationToggle(value);
               },
-              activeTrackColor: AppColors.accent,
+              activeTrackColor: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],
@@ -109,20 +111,27 @@ class CreateHabitNotificationSection extends StatelessWidget {
     );
   }
 
-  Widget _buildTimingSection() {
+  Widget _buildTimingSection(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppColors.accent.withAlpha(5),
+        color: Theme.of(context).colorScheme.primary.withAlpha(5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withAlpha(30), width: 0.5),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withAlpha(30),
+          width: 0.5,
+        ),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Icon(CupertinoIcons.clock, size: 16, color: AppColors.accent),
+              Icon(
+                CupertinoIcons.clock,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(width: 8),
               const Text(
                 'Notify me',
@@ -138,7 +147,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -157,7 +166,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
                   return _buildCustomOption();
                 }
                 final timing = _timings[index];
-                return _buildTimingChip(timing.minutes, timing.label);
+                return _buildTimingChip(context, timing.minutes, timing.label);
               },
             ),
           ),
@@ -166,7 +175,7 @@ class CreateHabitNotificationSection extends StatelessWidget {
     );
   }
 
-  Widget _buildTimingChip(int minutes, String label) {
+  Widget _buildTimingChip(BuildContext context, int minutes, String label) {
     final isSelected = minutesBefore == minutes;
 
     return GestureDetector(
@@ -177,11 +186,16 @@ class CreateHabitNotificationSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.surface,
+          color:
+              isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
-                isSelected ? AppColors.accent : AppColors.divider.withAlpha(50),
+                isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : AppColors.divider.withAlpha(50),
             width: 1,
           ),
         ),

@@ -179,10 +179,10 @@ class _ColorPickerModalState extends State<ColorPickerModal>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: hasChanged ? AppColors.accent : AppColors.surface,
+            color: hasChanged ? Theme.of(context).colorScheme.primary : AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: hasChanged ? AppColors.accent : AppColors.divider,
+              color: hasChanged ? Theme.of(context).colorScheme.primary : AppColors.divider,
               width: 1,
             ),
           ),
@@ -226,13 +226,13 @@ class _ColorPickerModalState extends State<ColorPickerModal>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withAlpha(15),
+                  color: Theme.of(context).colorScheme.primary.withAlpha(15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   CupertinoIcons.eye_fill,
                   size: 16,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 12),

@@ -105,10 +105,10 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: AppColors.accent.withAlpha(20),
+            color: Theme.of(context).colorScheme.primary.withAlpha(20),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(CupertinoIcons.today, size: 16, color: AppColors.accent),
+          child: Icon(CupertinoIcons.today, size: 16, color: Theme.of(context).colorScheme.primary),
         ),
         const SizedBox(width: 10),
         const Text(
@@ -143,7 +143,7 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
       label = 'Perfect';
       icon = CupertinoIcons.star_fill;
     } else if (score >= 70) {
-      color = AppColors.accent;
+      color = Theme.of(context).colorScheme.primary;
       label = 'Great';
       icon = CupertinoIcons.heart_fill;
     } else if (score >= 50) {
@@ -323,7 +323,7 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     );
                   },
@@ -433,7 +433,7 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
 
   Color _getProgressColor(double progress) {
     if (progress >= 0.9) return AppColors.success;
-    if (progress >= 0.7) return AppColors.accent;
+    if (progress >= 0.7) return Theme.of(context).colorScheme.primary;
     if (progress >= 0.5) return AppColors.warning;
     return AppColors.error;
   }

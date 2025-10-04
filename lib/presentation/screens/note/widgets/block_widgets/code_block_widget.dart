@@ -460,7 +460,7 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
                             contentPadding: EdgeInsets.zero,
                             isDense: true,
                           ),
-                          cursorColor: AppColors.accent,
+                          cursorColor: Theme.of(context).colorScheme.primary,
                           cursorWidth: 2,
                         ),
                       ],
@@ -609,12 +609,12 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
           height: 30,
           decoration: BoxDecoration(
             color:
-                isActive ? AppColors.accent.withAlpha(20) : Colors.transparent,
+                isActive ? Theme.of(context).colorScheme.primary.withAlpha(20) : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
             border:
                 isActive
                     ? Border.all(
-                      color: AppColors.accent.withAlpha(40),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(40),
                       width: 0.5,
                     )
                     : null,
@@ -622,7 +622,7 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
           child: Icon(
             icon,
             size: 16,
-            color: isActive ? AppColors.accent : const Color(0xFF858585),
+            color: isActive ? Theme.of(context).colorScheme.primary : const Color(0xFF858585),
           ),
         ),
       ),
@@ -671,14 +671,14 @@ class _CodeEditorWidgetState extends State<_CodeEditorWidget> {
                     entry.value.name,
                     style: TextStyle(
                       color:
-                          isSelected ? AppColors.accent : AppColors.textPrimary,
+                          isSelected ? Theme.of(context).colorScheme.primary : AppColors.textPrimary,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                   trailing:
                       isSelected
-                          ? Icon(Icons.check_circle, color: AppColors.accent)
+                          ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
                           : null,
                   onTap: () {
                     setState(() => _selectedLanguage = entry.key);

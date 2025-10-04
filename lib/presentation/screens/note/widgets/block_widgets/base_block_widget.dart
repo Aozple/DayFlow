@@ -125,7 +125,8 @@ abstract class BaseBlockWidget extends StatelessWidget {
     );
   }
 
-  Widget buildCheckbox({
+  Widget buildCheckbox(
+    BuildContext context, {
     required bool checked,
     required VoidCallback onChanged,
   }) {
@@ -136,11 +137,16 @@ abstract class BaseBlockWidget extends StatelessWidget {
         height: 20,
         margin: const EdgeInsets.only(right: 4),
         decoration: BoxDecoration(
-          color: checked ? AppColors.accent : AppColors.surface,
+          color:
+              checked
+                  ? Theme.of(context).colorScheme.primary
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color:
-                checked ? AppColors.accent : AppColors.divider.withAlpha(100),
+                checked
+                    ? Theme.of(context).colorScheme.primary
+                    : AppColors.divider.withAlpha(100),
             width: 1.5,
           ),
         ),
@@ -152,25 +158,25 @@ abstract class BaseBlockWidget extends StatelessWidget {
     );
   }
 
-  Color getBlockBackgroundColor(String type) {
+  Color getBlockBackgroundColor(BuildContext context, String type) {
     switch (type) {
       case 'quote':
         return AppColors.surfaceLight.withAlpha(20);
       case 'code':
         return AppColors.surface.withAlpha(40);
       case 'callout':
-        return AppColors.accent.withAlpha(10);
+        return Theme.of(context).colorScheme.primary.withAlpha(10);
       default:
         return Colors.transparent;
     }
   }
 
-  Widget buildQuoteAccent() {
+  Widget buildQuoteAccent(BuildContext context) {
     return Container(
       width: 3,
       margin: const EdgeInsets.only(right: 8),
       decoration: BoxDecoration(
-        color: AppColors.accent.withAlpha(100),
+        color: Theme.of(context).colorScheme.primary.withAlpha(100),
         borderRadius: BorderRadius.circular(2),
       ),
     );

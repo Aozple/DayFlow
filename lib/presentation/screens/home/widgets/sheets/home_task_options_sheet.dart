@@ -1,6 +1,7 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class HomeTaskOptionsSheet extends StatelessWidget {
   final TaskModel task;
@@ -40,7 +41,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
                   color:
                       task.isCompleted
                           ? AppColors.success.withAlpha(20)
-                          : AppColors.accent.withAlpha(20),
+                          : Theme.of(context).colorScheme.primary.withAlpha(20),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -48,7 +49,7 @@ class HomeTaskOptionsSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color:
-                        task.isCompleted ? AppColors.success : AppColors.accent,
+                        task.isCompleted ? AppColors.success : Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

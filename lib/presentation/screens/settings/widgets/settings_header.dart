@@ -14,7 +14,7 @@ class SettingsHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface.withAlpha(200),
+        color: AppColors.surface,
         border: Border(
           bottom: BorderSide(
             color: AppColors.divider.withAlpha(30),
@@ -34,7 +34,7 @@ class SettingsHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildBackButton(context),
-          _buildTitleSection(),
+          _buildTitleSection(context),
           const SizedBox(width: 72),
         ],
       ),
@@ -77,12 +77,16 @@ class SettingsHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleSection() {
+  Widget _buildTitleSection(BuildContext context) {
     return Expanded(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(CupertinoIcons.settings, color: AppColors.accent, size: 18),
+          Icon(
+            CupertinoIcons.settings,
+            color: Theme.of(context).colorScheme.primary,
+            size: 18,
+          ),
           const SizedBox(width: 6),
           const Text(
             'Settings',

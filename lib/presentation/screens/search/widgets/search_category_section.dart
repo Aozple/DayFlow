@@ -254,7 +254,7 @@ class _SearchCategorySectionState extends State<SearchCategorySection>
   Color _getCategoryColor() {
     switch (widget.type) {
       case SearchResultType.task:
-        return AppColors.accent;
+        return Theme.of(context).colorScheme.primary;
       case SearchResultType.note:
         return AppColors.info;
       case SearchResultType.habit:

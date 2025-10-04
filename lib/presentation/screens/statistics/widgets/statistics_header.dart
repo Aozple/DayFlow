@@ -1,5 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class StatisticsHeader extends StatelessWidget {
@@ -44,7 +45,7 @@ class StatisticsHeader extends StatelessWidget {
                 children: [
                   Icon(
                     CupertinoIcons.chart_bar_fill,
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 18,
                   ),
                   const SizedBox(width: 6),

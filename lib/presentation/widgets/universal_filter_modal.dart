@@ -267,10 +267,10 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: hasChanged ? AppColors.accent : AppColors.surface,
+          color: hasChanged ? Theme.of(context).colorScheme.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: hasChanged ? AppColors.accent : AppColors.divider,
+            color: hasChanged ? Theme.of(context).colorScheme.primary : AppColors.divider,
             width: 1,
           ),
         ),
@@ -322,7 +322,7 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
               'Clear',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.accent,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -847,7 +847,7 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
                       decoration: BoxDecoration(
                         color:
                             _filters.sortAscending
-                                ? AppColors.accent
+                                ? Theme.of(context).colorScheme.primary
                                 : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -893,7 +893,7 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
                       decoration: BoxDecoration(
                         color:
                             !_filters.sortAscending
-                                ? AppColors.accent
+                                ? Theme.of(context).colorScheme.primary
                                 : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -940,11 +940,11 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.surfaceLight,
+          color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
-                isSelected ? AppColors.accent : AppColors.divider.withAlpha(60),
+                isSelected ? Theme.of(context).colorScheme.primary : AppColors.divider.withAlpha(60),
             width: 1,
           ),
         ),
@@ -970,12 +970,12 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
         decoration: BoxDecoration(
           color:
               isSelected
-                  ? AppColors.accent.withAlpha(20)
+                  ? Theme.of(context).colorScheme.primary.withAlpha(20)
                   : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color:
-                isSelected ? AppColors.accent : AppColors.divider.withAlpha(60),
+                isSelected ? Theme.of(context).colorScheme.primary : AppColors.divider.withAlpha(60),
             width: 1,
           ),
         ),
@@ -984,7 +984,7 @@ class _UniversalFilterModalState extends State<UniversalFilterModal> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? AppColors.accent : AppColors.textSecondary,
+            color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
           ),
         ),
       ),

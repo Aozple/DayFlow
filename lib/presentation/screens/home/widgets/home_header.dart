@@ -24,7 +24,7 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRect(
       child: Container(
-        color: AppColors.surface.withAlpha(200),
+        color: AppColors.surface,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -70,7 +70,7 @@ class HomeHeader extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Text(
@@ -105,7 +105,7 @@ class HomeHeader extends StatelessWidget {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: AppColors.accent,
+                              color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
                           ),

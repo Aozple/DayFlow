@@ -1,5 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class HomeQuickAddSheet extends StatelessWidget {
@@ -41,7 +42,7 @@ class HomeQuickAddSheet extends StatelessWidget {
               Icon(
                 CupertinoIcons.checkmark_square_fill,
                 size: 20,
-                color: AppColors.accent,
+                color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(width: 8),
               const Text('New Task'),

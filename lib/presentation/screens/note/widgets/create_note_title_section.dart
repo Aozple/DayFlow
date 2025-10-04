@@ -270,15 +270,15 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.accent.withAlpha(25),
-              AppColors.accent.withAlpha(15),
+              Theme.of(context).colorScheme.primary.withAlpha(25),
+              Theme.of(context).colorScheme.primary.withAlpha(15),
             ],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accent.withAlpha(60), width: 1),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(60), width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accent.withAlpha(25),
+              color: Theme.of(context).colorScheme.primary.withAlpha(25),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -287,13 +287,13 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.calendar, size: 16, color: AppColors.accent),
+            Icon(CupertinoIcons.calendar, size: 16, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 3),
             Text(
               _formatDate(widget.selectedDate),
               style: TextStyle(
                 fontSize: 9,
-                color: AppColors.accent,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,
                 height: 1.0,
               ),

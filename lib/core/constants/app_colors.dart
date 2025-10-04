@@ -3,20 +3,14 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  static const Color background = Color(0xFF000000);
-  static const Color surface = Color(0xFF1C1C1E);
-  static const Color surfaceLight = Color(0xFF2C2C2E);
-  static const Color divider = Color(0xFF38383A);
+  static const Color background = Color(0xFF151515);
+  static const Color surface = Color(0xFF272827);
+  static const Color surfaceLight = Color(0xFF505050);
+  static const Color divider = Color(0xFF464646);
 
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF8E8E93);
-  static const Color textTertiary = Color(0xFF48484A);
-
-  static Color _currentAccent = const Color(0xFF0A84FF);
-  static Color _currentAccentDim = const Color(0xFF0051D5);
-
-  static Color get accent => _currentAccent;
-  static Color get accentDim => _currentAccentDim;
+  static const Color textPrimary = Color(0xFFf5f5f5);
+  static const Color textSecondary = Color(0xFFa5a5a5);
+  static const Color textTertiary = Color(0xFF8a8a8a);
 
   static const Color defaultTaskColor = Color(0xFF2C2C2E);
   static const Color completedTaskColor = Color(0xFF38383A);
@@ -63,14 +57,6 @@ class AppColors {
     return fromHex(colorHex).withAlpha(25);
   }
 
-  static void setAccentColor(String hexColor) {
-    _currentAccent = fromHex(hexColor);
-    _currentAccentDim = Color.alphaBlend(
-      Colors.black.withAlpha(80),
-      _currentAccent,
-    );
-  }
-
   static const List<Color> accentColors = [
     Color(0xFF4A90E2),
     Color(0xFF00B894),
@@ -99,5 +85,13 @@ class AppColors {
       default:
         return const Color(0xFF9E9E9E);
     }
+  }
+
+  static Color getAccent(BuildContext context) {
+    return Theme.of(context).colorScheme.primary;
+  }
+
+  static Color getAccentDim(BuildContext context) {
+    return Theme.of(context).colorScheme.tertiary;
   }
 }

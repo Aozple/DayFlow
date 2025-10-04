@@ -178,13 +178,13 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withAlpha(20),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(20),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
                         Icons.keyboard_arrow_right,
                         size: 18,
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -294,7 +294,7 @@ class _ToggleFieldWidgetState extends State<_ToggleFieldWidget>
                               icon: const Icon(Icons.add, size: 16),
                               label: const Text('Add content'),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppColors.accent,
+                                foregroundColor: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ],

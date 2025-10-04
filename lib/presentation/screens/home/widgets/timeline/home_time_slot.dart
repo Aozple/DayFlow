@@ -165,12 +165,12 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.accent.withAlpha(
+          color: Theme.of(context).colorScheme.primary.withAlpha(
             (25.5 * _highlightAnimation.value).round(),
           ),
           borderRadius: BorderRadius.circular(_borderRadius),
           border: Border.all(
-            color: AppColors.accent.withAlpha(
+            color: Theme.of(context).colorScheme.primary.withAlpha(
               (153 * _highlightAnimation.value).round(),
             ),
             width: 2,
@@ -180,7 +180,7 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(
+              color: Theme.of(context).colorScheme.primary.withAlpha(
                 (230 * _highlightAnimation.value).round(),
               ),
               borderRadius: BorderRadius.circular(20),
@@ -223,7 +223,7 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
             right: BorderSide(
               color:
                   widget.isCurrentHour
-                      ? AppColors.accent
+                      ? Theme.of(context).colorScheme.primary
                       : AppColors.divider.withAlpha(150),
               width: widget.isCurrentHour ? 3 : 1,
             ),
@@ -253,7 +253,7 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
         fontSize: 14,
         fontWeight: widget.isCurrentHour ? FontWeight.w800 : FontWeight.w500,
         color:
-            widget.isCurrentHour ? AppColors.accent : AppColors.textSecondary,
+            widget.isCurrentHour ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
         letterSpacing: 0.3,
         height: 1.2,
       ),
@@ -265,11 +265,11 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
       width: 5,
       height: 5,
       decoration: BoxDecoration(
-        color: AppColors.accent,
+        color: Theme.of(context).colorScheme.primary,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AppColors.accent.withAlpha(150),
+            color: Theme.of(context).colorScheme.primary.withAlpha(150),
             blurRadius: 8,
             spreadRadius: 2,
           ),
@@ -305,17 +305,7 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
     if (!hasContent) return null;
 
     return BoxDecoration(
-      color: AppColors.surface.withAlpha(25),
       borderRadius: BorderRadius.circular(_borderRadius),
-      border: Border.all(color: AppColors.divider.withAlpha(30), width: 0.5),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.background.withAlpha(60),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-          spreadRadius: -2,
-        ),
-      ],
     );
   }
 
@@ -453,7 +443,7 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
                 spreadRadius: 2,
               ),
               BoxShadow(
-                color: AppColors.accent.withAlpha(50),
+                color: Theme.of(context).colorScheme.primary.withAlpha(50),
                 blurRadius: 30,
                 offset: const Offset(0, 12),
                 spreadRadius: -5,
@@ -506,7 +496,7 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
           ),
           if (isTask && !isCompleted)
             BoxShadow(
-              color: AppColors.accent.withAlpha(8),
+              color: Theme.of(context).colorScheme.primary.withAlpha(8),
               blurRadius: 20,
               offset: Offset.zero,
               spreadRadius: -5,

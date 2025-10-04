@@ -455,7 +455,7 @@ class _CreateHabitEndConditionSectionState
       case HabitEndCondition.afterCount:
         return AppColors.warning;
       case HabitEndCondition.manual:
-        return AppColors.accent;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 

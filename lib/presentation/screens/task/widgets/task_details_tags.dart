@@ -1,5 +1,6 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class TaskDetailsTags extends StatelessWidget {
   final List<String> tags;
@@ -48,10 +49,14 @@ class TaskDetailsTags extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withAlpha(25),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(25),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.accent.withAlpha(50),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withAlpha(50),
                         width: 1,
                       ),
                     ),
@@ -61,14 +66,14 @@ class TaskDetailsTags extends StatelessWidget {
                         Icon(
                           CupertinoIcons.number,
                           size: 14,
-                          color: AppColors.accent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           tag,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.2,
                           ),

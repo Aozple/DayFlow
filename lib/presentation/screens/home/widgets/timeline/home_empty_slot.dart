@@ -11,19 +11,8 @@ class HomeEmptySlot extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.surface.withAlpha(60),
-              AppColors.surfaceLight.withAlpha(40),
-            ],
-          ),
+          color: AppColors.surface.withAlpha(150),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.divider.withAlpha(30),
-            width: 0.5,
-          ),
         ),
         child: Center(
           child: Icon(

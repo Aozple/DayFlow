@@ -80,7 +80,7 @@ class _StatisticsQuickStatsState extends State<StatisticsQuickStats> {
         'title': 'Tasks Done',
         'value': _formatNumber(overview['totalTasksCompleted'] ?? 0),
         'icon': CupertinoIcons.checkmark_seal_fill,
-        'color': AppColors.accent,
+        'color': Theme.of(context).colorScheme.primary,
         'trend': null,
         'description': 'Total number of tasks completed',
       },

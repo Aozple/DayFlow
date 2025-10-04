@@ -255,24 +255,24 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withAlpha(20),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(20),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                        color: AppColors.accent.withAlpha(40),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(40),
                         width: 0.5,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.title, size: 10, color: AppColors.accent),
+                        Icon(Icons.title, size: 10, color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 3),
                         Text(
                           'H${widget.block.level}',
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                             letterSpacing: 0.2,
                           ),
                         ),
@@ -323,8 +323,8 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.accent,
-                        AppColors.accent.withAlpha(100),
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.primary.withAlpha(100),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(2),
@@ -399,13 +399,13 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
               decoration: BoxDecoration(
                 color:
                     isSelected
-                        ? AppColors.accent.withAlpha(20)
+                        ? Theme.of(context).colorScheme.primary.withAlpha(20)
                         : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
                 border:
                     isSelected
                         ? Border.all(
-                          color: AppColors.accent.withAlpha(40),
+                          color: Theme.of(context).colorScheme.primary.withAlpha(40),
                           width: 0.5,
                         )
                         : null,
@@ -417,7 +417,7 @@ class _HeadingFieldWidgetState extends State<_HeadingFieldWidget> {
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color:
-                        isSelected ? AppColors.accent : AppColors.textSecondary,
+                        isSelected ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
                     letterSpacing: 0.1,
                   ),
                 ),

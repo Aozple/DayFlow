@@ -225,11 +225,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ),
                       decoration: BoxDecoration(
                         color:
-                            isSelected ? AppColors.accent : AppColors.surface,
+                            isSelected ? Theme.of(context).colorScheme.primary : AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color:
-                              isSelected ? AppColors.accent : AppColors.divider,
+                              isSelected ? Theme.of(context).colorScheme.primary : AppColors.divider,
                         ),
                       ),
                       child: Text(
@@ -335,7 +335,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -393,7 +393,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
                 return RefreshIndicator(
                   onRefresh: _refreshData,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                   backgroundColor: AppColors.surface,
                   child: ListView(
                     physics: const BouncingScrollPhysics(),
@@ -511,7 +511,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(

@@ -22,7 +22,7 @@ class StatusBarPadding extends StatelessWidget {
       height: height ?? topInset,
       margin: margin,
       padding: padding,
-      color: color ?? AppColors.surface.withAlpha(200),
+      color: color ?? AppColors.surface,
     );
   }
 }

@@ -68,7 +68,7 @@ class CreateNoteColorPicker extends StatelessWidget {
                       },
                       child: Text(
                         'Done',
-                        style: TextStyle(color: AppColors.accent),
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
                       ),
                     ),
                   ],

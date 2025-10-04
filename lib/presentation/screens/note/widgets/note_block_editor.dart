@@ -164,7 +164,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
               return Material(
                 elevation: 8,
                 borderRadius: BorderRadius.circular(12),
-                shadowColor: AppColors.accent.withAlpha(50),
+                shadowColor: Theme.of(context).colorScheme.primary.withAlpha(50),
                 child: child,
               );
             },
@@ -221,7 +221,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
               decoration: BoxDecoration(
                 color:
                     isHovered
-                        ? AppColors.accent.withAlpha(100)
+                        ? Theme.of(context).colorScheme.primary.withAlpha(100)
                         : AppColors.divider.withAlpha(30),
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -232,7 +232,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                           width: 32,
                           height: 18,
                           decoration: BoxDecoration(
-                            color: AppColors.accent,
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(9),
                           ),
                           child: const Icon(
@@ -267,13 +267,13 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                 decoration: BoxDecoration(
                   color:
                       _isBlockFocused(block.id)
-                          ? AppColors.accent.withAlpha(8)
+                          ? Theme.of(context).colorScheme.primary.withAlpha(8)
                           : AppColors.surface.withAlpha(15),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color:
                         _isBlockFocused(block.id)
-                            ? AppColors.accent.withAlpha(50)
+                            ? Theme.of(context).colorScheme.primary.withAlpha(50)
                             : AppColors.divider.withAlpha(50),
                     width: 1.5,
                   ),
@@ -402,7 +402,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                 Icon(
                   Icons.add_circle_outline,
                   size: 20,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -410,7 +410,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
@@ -429,7 +429,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
         key: _fabKey,
         heroTag: 'main_add_fab',
         onPressed: _toggleFabMenu,
-        backgroundColor: AppColors.accent,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: _isFabOpen ? 8 : 4,
         child: AnimatedBuilder(
           animation: _fabRotationController,
@@ -537,7 +537,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                   _toggleFabMenu();
                                   _addBlockOfType(BlockType.text);
                                 },
-                                backgroundColor: AppColors.accent,
+                                backgroundColor: Theme.of(context).colorScheme.primary,
                                 elevation: 4,
                                 child: const Icon(
                                   Icons.text_fields,
@@ -665,7 +665,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                                   _toggleFabMenu();
                                   _addBlockOfType(BlockType.heading);
                                 },
-                                backgroundColor: AppColors.accent,
+                                backgroundColor: Theme.of(context).colorScheme.primary,
                                 elevation: 4,
                                 child: const Icon(
                                   Icons.title,
@@ -836,7 +836,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.transform, color: AppColors.accent),
+                    Icon(Icons.transform, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 8),
                     const Text('Convert Type'),
                   ],
@@ -1027,7 +1027,7 @@ class _NoteBlockEditorState extends State<NoteBlockEditor>
       case BlockType.text:
         return AppColors.textSecondary;
       case BlockType.heading:
-        return AppColors.accent;
+        return Theme.of(context).colorScheme.primary;
       case BlockType.bulletList:
         return Colors.orange;
       case BlockType.numberedList:

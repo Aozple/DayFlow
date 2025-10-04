@@ -113,7 +113,7 @@ class _TimePickerModalState extends State<TimePickerModal> {
       child: Text(
         'Done',
         style: TextStyle(
-          color: _hasChanges ? AppColors.accent : AppColors.textTertiary,
+          color: _hasChanges ? Theme.of(context).colorScheme.primary : AppColors.textTertiary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -190,12 +190,12 @@ class _TimePickerModalState extends State<TimePickerModal> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.accent : AppColors.surface,
+                color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color:
                       isSelected
-                          ? AppColors.accent
+                          ? Theme.of(context).colorScheme.primary
                           : AppColors.divider.withAlpha(50),
                 ),
               ),

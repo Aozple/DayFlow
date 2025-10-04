@@ -1,6 +1,7 @@
 import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class HomeHabitOptionsSheet extends StatelessWidget {
   final HabitModel habit;
@@ -36,14 +37,14 @@ class HomeHabitOptionsSheet extends StatelessWidget {
                 Icon(
                   CupertinoIcons.flame_fill,
                   size: 14,
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${habit.currentStreak} day streak',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

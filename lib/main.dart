@@ -1,4 +1,3 @@
-import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/core/di/service_locator.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
 import 'package:dayflow/core/constants/app_constants.dart';
@@ -60,24 +59,23 @@ class DayFlowApp extends StatelessWidget {
         BlocProvider(create: (_) => HabitBloc()..add(const LoadHabits())),
         BlocProvider(create: (_) => SettingsBloc()..add(const LoadSettings())),
       ],
-      child: BlocListener<SettingsBloc, SettingsState>(
-        listener: (context, state) {
-          if (state is SettingsLoaded) {
-            AppColors.setAccentColor(state.accentColor);
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, settingsState) {
+          String accentColor = '#4A90E2';
+
+          if (settingsState is SettingsLoaded) {
+            accentColor = settingsState.accentColor;
           }
+
+          return MaterialApp.router(
+            title: 'DayFlow',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.getDarkTheme(accentColor),
+            darkTheme: AppTheme.getDarkTheme(accentColor),
+            themeMode: ThemeMode.dark,
+            routerConfig: AppRouter.router,
+          );
         },
-        child: BlocBuilder<SettingsBloc, SettingsState>(
-          builder: (context, settingsState) {
-            return MaterialApp.router(
-              title: 'DayFlow',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: ThemeMode.dark,
-              routerConfig: AppRouter.router,
-            );
-          },
-        ),
       ),
     );
   }

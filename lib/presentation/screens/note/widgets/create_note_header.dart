@@ -41,10 +41,10 @@ class CreateNoteHeader extends StatelessWidget {
     return '';
   }
 
-  Color get _statusColor {
+  Color _statusColor(BuildContext context) {
     if (isDeleting) return AppColors.error;
-    if (isSaving) return AppColors.accent;
-    return AppColors.accent.withAlpha(200);
+    if (isSaving) return Theme.of(context).colorScheme.primary;
+    return Theme.of(context).colorScheme.primary.withAlpha(200);
   }
 
   bool get _canInteract => !isSaving && !isDeleting;
@@ -53,7 +53,7 @@ class CreateNoteHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface.withAlpha(200),
+        color: AppColors.surface,
         border: Border(
           bottom: BorderSide(
             color: AppColors.divider.withAlpha(30),
@@ -73,8 +73,8 @@ class CreateNoteHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildCancelButton(),
-          _buildTitleSection(),
-          _buildActionButtons(),
+          _buildTitleSection(context),
+          _buildActionButtons(context),
         ],
       ),
     );
@@ -113,7 +113,7 @@ class CreateNoteHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildTitleSection() {
+  Widget _buildTitleSection(BuildContext context) {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -127,22 +127,24 @@ class CreateNoteHeader extends StatelessWidget {
               height: 1.0,
             ),
           ),
-          _buildStatusIndicator(),
+          _buildStatusIndicator(context),
         ],
       ),
     );
   }
 
-  Widget _buildStatusIndicator() {
+  Widget _buildStatusIndicator(BuildContext context) {
     if (!_shouldShowStatus) {
       return const SizedBox.shrink();
     }
+
+    final statusColor = _statusColor(context);
 
     return Container(
       margin: const EdgeInsets.only(top: 2),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: _statusColor.withAlpha(10),
+        color: statusColor.withAlpha(10),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -152,7 +154,7 @@ class CreateNoteHeader extends StatelessWidget {
             SizedBox(
               width: 10,
               height: 10,
-              child: CupertinoActivityIndicator(radius: 5, color: _statusColor),
+              child: CupertinoActivityIndicator(radius: 5, color: statusColor),
             ),
             const SizedBox(width: 4),
           ],
@@ -160,7 +162,7 @@ class CreateNoteHeader extends StatelessWidget {
             _statusText,
             style: TextStyle(
               fontSize: 11,
-              color: _statusColor,
+              color: statusColor,
               fontWeight: FontWeight.w500,
               height: 1.0,
             ),
@@ -170,12 +172,12 @@ class CreateNoteHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (isEditMode) ...[_buildDeleteButton(), const SizedBox(width: 12)],
-        _buildSaveButton(),
+        _buildSaveButton(context),
       ],
     );
   }
@@ -218,7 +220,7 @@ class CreateNoteHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildSaveButton() {
+  Widget _buildSaveButton(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       onPressed: _canInteract ? onSave : null,
@@ -230,7 +232,9 @@ class CreateNoteHeader extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color:
-              _canInteract ? AppColors.accent : AppColors.accent.withAlpha(100),
+              _canInteract
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.primary.withAlpha(100),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(

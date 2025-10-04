@@ -88,7 +88,7 @@ class _StatisticsInsightsCardState extends State<StatisticsInsightsCard> {
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.accent,
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
@@ -271,7 +271,7 @@ class _StatisticsInsightsCardState extends State<StatisticsInsightsCard> {
         lowerInsight.contains('tip')) {
       return AppColors.info;
     } else {
-      return AppColors.accent;
+      return Theme.of(context).colorScheme.primary;
     }
   }
 

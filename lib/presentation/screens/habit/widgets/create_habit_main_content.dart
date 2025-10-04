@@ -340,8 +340,8 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
             colors:
                 hasStartDate
                     ? [
-                      AppColors.accent.withAlpha(25),
-                      AppColors.accent.withAlpha(15),
+                      Theme.of(context).colorScheme.primary.withAlpha(25),
+                      Theme.of(context).colorScheme.primary.withAlpha(15),
                     ]
                     : [AppColors.surface, AppColors.surface.withAlpha(200)],
           ),
@@ -349,7 +349,7 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
           border: Border.all(
             color:
                 hasStartDate
-                    ? AppColors.accent.withAlpha(60)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(60)
                     : AppColors.divider.withAlpha(60),
             width: 1,
           ),
@@ -357,7 +357,7 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
               hasStartDate
                   ? [
                     BoxShadow(
-                      color: AppColors.accent.withAlpha(25),
+                      color: Theme.of(context).colorScheme.primary.withAlpha(25),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -370,7 +370,7 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
             Icon(
               CupertinoIcons.calendar,
               size: 18,
-              color: hasStartDate ? AppColors.accent : AppColors.textSecondary,
+              color: hasStartDate ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
             ),
             const SizedBox(height: 3),
             Text(
@@ -378,7 +378,7 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
               style: TextStyle(
                 fontSize: 9,
                 color:
-                    hasStartDate ? AppColors.accent : AppColors.textSecondary,
+                    hasStartDate ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
                 fontWeight: hasStartDate ? FontWeight.w700 : FontWeight.w600,
                 height: 1.0,
               ),

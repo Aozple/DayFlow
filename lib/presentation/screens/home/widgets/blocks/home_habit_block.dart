@@ -36,7 +36,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     final isDefaultColor = _isDefaultHabitColor(widget.habit.color);
     final habitColor =
         isDefaultColor
-            ? AppColors.accent
+            ? Theme.of(context).colorScheme.primary
             : AppColors.fromHex(widget.habit.color);
 
     final isCompleted = widget.instance?.isCompleted ?? false;
@@ -80,13 +80,9 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
         HapticFeedback.lightImpact();
         widget.onOptions(widget.habit);
       },
-      child: Container(
+      child: SizedBox(
         width: 20,
         height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.surface.withAlpha(30),
-          borderRadius: BorderRadius.circular(4),
-        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

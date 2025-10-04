@@ -37,6 +37,7 @@ class TaskDetailsInfoSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildInfoItem(
+            context,
             icon: CupertinoIcons.calendar,
             label: 'Schedule',
             value:
@@ -48,6 +49,7 @@ class TaskDetailsInfoSection extends StatelessWidget {
           const Divider(height: 24, color: AppColors.divider),
 
           _buildInfoItem(
+            context,
             icon: CupertinoIcons.flag_fill,
             label: 'Priority',
             value: 'Level ${task.priority}',
@@ -57,6 +59,7 @@ class TaskDetailsInfoSection extends StatelessWidget {
           const Divider(height: 24, color: AppColors.divider),
 
           _buildInfoItem(
+            context,
             icon: CupertinoIcons.paintbrush_fill,
             label: 'Color',
             value: null,
@@ -76,7 +79,8 @@ class TaskDetailsInfoSection extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem({
+  Widget _buildInfoItem(
+    BuildContext context, {
     required IconData icon,
     required String label,
     String? value,
@@ -124,13 +128,13 @@ class TaskDetailsInfoSection extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.accent.withAlpha(20),
+              color: Theme.of(context).colorScheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               CupertinoIcons.pencil,
               size: 16,
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ),

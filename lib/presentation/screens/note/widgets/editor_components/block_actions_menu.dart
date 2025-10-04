@@ -86,18 +86,26 @@ class BlockActionsMenu extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   _buildActionItem(
+                    context,
                     Icons.transform,
                     'Convert Type',
                     () => _showConvertSubmenu(context),
                     description: 'Change block type',
                   ),
 
-                  _buildActionItem(Icons.content_copy, 'Duplicate', () {
-                    onDuplicate();
-                    onHide();
-                  }, description: 'Copy this block'),
+                  _buildActionItem(
+                    context,
+                    Icons.content_copy,
+                    'Duplicate',
+                    () {
+                      onDuplicate();
+                      onHide();
+                    },
+                    description: 'Copy this block',
+                  ),
 
                   _buildActionItem(
+                    context,
                     Icons.palette_outlined,
                     'Style',
                     () {
@@ -112,6 +120,7 @@ class BlockActionsMenu extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   _buildActionItem(
+                    context,
                     Icons.delete_outline,
                     'Delete',
                     () {
@@ -131,6 +140,7 @@ class BlockActionsMenu extends StatelessWidget {
   }
 
   Widget _buildActionItem(
+    BuildContext context,
     IconData icon,
     String label,
     VoidCallback onTap, {
@@ -155,13 +165,18 @@ class BlockActionsMenu extends StatelessWidget {
                     color:
                         isDestructive
                             ? Colors.red.withAlpha(20)
-                            : AppColors.accent.withAlpha(20),
+                            : Theme.of(
+                              context,
+                            ).colorScheme.primary.withAlpha(20),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
                     icon,
                     size: 16,
-                    color: isDestructive ? Colors.red : AppColors.accent,
+                    color:
+                        isDestructive
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.primary,
                   ),
                 ),
 
@@ -337,13 +352,16 @@ class BlockActionsMenu extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: _getBlockTypeColor(type).withAlpha(20),
+                          color: _getBlockTypeColor(
+                            context,
+                            type,
+                          ).withAlpha(20),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
                           _getBlockTypeIcon(type),
                           size: 18,
-                          color: _getBlockTypeColor(type),
+                          color: _getBlockTypeColor(context, type),
                         ),
                       ),
 
@@ -399,12 +417,12 @@ class BlockActionsMenu extends StatelessWidget {
     }
   }
 
-  Color _getBlockTypeColor(BlockType type) {
+  Color _getBlockTypeColor(BuildContext context, BlockType type) {
     switch (type) {
       case BlockType.text:
         return AppColors.textSecondary;
       case BlockType.heading:
-        return AppColors.accent;
+        return Theme.of(context).colorScheme.primary;
       case BlockType.bulletList:
         return Colors.orange;
       case BlockType.numberedList:

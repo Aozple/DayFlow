@@ -259,7 +259,7 @@ class _DraggableModalState extends State<DraggableModal>
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.accent.withAlpha(20),
+                                        color: Theme.of(context).colorScheme.primary.withAlpha(20),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Row(
@@ -268,14 +268,14 @@ class _DraggableModalState extends State<DraggableModal>
                                           Icon(
                                             CupertinoIcons.arrow_up,
                                             size: 10,
-                                            color: AppColors.accent,
+                                            color: Theme.of(context).colorScheme.primary,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
                                             'Swipe up',
                                             style: TextStyle(
                                               fontSize: 10,
-                                              color: AppColors.accent,
+                                              color: Theme.of(context).colorScheme.primary,
                                             ),
                                           ),
                                         ],

@@ -63,7 +63,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
         child: Text(
           'Save',
           style: TextStyle(
-            color: AppColors.accent,
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -112,13 +112,13 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
           decoration: BoxDecoration(
             color:
                 isSelected
-                    ? AppColors.accent.withAlpha(25)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(25)
                     : AppColors.surfaceLight.withAlpha(100),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color:
                   isSelected
-                      ? AppColors.accent.withAlpha(60)
+                      ? Theme.of(context).colorScheme.primary.withAlpha(60)
                       : AppColors.divider.withAlpha(50),
               width: 0.5,
             ),
@@ -127,7 +127,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
             children: [
               Icon(
                 CupertinoIcons.bell,
-                color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -136,7 +136,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                   label,
                   style: TextStyle(
                     color:
-                        isSelected ? AppColors.accent : AppColors.textPrimary,
+                        isSelected ? Theme.of(context).colorScheme.primary : AppColors.textPrimary,
                     fontSize: 16,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     letterSpacing: 0.2,
@@ -148,7 +148,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -183,13 +183,13 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
           decoration: BoxDecoration(
             color:
                 isCustomSelected
-                    ? AppColors.accent.withAlpha(25)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(25)
                     : AppColors.surfaceLight.withAlpha(100),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color:
                   isCustomSelected
-                      ? AppColors.accent.withAlpha(60)
+                      ? Theme.of(context).colorScheme.primary.withAlpha(60)
                       : AppColors.divider.withAlpha(50),
               width: 0.5,
             ),
@@ -200,7 +200,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                 CupertinoIcons.time,
                 color:
                     isCustomSelected
-                        ? AppColors.accent
+                        ? Theme.of(context).colorScheme.primary
                         : AppColors.textSecondary,
                 size: 20,
               ),
@@ -210,7 +210,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                 style: TextStyle(
                   color:
                       isCustomSelected
-                          ? AppColors.accent
+                          ? Theme.of(context).colorScheme.primary
                           : AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight:
@@ -248,7 +248,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.accent),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                   onChanged: (value) {
@@ -267,7 +267,7 @@ class _NotificationTimePickerState extends State<NotificationTimePicker> {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

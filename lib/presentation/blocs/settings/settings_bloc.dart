@@ -1,4 +1,3 @@
-import 'package:dayflow/core/constants/app_colors.dart';
 import 'package:dayflow/data/models/app_settings.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/presentation/blocs/base/base_bloc.dart';
@@ -44,7 +43,6 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
 
         final settings = _repository.getSettings();
         _cachedSettings = settings;
-        AppColors.setAccentColor(settings.accentColor);
 
         return settings;
       },
@@ -79,6 +77,11 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     UpdateFirstDayOfWeek event,
     Emitter<SettingsState> emit,
   ) async {
+    if (_shouldDebounce()) {
+      logVerbose('Debouncing first day update');
+      return;
+    }
+
     await _updateSingleSetting(
       emit,
       settingName: 'first day of week',
@@ -90,6 +93,11 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     UpdateDefaultPriority event,
     Emitter<SettingsState> emit,
   ) async {
+    if (_shouldDebounce()) {
+      logVerbose('Debouncing priority update');
+      return;
+    }
+
     await _updateSingleSetting(
       emit,
       settingName: 'default priority',
@@ -102,6 +110,11 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     UpdateNotificationEnabled event,
     Emitter<SettingsState> emit,
   ) async {
+    if (_shouldDebounce()) {
+      logVerbose('Debouncing notification enabled update');
+      return;
+    }
+
     await _updateSingleSetting(
       emit,
       settingName: 'notification enabled',
@@ -115,6 +128,11 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     UpdateDefaultNotificationTime event,
     Emitter<SettingsState> emit,
   ) async {
+    if (_shouldDebounce()) {
+      logVerbose('Debouncing notification time update');
+      return;
+    }
+
     await _updateSingleSetting(
       emit,
       settingName: 'notification time',
@@ -129,6 +147,11 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     UpdateNotificationSound event,
     Emitter<SettingsState> emit,
   ) async {
+    if (_shouldDebounce()) {
+      logVerbose('Debouncing notification sound update');
+      return;
+    }
+
     await _updateSingleSetting(
       emit,
       settingName: 'notification sound',
@@ -141,6 +164,11 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     UpdateNotificationVibration event,
     Emitter<SettingsState> emit,
   ) async {
+    if (_shouldDebounce()) {
+      logVerbose('Debouncing notification vibration update');
+      return;
+    }
+
     await _updateSingleSetting(
       emit,
       settingName: 'notification vibration',

@@ -356,7 +356,7 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(CupertinoIcons.camera_fill, color: AppColors.accent),
+                    Icon(CupertinoIcons.camera_fill, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 8),
                     const Text('Take Photo'),
                   ],
@@ -370,7 +370,7 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(CupertinoIcons.photo_fill, color: AppColors.accent),
+                    Icon(CupertinoIcons.photo_fill, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 8),
                     const Text('Choose from Gallery'),
                   ],
@@ -640,13 +640,13 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.accent.withAlpha(15),
+                color: Theme.of(context).colorScheme.primary.withAlpha(15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 'Try again',
                 style: TextStyle(
-                  color: AppColors.accent,
+                  color: Theme.of(context).colorScheme.primary,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -672,7 +672,7 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
         border: Border.all(
           color:
               _isEditingCaption
-                  ? AppColors.accent.withAlpha(50)
+                  ? Theme.of(context).colorScheme.primary.withAlpha(50)
                   : AppColors.divider.withAlpha(20),
           width: 1,
         ),
@@ -718,13 +718,13 @@ class _PictureBlockContentState extends State<_PictureBlockContent>
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withAlpha(20),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(20),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
                         CupertinoIcons.check_mark,
                         size: 16,
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),

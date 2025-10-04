@@ -397,9 +397,9 @@ class _HomeTimelineState extends State<HomeTimeline>
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            AppColors.accent.withAlpha(40),
-            AppColors.accent.withAlpha(20),
-            AppColors.accent.withAlpha(0),
+            Theme.of(context).colorScheme.primary.withAlpha(40),
+            Theme.of(context).colorScheme.primary.withAlpha(20),
+            Theme.of(context).colorScheme.primary.withAlpha(0),
           ],
         ),
       ),
@@ -436,7 +436,7 @@ class _HomeTimelineState extends State<HomeTimeline>
               ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.accent, AppColors.accent.withAlpha(230)],
+                colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withAlpha(230)],
               )
               : const LinearGradient(
                 begin: Alignment.topLeft,
@@ -445,7 +445,7 @@ class _HomeTimelineState extends State<HomeTimeline>
               ),
       borderRadius: BorderRadius.circular(14),
       border: Border.all(
-        color: isReady ? AppColors.accent : AppColors.divider.withAlpha(60),
+        color: isReady ? Theme.of(context).colorScheme.primary : AppColors.divider.withAlpha(60),
         width: 0.5,
       ),
       boxShadow: _getIndicatorShadows(isReady),
@@ -457,7 +457,7 @@ class _HomeTimelineState extends State<HomeTimeline>
       BoxShadow(
         color:
             isReady
-                ? AppColors.accent.withAlpha(50)
+                ? Theme.of(context).colorScheme.primary.withAlpha(50)
                 : AppColors.background.withAlpha(40),
         blurRadius: isReady ? 20 : 10,
         offset: const Offset(0, 4),
@@ -465,7 +465,7 @@ class _HomeTimelineState extends State<HomeTimeline>
       ),
       if (isReady)
         BoxShadow(
-          color: AppColors.accent.withAlpha(30),
+          color: Theme.of(context).colorScheme.primary.withAlpha(30),
           blurRadius: 30,
           offset: const Offset(0, 8),
           spreadRadius: -5,
@@ -539,13 +539,13 @@ class _HomeTimelineState extends State<HomeTimeline>
         color:
             isReady
                 ? Colors.white.withAlpha(20)
-                : AppColors.accent.withAlpha(20),
+                : Theme.of(context).colorScheme.primary.withAlpha(20),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color:
               isReady
                   ? Colors.white.withAlpha(30)
-                  : AppColors.accent.withAlpha(40),
+                  : Theme.of(context).colorScheme.primary.withAlpha(40),
           width: 0.5,
         ),
       ),
@@ -554,7 +554,7 @@ class _HomeTimelineState extends State<HomeTimeline>
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: isReady ? Colors.white : AppColors.accent,
+          color: isReady ? Colors.white : Theme.of(context).colorScheme.primary,
           letterSpacing: 0.5,
         ),
       ),
@@ -587,7 +587,7 @@ class _HomeTimelineState extends State<HomeTimeline>
                     ? Colors.white.withAlpha(20)
                     : AppColors.divider.withAlpha(40),
             valueColor: AlwaysStoppedAnimation<Color>(
-              isReady ? Colors.white : AppColors.accent,
+              isReady ? Colors.white : Theme.of(context).colorScheme.primary,
             ),
           ),
         ),
