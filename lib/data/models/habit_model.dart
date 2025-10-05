@@ -7,6 +7,22 @@ import 'package:uuid/uuid.dart';
 class HabitModel {
   static const String _tag = 'HabitModel';
 
+  static final Map<String, bool> _validationCache = {};
+  static DateTime? _cachedNow;
+  static int? _cacheTimestamp;
+
+  static final Map<String, HabitFrequency> _frequencyMap = {
+    for (var f in HabitFrequency.values) f.name: f,
+  };
+
+  static final Map<String, HabitEndCondition> _endConditionMap = {
+    for (var e in HabitEndCondition.values) e.name: e,
+  };
+
+  static final Map<String, HabitType> _habitTypeMap = {
+    for (var t in HabitType.values) t.name: t,
+  };
+
   final String id;
   final String title;
   final String? description;
@@ -36,6 +52,9 @@ class HabitModel {
   final int longestStreak;
   final int totalCompletions;
   final DateTime? lastCompletedDate;
+
+  String? _cachedFrequencyLabel;
+  String? _lastFrequencyKey;
 
   static const int maxTitleLength = 200;
   static const int maxDescriptionLength = 1000;
@@ -78,37 +97,78 @@ class HabitModel {
   }
 
   void _validateModel() {
-    if (title.isEmpty) {
-      throw ArgumentError('Title cannot be empty');
-    }
-    if (title.length > maxTitleLength) {
-      throw ArgumentError('Title too long (max $maxTitleLength characters)');
-    }
-    if (description != null && description!.length > maxDescriptionLength) {
-      throw ArgumentError(
-        'Description too long (max $maxDescriptionLength characters)',
-      );
-    }
-    if (!ColorUtils.isValidHex(color)) {
-      throw ArgumentError('Invalid color format');
-    }
-    if (startDate.isBefore(createdAt)) {
-      throw ArgumentError('Start date cannot be before creation date');
-    }
-    if (tags.length > maxTags) {
-      throw ArgumentError('Too many tags (max $maxTags)');
-    }
-    for (final tag in tags) {
-      if (tag.length > maxTagLength) {
-        throw ArgumentError(
-          'Tag "$tag" too long (max $maxTagLength characters)',
-        );
+    final validationKey =
+        '${title.length}-$color-${tags.length}-${frequency.name}-${habitType.name}';
+
+    if (_validationCache.containsKey(validationKey)) {
+      if (!_validationCache[validationKey]!) {
+        throw ArgumentError('Invalid model data (cached)');
       }
+      return;
     }
 
-    _validateFrequency();
-    _validateEndCondition();
-    _validateHabitType();
+    try {
+      if (title.isEmpty) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Title cannot be empty');
+      }
+
+      if (title.length > maxTitleLength) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Title too long (max $maxTitleLength characters)');
+      }
+
+      if (tags.length > maxTags) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Too many tags (max $maxTags)');
+      }
+
+      if (!ColorUtils.isValidHex(color)) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Invalid color format');
+      }
+
+      if (description != null && description!.length > maxDescriptionLength) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError(
+          'Description too long (max $maxDescriptionLength characters)',
+        );
+      }
+
+      for (int i = 0; i < tags.length; i++) {
+        if (tags[i].length > maxTagLength) {
+          _cacheInvalidResult(validationKey);
+          throw ArgumentError(
+            'Tag "${tags[i]}" too long (max $maxTagLength characters)',
+          );
+        }
+      }
+
+      _validateFrequency();
+      _validateEndCondition();
+      _validateHabitType();
+
+      _cacheValidResult(validationKey);
+    } catch (e) {
+      _cacheInvalidResult(validationKey);
+      rethrow;
+    }
+  }
+
+  void _cacheValidResult(String key) {
+    if (_validationCache.length < 100) {
+      _validationCache[key] = true;
+    }
+  }
+
+  void _cacheInvalidResult(String key) {
+    if (_validationCache.length < 100) {
+      _validationCache[key] = false;
+    }
+  }
+
+  static void clearValidationCache() {
+    _validationCache.clear();
   }
 
   void _validateFrequency() {
@@ -223,44 +283,101 @@ class HabitModel {
 
   factory HabitModel.fromMap(Map<String, dynamic> map) {
     try {
-      TimeOfDay? parseTime(Map<String, dynamic>? timeMap) {
-        if (timeMap == null) return null;
+      TimeOfDay? parseTime(dynamic timeData) {
+        if (timeData is! Map<String, dynamic>) return null;
+
         try {
-          return TimeOfDay(
-            hour: timeMap['hour'] as int,
-            minute: timeMap['minute'] as int,
-          );
+          final hour = timeData['hour'];
+          final minute = timeData['minute'];
+
+          if (hour is int &&
+              minute is int &&
+              hour >= 0 &&
+              hour <= 23 &&
+              minute >= 0 &&
+              minute <= 59) {
+            return TimeOfDay(hour: hour, minute: minute);
+          }
         } catch (e) {
-          DebugLogger.warning('Invalid time format', tag: _tag, data: timeMap);
-          return null;
+          DebugLogger.warning('Invalid time format', tag: _tag, data: timeData);
         }
+        return null;
       }
 
       List<String> parseTags() {
-        try {
-          if (map['tags'] != null) {
-            return List<String>.from(map['tags'])
-                .where((tag) => tag.isNotEmpty && tag.length <= maxTagLength)
-                .take(maxTags)
-                .toList();
+        final tagsData = map['tags'];
+        if (tagsData is! List) return [];
+
+        final result = <String>[];
+
+        for (int i = 0; i < tagsData.length && result.length < maxTags; i++) {
+          final tag = tagsData[i]?.toString();
+          if (tag != null && tag.isNotEmpty && tag.length <= maxTagLength) {
+            result.add(tag);
           }
-        } catch (e) {
-          DebugLogger.warning(
-            'Error parsing tags',
-            tag: _tag,
-            data: e.toString(),
-          );
         }
-        return [];
+
+        return result;
       }
 
-      var endCondition = HabitEndCondition.values.firstWhere(
-        (e) => e.name == map['endCondition'],
-        orElse: () => HabitEndCondition.never,
-      );
+      List<int>? parseWeekdays() {
+        final weekdaysData = map['weekdays'];
+        if (weekdaysData is! List) return null;
+
+        final result = <int>[];
+
+        for (final day in weekdaysData) {
+          if (day is int && day >= 1 && day <= 7) {
+            result.add(day);
+          }
+        }
+
+        return result.isNotEmpty ? result : null;
+      }
+
+      int? parseIntSafe(dynamic value, {int? min, int? max}) {
+        if (value == null) return null;
+
+        int? result;
+        if (value is int) {
+          result = value;
+        } else {
+          try {
+            result = int.parse(value.toString());
+          } catch (_) {
+            return null;
+          }
+        }
+
+        if (min != null && result < min) return null;
+        if (max != null && result > max) return null;
+
+        return result;
+      }
+
+      String parseStringSafe(dynamic value, String fallback, {int? maxLength}) {
+        if (value is! String) return fallback;
+
+        final trimmed = value.trim();
+        if (trimmed.isEmpty) return fallback;
+
+        if (maxLength != null && trimmed.length > maxLength) {
+          DebugLogger.warning(
+            'String truncated',
+            tag: _tag,
+            data: '${trimmed.length} -> $maxLength',
+          );
+          return trimmed.substring(0, maxLength);
+        }
+
+        return trimmed;
+      }
+
+      var endCondition =
+          _endConditionMap[map['endCondition']] ?? HabitEndCondition.never;
       var endDate = DateUtils.tryParse(map['endDate'] as String?);
 
-      if (endDate != null && endDate.isBefore(DateTime.now())) {
+      if (endDate != null && endDate.isBefore(_now)) {
         endCondition = HabitEndCondition.never;
         endDate = null;
         DebugLogger.warning(
@@ -269,53 +386,76 @@ class HabitModel {
         );
       }
 
+      final createdAt = DateUtils.tryParse(map['createdAt'] as String?) ?? _now;
+      final startDate =
+          DateUtils.tryParse(map['startDate'] as String?) ?? createdAt;
+
       final habit = HabitModel(
         id: map['id'] as String? ?? const Uuid().v4(),
-        title: () {
-          final rawTitle = map['title'] as String? ?? 'Untitled Habit';
-          if (rawTitle.length > maxTitleLength) {
-            DebugLogger.warning(
-              'Title truncated',
-              tag: _tag,
-              data: '${rawTitle.length} -> $maxTitleLength',
-            );
-            return rawTitle.substring(0, maxTitleLength);
-          }
-          return rawTitle;
-        }(),
-        description: map['description'] as String?,
-        createdAt:
-            DateUtils.tryParse(map['createdAt'] as String?) ?? DateTime.now(),
-        startDate:
-            DateUtils.tryParse(map['startDate'] as String?) ??
-            DateUtils.tryParse(map['createdAt'] as String?) ??
-            DateTime.now(),
-        isDeleted: map['isDeleted'] as bool? ?? false,
-        color: map['color'] as String? ?? '#6C63FF',
-        tags: parseTags(),
-        hasNotification: map['hasNotification'] as bool? ?? false,
-        notificationMinutesBefore: map['notificationMinutesBefore'] as int?,
-        frequency: HabitFrequency.values.firstWhere(
-          (f) => f.name == map['frequency'],
-          orElse: () => HabitFrequency.daily,
+
+        title: parseStringSafe(
+          map['title'],
+          'Untitled Habit',
+          maxLength: maxTitleLength,
         ),
-        weekdays:
-            map['weekdays'] != null ? List<int>.from(map['weekdays']) : null,
-        monthDay: map['monthDay'] as int?,
-        customInterval: map['customInterval'] as int?,
-        preferredTime: parseTime(map['preferredTime'] as Map<String, dynamic>?),
+
+        description:
+            map['description'] is String
+                ? parseStringSafe(
+                  map['description'],
+                  '',
+                  maxLength: maxDescriptionLength,
+                )
+                : null,
+
+        createdAt: createdAt,
+        startDate: startDate,
+        isDeleted: map['isDeleted'] as bool? ?? false,
+
+        color: ColorUtils.validateHex(map['color'] as String?) ?? '#6C63FF',
+
+        tags: parseTags(),
+
+        hasNotification: map['hasNotification'] as bool? ?? false,
+        notificationMinutesBefore: parseIntSafe(
+          map['notificationMinutesBefore'],
+          min: 0,
+          max: 1440,
+        ),
+
+        frequency: _frequencyMap[map['frequency']] ?? HabitFrequency.daily,
+
+        weekdays: parseWeekdays(),
+
+        monthDay: parseIntSafe(map['monthDay'], min: 1, max: 31),
+
+        customInterval: parseIntSafe(
+          map['customInterval'],
+          min: 1,
+          max: maxCustomInterval,
+        ),
+
+        preferredTime: parseTime(map['preferredTime']),
+
         endCondition: endCondition,
         endDate: endDate,
-        targetCount: map['targetCount'] as int?,
-        habitType: HabitType.values.firstWhere(
-          (t) => t.name == map['habitType'],
-          orElse: () => HabitType.simple,
+
+        targetCount: parseIntSafe(map['targetCount'], min: 1),
+
+        habitType: _habitTypeMap[map['habitType']] ?? HabitType.simple,
+
+        targetValue: parseIntSafe(
+          map['targetValue'],
+          min: 1,
+          max: maxTargetValue,
         ),
-        targetValue: map['targetValue'] as int?,
-        unit: map['unit'] as String?,
-        currentStreak: map['currentStreak'] as int? ?? 0,
-        longestStreak: map['longestStreak'] as int? ?? 0,
-        totalCompletions: map['totalCompletions'] as int? ?? 0,
+
+        unit: map['unit'] is String ? (map['unit'] as String).trim() : null,
+
+        currentStreak: parseIntSafe(map['currentStreak'], min: 0) ?? 0,
+        longestStreak: parseIntSafe(map['longestStreak'], min: 0) ?? 0,
+        totalCompletions: parseIntSafe(map['totalCompletions'], min: 0) ?? 0,
+
         lastCompletedDate: DateUtils.tryParse(
           map['lastCompletedDate'] as String?,
         ),
@@ -326,6 +466,7 @@ class HabitModel {
         tag: _tag,
         data: 'ID: ${habit.id}',
       );
+
       return habit;
     } catch (e) {
       DebugLogger.error('Failed to deserialize habit', tag: _tag, error: e);
@@ -390,12 +531,21 @@ class HabitModel {
     );
   }
 
+  static DateTime get _now {
+    final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    if (_cacheTimestamp != currentTimestamp || _cachedNow == null) {
+      _cachedNow = DateTime.now();
+      _cacheTimestamp = currentTimestamp;
+    }
+    return _cachedNow!;
+  }
+
   bool get isActive => !isDeleted && !_hasEnded;
 
   bool get _hasEnded {
     switch (endCondition) {
       case HabitEndCondition.onDate:
-        return endDate != null && DateTime.now().isAfter(endDate!);
+        return endDate != null && _now.isAfter(endDate!);
       case HabitEndCondition.afterCount:
         return targetCount != null && totalCompletions >= targetCount!;
       case HabitEndCondition.never:
@@ -407,7 +557,7 @@ class HabitModel {
   bool get shouldShowToday {
     if (!isActive) return false;
 
-    final today = DateTime.now();
+    final today = _now;
     switch (frequency) {
       case HabitFrequency.daily:
         return true;
@@ -432,31 +582,48 @@ class HabitModel {
   }
 
   String get frequencyLabel {
+    final frequencyKey =
+        '${frequency.name}-${weekdays?.join(",")}-$monthDay-$customInterval';
+
+    if (_lastFrequencyKey == frequencyKey && _cachedFrequencyLabel != null) {
+      return _cachedFrequencyLabel!;
+    }
+
+    String label;
     switch (frequency) {
       case HabitFrequency.daily:
-        return 'Daily';
+        label = 'Daily';
+        break;
       case HabitFrequency.weekly:
         if (weekdays != null && weekdays!.isNotEmpty) {
           if (weekdays!.length == 7) {
-            return 'Every day';
+            label = 'Every day';
           } else if (weekdays!.length == 1) {
-            return 'Every ${_getWeekdayName(weekdays!.first)}';
+            label = 'Every ${_getWeekdayName(weekdays!.first)}';
           } else {
-            return '${weekdays!.length} days/week';
+            label = '${weekdays!.length} days/week';
           }
+        } else {
+          label = 'Weekly';
         }
-        return 'Weekly';
+        break;
       case HabitFrequency.monthly:
-        return 'Monthly (day $monthDay)';
+        label = 'Monthly (day $monthDay)';
+        break;
       case HabitFrequency.custom:
         if (customInterval == 1) {
-          return 'Daily';
+          label = 'Daily';
         } else if (customInterval == 7) {
-          return 'Weekly';
+          label = 'Weekly';
         } else {
-          return 'Every $customInterval days';
+          label = 'Every $customInterval days';
         }
+        break;
     }
+
+    _cachedFrequencyLabel = label;
+    _lastFrequencyKey = frequencyKey;
+    return label;
   }
 
   String _getWeekdayName(int weekday) {

@@ -8,6 +8,10 @@ import 'package:uuid/uuid.dart';
 class TaskModel {
   static const String _tag = 'TaskModel';
 
+  static final Map<String, bool> _validationCache = {};
+  static DateTime? _cachedNow;
+  static int? _cacheTimestamp;
+
   final String id;
   final String title;
   final String? description;
@@ -55,46 +59,95 @@ class TaskModel {
   }
 
   void _validateModel() {
-    if (title.isEmpty) {
-      throw ArgumentError('Title cannot be empty');
+    final validationKey =
+        '${title.length}-$priority-$color-${tags.length}-${description?.length ?? 0}';
+
+    if (_validationCache.containsKey(validationKey)) {
+      if (!_validationCache[validationKey]!) {
+        throw ArgumentError('Invalid model data (cached)');
+      }
+      return;
     }
-    if (title.length > ValidationUtils.maxTitleLength) {
-      throw ArgumentError(
-        'Title too long (max ${ValidationUtils.maxTitleLength} characters)',
-      );
-    }
-    if (description != null &&
-        description!.length > ValidationUtils.maxDescriptionLength) {
-      throw ArgumentError(
-        'Description too long (max ${ValidationUtils.maxDescriptionLength} characters)',
-      );
-    }
-    if (priority < ValidationUtils.minPriority ||
-        priority > ValidationUtils.maxPriority) {
-      throw ArgumentError(
-        'Priority must be between ${ValidationUtils.minPriority} and ${ValidationUtils.maxPriority}',
-      );
-    }
-    if (!ColorUtils.isValidHex(color)) {
-      throw ArgumentError('Invalid color format');
-    }
-    if (tags.length > ValidationUtils.maxTags) {
-      throw ArgumentError('Too many tags (max ${ValidationUtils.maxTags})');
-    }
-    for (final tag in tags) {
-      if (tag.length > ValidationUtils.maxTagLength) {
+
+    try {
+      if (title.isEmpty) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Title cannot be empty');
+      }
+
+      if (priority < ValidationUtils.minPriority ||
+          priority > ValidationUtils.maxPriority) {
+        _cacheInvalidResult(validationKey);
         throw ArgumentError(
-          'Tag "$tag" too long (max ${ValidationUtils.maxTagLength} characters)',
+          'Priority must be between ${ValidationUtils.minPriority} and ${ValidationUtils.maxPriority}',
         );
       }
+
+      if (tags.length > ValidationUtils.maxTags) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Too many tags (max ${ValidationUtils.maxTags})');
+      }
+
+      if (title.length > ValidationUtils.maxTitleLength) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError(
+          'Title too long (max ${ValidationUtils.maxTitleLength} characters)',
+        );
+      }
+
+      if (description != null &&
+          description!.length > ValidationUtils.maxDescriptionLength) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError(
+          'Description too long (max ${ValidationUtils.maxDescriptionLength} characters)',
+        );
+      }
+
+      if (estimatedMinutes != null &&
+          (estimatedMinutes! < ValidationUtils.minEstimatedMinutes ||
+              estimatedMinutes! > ValidationUtils.maxEstimatedMinutes)) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError(
+          'Estimated minutes must be between ${ValidationUtils.minEstimatedMinutes} and ${ValidationUtils.maxEstimatedMinutes}',
+        );
+      }
+
+      if (!ColorUtils.isValidHex(color)) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Invalid color format');
+      }
+
+      for (int i = 0; i < tags.length; i++) {
+        final tag = tags[i];
+        if (tag.length > ValidationUtils.maxTagLength) {
+          _cacheInvalidResult(validationKey);
+          throw ArgumentError(
+            'Tag "$tag" too long (max ${ValidationUtils.maxTagLength} characters)',
+          );
+        }
+      }
+
+      _cacheValidResult(validationKey);
+    } catch (e) {
+      _cacheInvalidResult(validationKey);
+      rethrow;
     }
-    if (estimatedMinutes != null &&
-        (estimatedMinutes! < ValidationUtils.minEstimatedMinutes ||
-            estimatedMinutes! > ValidationUtils.maxEstimatedMinutes)) {
-      throw ArgumentError(
-        'Estimated minutes must be between ${ValidationUtils.minEstimatedMinutes} and ${ValidationUtils.maxEstimatedMinutes}',
-      );
+  }
+
+  void _cacheValidResult(String key) {
+    if (_validationCache.length < 100) {
+      _validationCache[key] = true;
     }
+  }
+
+  void _cacheInvalidResult(String key) {
+    if (_validationCache.length < 100) {
+      _validationCache[key] = false;
+    }
+  }
+
+  static void clearValidationCache() {
+    _validationCache.clear();
   }
 
   Map<String, dynamic> toMap() {
@@ -256,6 +309,28 @@ class TaskModel {
     int? notificationMinutesBefore,
     List<NoteBlock>? blocks,
   }) {
+    if (id == null &&
+        title == null &&
+        description == null &&
+        createdAt == null &&
+        dueDate == null &&
+        completedAt == null &&
+        isCompleted == null &&
+        isDeleted == null &&
+        priority == null &&
+        color == null &&
+        tags == null &&
+        isNote == null &&
+        noteContent == null &&
+        estimatedMinutes == null &&
+        actualMinutes == null &&
+        markdownContent == null &&
+        hasNotification == null &&
+        notificationMinutesBefore == null &&
+        blocks == null) {
+      return this;
+    }
+
     return TaskModel(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -287,25 +362,34 @@ class TaskModel {
     return [];
   }
 
+  static DateTime get _now {
+    final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    if (_cacheTimestamp != currentTimestamp || _cachedNow == null) {
+      _cachedNow = DateTime.now();
+      _cacheTimestamp = currentTimestamp;
+    }
+    return _cachedNow!;
+  }
+
   bool get isOverdue {
     if (dueDate == null || isCompleted) return false;
-    return dueDate!.isBefore(DateTime.now());
+    return dueDate!.isBefore(_now);
   }
 
   bool get isDueToday {
     if (dueDate == null) return false;
-    return DateUtils.isSameDay(dueDate!, DateTime.now());
+    return DateUtils.isSameDay(dueDate!, _now);
   }
 
   bool get isDueTomorrow {
     if (dueDate == null) return false;
-    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final tomorrow = _now.add(const Duration(days: 1));
     return DateUtils.isSameDay(dueDate!, tomorrow);
   }
 
   Duration? get timeUntilDue {
     if (dueDate == null) return null;
-    return dueDate!.difference(DateTime.now());
+    return dueDate!.difference(_now);
   }
 
   String get priorityLabel {

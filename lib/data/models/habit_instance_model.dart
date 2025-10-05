@@ -5,6 +5,24 @@ import 'package:uuid/uuid.dart';
 class HabitInstanceModel {
   static const String _tag = 'HabitInstanceModel';
 
+  static final Map<String, HabitInstanceStatus> _statusMap = {
+    for (var s in HabitInstanceStatus.values) s.name: s,
+  };
+
+  static final Map<String, bool> _validationCache = {};
+
+  static DateTime? _cachedNow;
+  static int? _cacheTimestamp;
+
+  static DateTime get _now {
+    final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    if (_cacheTimestamp != currentTimestamp || _cachedNow == null) {
+      _cachedNow = DateTime.now();
+      _cacheTimestamp = currentTimestamp;
+    }
+    return _cachedNow!;
+  }
+
   final String id;
   final String habitId;
   final DateTime date;
@@ -28,17 +46,54 @@ class HabitInstanceModel {
   }
 
   void _validateModel() {
-    if (habitId.isEmpty) {
-      throw ArgumentError('Habit ID cannot be empty');
+    final validationKey = '$habitId-${status.name}-${value ?? 0}';
+
+    if (_validationCache.containsKey(validationKey)) {
+      if (!_validationCache[validationKey]!) {
+        throw ArgumentError('Invalid model data (cached)');
+      }
+      return;
     }
-    if (status == HabitInstanceStatus.completed && completedAt == null) {
-      throw ArgumentError(
-        'Completed instances must have completedAt timestamp',
-      );
+
+    try {
+      if (habitId.isEmpty) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Habit ID cannot be empty');
+      }
+
+      if (status == HabitInstanceStatus.completed && completedAt == null) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError(
+          'Completed instances must have completedAt timestamp',
+        );
+      }
+
+      if (value != null && value! < 0) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError('Value cannot be negative');
+      }
+
+      _cacheValidResult(validationKey);
+    } catch (e) {
+      _cacheInvalidResult(validationKey);
+      rethrow;
     }
-    if (value != null && value! < 0) {
-      throw ArgumentError('Value cannot be negative');
+  }
+
+  void _cacheValidResult(String key) {
+    if (_validationCache.length < 100) {
+      _validationCache[key] = true;
     }
+  }
+
+  void _cacheInvalidResult(String key) {
+    if (_validationCache.length < 100) {
+      _validationCache[key] = false;
+    }
+  }
+
+  static void clearValidationCache() {
+    _validationCache.clear();
   }
 
   Map<String, dynamic> toMap() {
@@ -72,17 +127,39 @@ class HabitInstanceModel {
 
   factory HabitInstanceModel.fromMap(Map<String, dynamic> map) {
     try {
+      int? parseIntSafe(dynamic value, {int? min}) {
+        if (value == null) return null;
+
+        int? result;
+        if (value is int) {
+          result = value;
+        } else {
+          try {
+            result = int.parse(value.toString());
+          } catch (_) {
+            return null;
+          }
+        }
+
+        if (min != null && result < min) return null;
+        return result;
+      }
+
+      String parseStringSafe(dynamic value, String fallback) {
+        if (value is String && value.isNotEmpty) {
+          return value.trim();
+        }
+        return fallback;
+      }
+
       final instance = HabitInstanceModel(
-        id: map['id'] as String? ?? const Uuid().v4(),
-        habitId: map['habitId'] as String,
-        date: DateUtils.tryParse(map['date'] as String?) ?? DateTime.now(),
-        status: HabitInstanceStatus.values.firstWhere(
-          (s) => s.name == map['status'],
-          orElse: () => HabitInstanceStatus.pending,
-        ),
+        id: parseStringSafe(map['id'], const Uuid().v4()),
+        habitId: parseStringSafe(map['habitId'], ''),
+        date: DateUtils.tryParse(map['date'] as String?) ?? _now,
+        status: _statusMap[map['status']] ?? HabitInstanceStatus.pending,
         completedAt: DateUtils.tryParse(map['completedAt'] as String?),
-        value: map['value'] as int?,
-        note: map['note'] as String?,
+        value: parseIntSafe(map['value'], min: 0),
+        note: map['note'] is String ? (map['note'] as String).trim() : null,
         isDeleted: map['isDeleted'] as bool? ?? false,
       );
 
@@ -112,6 +189,17 @@ class HabitInstanceModel {
     String? note,
     bool? isDeleted,
   }) {
+    if (id == null &&
+        habitId == null &&
+        date == null &&
+        status == null &&
+        completedAt == null &&
+        value == null &&
+        note == null &&
+        isDeleted == null) {
+      return this;
+    }
+
     return HabitInstanceModel(
       id: id ?? this.id,
       habitId: habitId ?? this.habitId,
@@ -126,9 +214,9 @@ class HabitInstanceModel {
 
   bool get isCompleted => status == HabitInstanceStatus.completed;
   bool get isPending => status == HabitInstanceStatus.pending;
-  bool get isToday => DateUtils.isSameDay(date, DateTime.now());
-  bool get isPast => date.isBefore(DateTime.now()) && !isToday;
-  bool get isFuture => date.isAfter(DateTime.now()) && !isToday;
+  bool get isToday => DateUtils.isSameDay(date, _now);
+  bool get isPast => date.isBefore(_now) && !isToday;
+  bool get isFuture => date.isAfter(_now) && !isToday;
 
   @override
   String toString() {

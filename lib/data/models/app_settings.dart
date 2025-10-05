@@ -4,6 +4,8 @@ import 'package:dayflow/core/utils/debug_logger.dart';
 class AppSettings {
   static const String _tag = 'AppSettings';
 
+  static final Map<String, int> _colorCache = {};
+
   final String accentColor;
   final String firstDayOfWeek;
   final int defaultTaskPriority;
@@ -32,18 +34,6 @@ class AppSettings {
     240,
     1440,
   ];
-
-  static const Map<String, String> predefinedColors = {
-    'blue': '#0A84FF',
-    'purple': '#6C63FF',
-    'green': '#34C759',
-    'red': '#FF3B30',
-    'orange': '#FF9500',
-    'pink': '#FF2D55',
-    'teal': '#5AC8FA',
-    'indigo': '#5856D6',
-    'yellow': '#FFCC00',
-  };
 
   const AppSettings({
     this.accentColor = defaultAccentColor,
@@ -188,6 +178,16 @@ class AppSettings {
     bool? notificationSound,
     bool? notificationVibration,
   }) {
+    if (accentColor == null &&
+        firstDayOfWeek == null &&
+        defaultTaskPriority == null &&
+        defaultNotificationEnabled == null &&
+        defaultNotificationMinutesBefore == null &&
+        notificationSound == null &&
+        notificationVibration == null) {
+      return this;
+    }
+
     return AppSettings(
       accentColor: accentColor ?? this.accentColor,
       firstDayOfWeek: firstDayOfWeek ?? this.firstDayOfWeek,
@@ -255,10 +255,24 @@ class AppSettings {
   }
 
   int get accentColorValue {
+    // Check static cache first
+    final cached = _colorCache[accentColor];
+    if (cached != null) return cached;
+
+    // Calculate and cache
     try {
-      return ColorUtils.fromHex(accentColor).toARGB32();
+      final colorValue = ColorUtils.fromHex(accentColor).toARGB32();
+
+      // Cache with size limit
+      if (_colorCache.length < 20) {
+        _colorCache[accentColor] = colorValue;
+      }
+
+      return colorValue;
     } catch (_) {
-      return 0xFF0A84FF;
+      const fallbackValue = 0xFF0A84FF;
+      _colorCache[accentColor] = fallbackValue;
+      return fallbackValue;
     }
   }
 
@@ -275,49 +289,39 @@ class AppSettings {
   Map<String, dynamic> getDifferencesFrom(AppSettings other) {
     final differences = <String, dynamic>{};
 
-    if (accentColor != other.accentColor) {
-      differences['accentColor'] = {
-        'old': other.accentColor,
-        'new': accentColor,
-      };
+    void addDifference(String key, dynamic oldValue, dynamic newValue) {
+      if (oldValue != newValue) {
+        differences[key] = {'old': oldValue, 'new': newValue};
+      }
     }
-    if (firstDayOfWeek != other.firstDayOfWeek) {
-      differences['firstDayOfWeek'] = {
-        'old': other.firstDayOfWeek,
-        'new': firstDayOfWeek,
-      };
-    }
-    if (defaultTaskPriority != other.defaultTaskPriority) {
-      differences['defaultTaskPriority'] = {
-        'old': other.defaultTaskPriority,
-        'new': defaultTaskPriority,
-      };
-    }
-    if (defaultNotificationEnabled != other.defaultNotificationEnabled) {
-      differences['defaultNotificationEnabled'] = {
-        'old': other.defaultNotificationEnabled,
-        'new': defaultNotificationEnabled,
-      };
-    }
-    if (defaultNotificationMinutesBefore !=
-        other.defaultNotificationMinutesBefore) {
-      differences['defaultNotificationMinutesBefore'] = {
-        'old': other.defaultNotificationMinutesBefore,
-        'new': defaultNotificationMinutesBefore,
-      };
-    }
-    if (notificationSound != other.notificationSound) {
-      differences['notificationSound'] = {
-        'old': other.notificationSound,
-        'new': notificationSound,
-      };
-    }
-    if (notificationVibration != other.notificationVibration) {
-      differences['notificationVibration'] = {
-        'old': other.notificationVibration,
-        'new': notificationVibration,
-      };
-    }
+
+    addDifference('accentColor', other.accentColor, accentColor);
+    addDifference('firstDayOfWeek', other.firstDayOfWeek, firstDayOfWeek);
+    addDifference(
+      'defaultTaskPriority',
+      other.defaultTaskPriority,
+      defaultTaskPriority,
+    );
+    addDifference(
+      'defaultNotificationEnabled',
+      other.defaultNotificationEnabled,
+      defaultNotificationEnabled,
+    );
+    addDifference(
+      'defaultNotificationMinutesBefore',
+      other.defaultNotificationMinutesBefore,
+      defaultNotificationMinutesBefore,
+    );
+    addDifference(
+      'notificationSound',
+      other.notificationSound,
+      notificationSound,
+    );
+    addDifference(
+      'notificationVibration',
+      other.notificationVibration,
+      notificationVibration,
+    );
 
     return differences;
   }

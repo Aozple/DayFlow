@@ -12,6 +12,29 @@ class ValidationUtils {
   static const int maxEstimatedMinutes = 1440;
   static const int maxTags = 10;
 
+  static T _clampValue<T extends num>(
+    dynamic value,
+    T min,
+    T max,
+    T defaultValue,
+  ) {
+    if (value == null) return defaultValue;
+    if (value is T) return (value).clamp(min, max) as T;
+
+    try {
+      if (T == int) {
+        final parsed = int.parse(value.toString());
+        return (parsed.clamp(min, max)) as T;
+      }
+      if (T == double) {
+        final parsed = double.parse(value.toString());
+        return (parsed.clamp(min, max)) as T;
+      }
+    } catch (_) {}
+
+    return defaultValue;
+  }
+
   static String? validateTitle(String? title) {
     if (title == null || title.isEmpty) {
       return 'Title cannot be empty';
@@ -52,41 +75,15 @@ class ValidationUtils {
     int max,
     int defaultValue,
   ) {
-    if (value == null) return defaultValue;
-    if (value is int) {
-      return value.clamp(min, max);
-    }
-    try {
-      final parsed = int.parse(value.toString());
-      return parsed.clamp(min, max);
-    } catch (_) {
-      return defaultValue;
-    }
+    return _clampValue(value, min, max, defaultValue);
   }
 
   static int? validateMinutes(dynamic value, int min, int max) {
-    if (value == null) return null;
-    if (value is int) {
-      return value.clamp(min, max);
-    }
-    try {
-      final parsed = int.parse(value.toString());
-      return parsed.clamp(min, max);
-    } catch (_) {
-      return null;
-    }
+    final result = _clampValue(value, min, max, -1);
+    return result == -1 ? null : result;
   }
 
   static int validateHeadingLevel(dynamic level) {
-    if (level == null) return 1;
-    if (level is int) {
-      return level.clamp(1, 6);
-    }
-    try {
-      final parsed = int.parse(level.toString());
-      return parsed.clamp(1, 6);
-    } catch (_) {
-      return 1;
-    }
+    return _clampValue(level, 1, 6, 1);
   }
 }

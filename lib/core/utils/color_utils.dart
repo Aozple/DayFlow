@@ -5,6 +5,8 @@ class ColorUtils {
 
   static final _hexRegex = RegExp(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$');
 
+  static final Map<String, Color> _colorCache = {};
+
   static bool isValidHex(String color) {
     return _hexRegex.hasMatch(color);
   }
@@ -29,10 +31,19 @@ class ColorUtils {
   }
 
   static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
+    final cached = _colorCache[hexString];
+    if (cached != null) return cached;
+
+    final cleanHex =
+        hexString.startsWith('#') ? hexString.substring(1) : hexString;
+    final colorValue = int.parse('ff$cleanHex', radix: 16);
+    final color = Color(colorValue);
+
+    if (_colorCache.length < 50) {
+      _colorCache[hexString] = color;
+    }
+
+    return color;
   }
 
   static String toHex(Color color) {

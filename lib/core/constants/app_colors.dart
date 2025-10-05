@@ -62,21 +62,18 @@ class AppColors {
     Color(0xFFE17055),
   ];
 
+  static const Map<int, Color> _priorityColors = {
+    1: Color(0xFF4CAF50),
+    2: Color(0xFF2196F3),
+    3: Color(0xFFFFC107),
+    4: Color(0xFFFF9800),
+    5: Color(0xFFF44336),
+  };
+
+  static const Color _defaultPriorityColor = Color(0xFF9E9E9E);
+
   static Color getPriorityColor(int priority) {
-    switch (priority) {
-      case 1:
-        return const Color(0xFF4CAF50);
-      case 2:
-        return const Color(0xFF2196F3);
-      case 3:
-        return const Color(0xFFFFC107);
-      case 4:
-        return const Color(0xFFFF9800);
-      case 5:
-        return const Color(0xFFF44336);
-      default:
-        return const Color(0xFF9E9E9E);
-    }
+    return _priorityColors[priority] ?? _defaultPriorityColor;
   }
 
   static Color getAccent(BuildContext context) {
