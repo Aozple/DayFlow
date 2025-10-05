@@ -1,3 +1,6 @@
+import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
+import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
+import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
@@ -20,4 +23,8 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<HabitInstanceRepository>(
     () => HabitInstanceRepository(),
   );
+
+  sl.registerFactory<TaskBloc>(() => TaskBloc());
+  sl.registerFactory<HabitBloc>(() => HabitBloc());
+  sl.registerFactory<SettingsBloc>(() => SettingsBloc());
 }
