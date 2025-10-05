@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +8,7 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData getDarkTheme(String accentColorHex) {
-    final accentColor = AppColors.fromHex(accentColorHex);
+    final accentColor = ColorUtils.fromHex(accentColorHex);
     final accentDim = Color.alphaBlend(Colors.black.withAlpha(80), accentColor);
 
     return ThemeData(

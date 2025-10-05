@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/presentation/widgets/draggable_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -179,10 +180,16 @@ class _ColorPickerModalState extends State<ColorPickerModal>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: hasChanged ? Theme.of(context).colorScheme.primary : AppColors.surface,
+            color:
+                hasChanged
+                    ? Theme.of(context).colorScheme.primary
+                    : AppColors.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: hasChanged ? Theme.of(context).colorScheme.primary : AppColors.divider,
+              color:
+                  hasChanged
+                      ? Theme.of(context).colorScheme.primary
+                      : AppColors.divider,
               width: 1,
             ),
           ),
@@ -212,7 +219,7 @@ class _ColorPickerModalState extends State<ColorPickerModal>
         border: Border.all(color: AppColors.divider.withAlpha(40), width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColors.fromHex(_currentSelectedColor).withAlpha(10),
+            color: ColorUtils.fromHex(_currentSelectedColor).withAlpha(10),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -272,7 +279,7 @@ class _ColorPickerModalState extends State<ColorPickerModal>
             itemBuilder: (context, index) {
               final colorHex = widget.recentColors![index];
               return _buildColorOption(
-                AppColors.fromHex(colorHex),
+                ColorUtils.fromHex(colorHex),
                 colorHex,
                 size: 52,
               );
@@ -376,7 +383,10 @@ class _ColorPickerModalState extends State<ColorPickerModal>
                           right:
                               colors.length < colorsPerRow && !isLast ? 16 : 0,
                         ),
-                        child: _buildColorOption(color, AppColors.toHex(color)),
+                        child: _buildColorOption(
+                          color,
+                          ColorUtils.toHex(color),
+                        ),
                       );
                     }).toList(),
               ),

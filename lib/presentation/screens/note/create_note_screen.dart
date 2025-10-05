@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/data/models/note_block.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
 import 'package:dayflow/presentation/screens/home/widgets/blocks/home_note_block.dart';
@@ -51,7 +52,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
 
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
-  String _selectedColor = AppColors.toHex(AppColors.userColors[6]);
+  String _selectedColor = ColorUtils.toHex(AppColors.userColors[6]);
   bool _hasChanges = false;
   bool _isSaving = false;
   bool _isDeleting = false;
@@ -106,7 +107,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
           widget.prefilledHour != null
               ? TimeOfDay(hour: widget.prefilledHour!, minute: 0)
               : TimeOfDay.now();
-      _selectedColor = AppColors.toHex(AppColors.userColors[0]);
+      _selectedColor = ColorUtils.toHex(AppColors.userColors[0]);
     }
   }
 

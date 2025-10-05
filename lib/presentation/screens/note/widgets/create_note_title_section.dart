@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -105,7 +106,7 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
         (char >= 0x0590 && char <= 0x05FF);
   }
 
-  Color get _selectedColor => AppColors.fromHex(widget.selectedColor);
+  Color get _selectedColor => ColorUtils.fromHex(widget.selectedColor);
 
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl
@@ -275,7 +276,10 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
             ],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(60), width: 1),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withAlpha(60),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).colorScheme.primary.withAlpha(25),
@@ -287,7 +291,11 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.calendar, size: 16, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              CupertinoIcons.calendar,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 3),
             Text(
               _formatDate(widget.selectedDate),

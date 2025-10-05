@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 
 class AppSettings {
@@ -57,7 +58,8 @@ class AppSettings {
   Map<String, dynamic> toMap() {
     try {
       final map = {
-        'accentColor': validateHexColor(accentColor),
+        'accentColor':
+            ColorUtils.validateHex(accentColor) ?? defaultAccentColor,
         'firstDayOfWeek': validateFirstDay(firstDayOfWeek),
         'defaultTaskPriority': validatePriority(defaultTaskPriority),
         'defaultNotificationEnabled': defaultNotificationEnabled,
@@ -89,9 +91,11 @@ class AppSettings {
       }
 
       return AppSettings(
-        accentColor: validateHexColor(
-          map['accentColor'] as String? ?? defaultAccentColor,
-        ),
+        accentColor:
+            ColorUtils.validateHex(
+              map['accentColor'] as String? ?? defaultAccentColor,
+            ) ??
+            defaultAccentColor,
         firstDayOfWeek: validateFirstDay(
           map['firstDayOfWeek'] as String? ?? defaultFirstDay,
         ),
@@ -130,35 +134,6 @@ class AppSettings {
     return const AppSettings().toMap();
   }
 
-  static String validateHexColor(String color) {
-    final predefinedColor =
-        predefinedColors.entries
-            .firstWhere(
-              (entry) => entry.value.toLowerCase() == color.toLowerCase(),
-              orElse: () => const MapEntry('', ''),
-            )
-            .value;
-
-    if (predefinedColor.isNotEmpty) {
-      return predefinedColor;
-    }
-
-    final hexRegex = RegExp(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$');
-
-    if (hexRegex.hasMatch(color)) {
-      if (color.length == 4) {
-        final r = color[1];
-        final g = color[2];
-        final b = color[3];
-        return '#$r$r$g$g$b$b';
-      }
-      return color.toUpperCase();
-    }
-
-    DebugLogger.warning('Invalid color, using default', tag: _tag, data: color);
-    return defaultAccentColor;
-  }
-
   static String validateFirstDay(String day) {
     final normalized = day.toLowerCase().trim();
     if (validFirstDays.contains(normalized)) {
@@ -183,21 +158,25 @@ class AppSettings {
       tag: _tag,
       data: priority,
     );
-    return defaultPriority.clamp(1, 5);
+    return defaultPriority;
   }
 
   static int validateMinutesBefore(int minutes) {
-    final clamped = minutes.clamp(0, 1440);
-
-    if (clamped != minutes) {
-      DebugLogger.warning(
-        'Minutes clamped',
-        tag: _tag,
-        data: '$minutes -> $clamped',
-      );
+    if (validMinutesOptions.contains(minutes)) {
+      return minutes;
     }
 
-    return clamped;
+    final nearest = validMinutesOptions.reduce((a, b) {
+      return (a - minutes).abs() < (b - minutes).abs() ? a : b;
+    });
+
+    DebugLogger.warning(
+      'Minutes adjusted to nearest valid option',
+      tag: _tag,
+      data: '$minutes -> $nearest',
+    );
+
+    return nearest;
   }
 
   AppSettings copyWith({
@@ -210,24 +189,14 @@ class AppSettings {
     bool? notificationVibration,
   }) {
     return AppSettings(
-      accentColor:
-          accentColor != null
-              ? validateHexColor(accentColor)
-              : this.accentColor,
-      firstDayOfWeek:
-          firstDayOfWeek != null
-              ? validateFirstDay(firstDayOfWeek)
-              : this.firstDayOfWeek,
-      defaultTaskPriority:
-          defaultTaskPriority != null
-              ? validatePriority(defaultTaskPriority)
-              : this.defaultTaskPriority,
+      accentColor: accentColor ?? this.accentColor,
+      firstDayOfWeek: firstDayOfWeek ?? this.firstDayOfWeek,
+      defaultTaskPriority: defaultTaskPriority ?? this.defaultTaskPriority,
       defaultNotificationEnabled:
           defaultNotificationEnabled ?? this.defaultNotificationEnabled,
       defaultNotificationMinutesBefore:
-          defaultNotificationMinutesBefore != null
-              ? validateMinutesBefore(defaultNotificationMinutesBefore)
-              : this.defaultNotificationMinutesBefore,
+          defaultNotificationMinutesBefore ??
+          this.defaultNotificationMinutesBefore,
       notificationSound: notificationSound ?? this.notificationSound,
       notificationVibration:
           notificationVibration ?? this.notificationVibration,
@@ -236,7 +205,7 @@ class AppSettings {
 
   bool isValid() {
     try {
-      validateHexColor(accentColor);
+      ColorUtils.validateHex(accentColor) ?? defaultAccentColor;
       validateFirstDay(firstDayOfWeek);
       validatePriority(defaultTaskPriority);
       validateMinutesBefore(defaultNotificationMinutesBefore);
@@ -287,7 +256,7 @@ class AppSettings {
 
   int get accentColorValue {
     try {
-      return int.parse(accentColor.substring(1), radix: 16) | 0xFF000000;
+      return ColorUtils.fromHex(accentColor).toARGB32();
     } catch (_) {
       return 0xFF0A84FF;
     }

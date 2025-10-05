@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -157,7 +158,7 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
         (firstChar >= 0x0590 && firstChar <= 0x05FF);
   }
 
-  Color get _selectedColor => AppColors.fromHex(widget.selectedColor);
+  Color get _selectedColor => ColorUtils.fromHex(widget.selectedColor);
 
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl ? 'عنوان عادت...' : 'Habit title *';

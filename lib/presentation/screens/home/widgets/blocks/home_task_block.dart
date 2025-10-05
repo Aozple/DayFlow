@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,7 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     final taskColor =
         isDefaultColor
             ? AppColors.textSecondary
-            : AppColors.fromHex(widget.task.color);
+            : ColorUtils.fromHex(widget.task.color);
 
     if (widget.task.isNote) {
       return const SizedBox.shrink();
@@ -303,18 +304,24 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
         height: 32,
         decoration: BoxDecoration(
           color:
-              widget.task.isCompleted ? Theme.of(context).colorScheme.primary : Colors.transparent,
+              widget.task.isCompleted
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color:
-                widget.task.isCompleted ? Theme.of(context).colorScheme.primary : AppColors.divider,
+                widget.task.isCompleted
+                    ? Theme.of(context).colorScheme.primary
+                    : AppColors.divider,
             width: 2,
           ),
           boxShadow:
               widget.task.isCompleted
                   ? [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withAlpha(30),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(30),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

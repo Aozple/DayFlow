@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/repositories/interfaces/settings_repository_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -99,7 +100,10 @@ class SettingsRepository implements ISettingsRepository {
 
   AppSettings _fixInvalidSettings(AppSettings settings) {
     return AppSettings(
-      accentColor: AppSettings.validateHexColor(settings.accentColor),
+      accentColor: ColorUtils.validateHexWithFallback(
+        settings.accentColor,
+        AppSettings.defaultAccentColor,
+      ),
       firstDayOfWeek: AppSettings.validateFirstDay(settings.firstDayOfWeek),
       defaultTaskPriority: AppSettings.validatePriority(
         settings.defaultTaskPriority,

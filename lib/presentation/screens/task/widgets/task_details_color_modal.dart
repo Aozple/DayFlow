@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -103,7 +104,7 @@ class TaskDetailsColorModal extends StatelessWidget {
                           runSpacing: 16,
                           children:
                               AppColors.userColors.map((color) {
-                                final colorHex = AppColors.toHex(color);
+                                final colorHex = ColorUtils.toHex(color);
                                 final isSelected = selectedColorHex == colorHex;
                                 return GestureDetector(
                                   onTap: () {

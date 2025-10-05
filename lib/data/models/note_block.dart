@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:uuid/uuid.dart';
+import 'package:dayflow/core/utils/validation_utils.dart';
 
 enum BlockType {
   text,
@@ -70,11 +72,8 @@ class HeadingBlock extends NoteBlock {
   }
 
   factory HeadingBlock.fromJson(Map<String, dynamic> json) {
-    return HeadingBlock(
-      id: json['id'],
-      text: json['text'] ?? '',
-      level: json['level'] ?? 1,
-    );
+    final level = ValidationUtils.validateHeadingLevel(json['level']);
+    return HeadingBlock(id: json['id'], text: json['text'] ?? '', level: level);
   }
 
   @override
@@ -103,6 +102,15 @@ abstract class ListBlock extends NoteBlock {
   Map<String, dynamic> toJson() {
     return {'id': id, 'type': type.name, 'items': items};
   }
+
+  static List<String> _parseStringList(dynamic data) {
+    try {
+      if (data is List) {
+        return data.map((item) => item.toString()).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
 }
 
 class BulletListBlock extends ListBlock {
@@ -112,7 +120,7 @@ class BulletListBlock extends ListBlock {
   factory BulletListBlock.fromJson(Map<String, dynamic> json) {
     return BulletListBlock(
       id: json['id'],
-      items: List<String>.from(json['items'] ?? []),
+      items: ListBlock._parseStringList(json['items']),
     );
   }
 
@@ -129,7 +137,7 @@ class NumberedListBlock extends ListBlock {
   factory NumberedListBlock.fromJson(Map<String, dynamic> json) {
     return NumberedListBlock(
       id: json['id'],
-      items: List<String>.from(json['items'] ?? []),
+      items: ListBlock._parseStringList(json['items']),
     );
   }
 
@@ -157,11 +165,26 @@ class TodoListBlock extends ListBlock {
   }
 
   factory TodoListBlock.fromJson(Map<String, dynamic> json) {
-    return TodoListBlock(
-      id: json['id'],
-      items: List<String>.from(json['items'] ?? []),
-      checked: List<bool>.from(json['checked'] ?? []),
-    );
+    final items = ListBlock._parseStringList(json['items']);
+    final checkedData = json['checked'] as List?;
+    final checked = <bool>[];
+
+    try {
+      if (checkedData != null) {
+        for (final item in checkedData) {
+          checked.add(item == true);
+        }
+      }
+    } catch (_) {}
+
+    while (checked.length < items.length) {
+      checked.add(false);
+    }
+    if (checked.length > items.length) {
+      checked.removeRange(items.length, checked.length);
+    }
+
+    return TodoListBlock(id: json['id'], items: items, checked: checked);
   }
 
   @override
@@ -262,13 +285,20 @@ class ToggleBlock extends NoteBlock {
   }
 
   factory ToggleBlock.fromJson(Map<String, dynamic> json) {
+    List<NoteBlock> children = [];
+    try {
+      if (json['children'] is List) {
+        children =
+            (json['children'] as List)
+                .map((childJson) => blockFromJson(childJson))
+                .toList();
+      }
+    } catch (_) {}
+
     return ToggleBlock(
       id: json['id'],
       title: json['title'] ?? '',
-      children:
-          (json['children'] as List)
-              .map((childJson) => blockFromJson(childJson))
-              .toList(),
+      children: children,
       isExpanded: json['isExpanded'] ?? false,
     );
   }
@@ -410,28 +440,46 @@ class PictureBlock extends NoteBlock {
 }
 
 NoteBlock blockFromJson(Map<String, dynamic> json) {
-  final type = BlockType.values.byName(json['type']);
+  try {
+    final typeString = json['type'] as String?;
+    if (typeString == null) {
+      return TextBlock(
+        id: json['id'] ?? const Uuid().v4(),
+        text: 'Invalid block',
+      );
+    }
 
-  switch (type) {
-    case BlockType.text:
-      return TextBlock.fromJson(json);
-    case BlockType.heading:
-      return HeadingBlock.fromJson(json);
-    case BlockType.bulletList:
-      return BulletListBlock.fromJson(json);
-    case BlockType.numberedList:
-      return NumberedListBlock.fromJson(json);
-    case BlockType.todoList:
-      return TodoListBlock.fromJson(json);
-    case BlockType.quote:
-      return QuoteBlock.fromJson(json);
-    case BlockType.code:
-      return CodeBlock.fromJson(json);
-    case BlockType.toggle:
-      return ToggleBlock.fromJson(json);
-    case BlockType.callout:
-      return CalloutBlock.fromJson(json);
-    case BlockType.picture:
-      return PictureBlock.fromJson(json);
+    final type = BlockType.values.firstWhere(
+      (e) => e.name == typeString,
+      orElse: () => BlockType.text,
+    );
+
+    switch (type) {
+      case BlockType.text:
+        return TextBlock.fromJson(json);
+      case BlockType.heading:
+        return HeadingBlock.fromJson(json);
+      case BlockType.bulletList:
+        return BulletListBlock.fromJson(json);
+      case BlockType.numberedList:
+        return NumberedListBlock.fromJson(json);
+      case BlockType.todoList:
+        return TodoListBlock.fromJson(json);
+      case BlockType.quote:
+        return QuoteBlock.fromJson(json);
+      case BlockType.code:
+        return CodeBlock.fromJson(json);
+      case BlockType.toggle:
+        return ToggleBlock.fromJson(json);
+      case BlockType.callout:
+        return CalloutBlock.fromJson(json);
+      case BlockType.picture:
+        return PictureBlock.fromJson(json);
+    }
+  } catch (e) {
+    return TextBlock(
+      id: json['id'] ?? const Uuid().v4(),
+      text: 'Error loading block: ${e.toString()}',
+    );
   }
 }

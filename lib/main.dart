@@ -1,6 +1,7 @@
 import 'package:dayflow/core/di/service_locator.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
 import 'package:dayflow/core/constants/app_constants.dart';
+import 'package:dayflow/data/migrations/migration_manager.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
@@ -31,6 +32,8 @@ void main() async {
   await Hive.openBox(AppConstants.settingsBox);
   await Hive.openBox(AppConstants.habitsBox);
   await Hive.openBox(AppConstants.habitInstancesBox);
+
+  await MigrationManager.migrate();
 
   await setupServiceLocator();
 

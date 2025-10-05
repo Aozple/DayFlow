@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -157,7 +158,7 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
         (firstChar >= 0x0590 && firstChar <= 0x05FF);
   }
 
-  Color get _selectedColor => AppColors.fromHex(widget.selectedColor);
+  Color get _selectedColor => ColorUtils.fromHex(widget.selectedColor);
 
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl ? 'عنوان تسک...' : 'Task title *';
@@ -343,7 +344,10 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
             ],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(60), width: 1),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withAlpha(60),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).colorScheme.primary.withAlpha(25),
@@ -355,7 +359,11 @@ class _CreateTaskMainContentState extends State<CreateTaskMainContent> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(CupertinoIcons.calendar, size: 18, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              CupertinoIcons.calendar,
+              size: 18,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 3),
             Text(
               _formatDate(widget.selectedDate),

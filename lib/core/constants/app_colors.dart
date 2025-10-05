@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 
 class AppColors {
@@ -38,17 +39,6 @@ class AppColors {
   static const Color error = Color(0xFFFF453A);
   static const Color info = Color(0xFF5E5CE6);
 
-  static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
-  }
-
-  static String toHex(Color color) {
-    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-  }
-
   static Color getTaskBackground(String colorHex, bool isCompleted) {
     if (isCompleted) return surface.withAlpha(130);
 
@@ -56,14 +46,14 @@ class AppColors {
       return surfaceLight;
     }
 
-    return fromHex(colorHex).withAlpha(25);
+    return ColorUtils.fromHex(colorHex).withAlpha(25);
   }
 
   static const List<Color> accentColors = [
     Color(0xFF4A90E2),
     Color(0xFF00B894),
     Color(0xFFFF7675),
-    Color(0xFFFFA500),
+    Color(0xFFfb6f92),
     Color(0xFFFDCB82),
     Color(0xFFA29BFE),
     Color(0xFF00CEC9),

@@ -1,5 +1,7 @@
+import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide DateUtils;
 import 'package:uuid/uuid.dart';
 
 class HabitModel {
@@ -87,7 +89,7 @@ class HabitModel {
         'Description too long (max $maxDescriptionLength characters)',
       );
     }
-    if (!_isValidHexColor(color)) {
+    if (!ColorUtils.isValidHex(color)) {
       throw ArgumentError('Invalid color format');
     }
     if (startDate.isBefore(createdAt)) {
@@ -178,11 +180,6 @@ class HabitModel {
     }
   }
 
-  static bool _isValidHexColor(String color) {
-    final regex = RegExp(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$');
-    return regex.hasMatch(color);
-  }
-
   Map<String, dynamic> toMap() {
     try {
       final map = {
@@ -226,16 +223,6 @@ class HabitModel {
 
   factory HabitModel.fromMap(Map<String, dynamic> map) {
     try {
-      DateTime? parseDate(String? dateStr) {
-        if (dateStr == null || dateStr.isEmpty) return null;
-        try {
-          return DateTime.parse(dateStr);
-        } catch (e) {
-          DebugLogger.warning('Invalid date format', tag: _tag, data: dateStr);
-          return null;
-        }
-      }
-
       TimeOfDay? parseTime(Map<String, dynamic>? timeMap) {
         if (timeMap == null) return null;
         try {
@@ -271,7 +258,7 @@ class HabitModel {
         (e) => e.name == map['endCondition'],
         orElse: () => HabitEndCondition.never,
       );
-      var endDate = parseDate(map['endDate'] as String?);
+      var endDate = DateUtils.tryParse(map['endDate'] as String?);
 
       if (endDate != null && endDate.isBefore(DateTime.now())) {
         endCondition = HabitEndCondition.never;
@@ -284,18 +271,24 @@ class HabitModel {
 
       final habit = HabitModel(
         id: map['id'] as String? ?? const Uuid().v4(),
-        title: (map['title'] as String? ?? 'Untitled Habit').substring(
-          0,
-          (map['title'] as String? ?? 'Untitled Habit').length.clamp(
-            0,
-            maxTitleLength,
-          ),
-        ),
+        title: () {
+          final rawTitle = map['title'] as String? ?? 'Untitled Habit';
+          if (rawTitle.length > maxTitleLength) {
+            DebugLogger.warning(
+              'Title truncated',
+              tag: _tag,
+              data: '${rawTitle.length} -> $maxTitleLength',
+            );
+            return rawTitle.substring(0, maxTitleLength);
+          }
+          return rawTitle;
+        }(),
         description: map['description'] as String?,
-        createdAt: parseDate(map['createdAt'] as String?) ?? DateTime.now(),
+        createdAt:
+            DateUtils.tryParse(map['createdAt'] as String?) ?? DateTime.now(),
         startDate:
-            parseDate(map['startDate'] as String?) ??
-            parseDate(map['createdAt'] as String?) ??
+            DateUtils.tryParse(map['startDate'] as String?) ??
+            DateUtils.tryParse(map['createdAt'] as String?) ??
             DateTime.now(),
         isDeleted: map['isDeleted'] as bool? ?? false,
         color: map['color'] as String? ?? '#6C63FF',
@@ -323,7 +316,9 @@ class HabitModel {
         currentStreak: map['currentStreak'] as int? ?? 0,
         longestStreak: map['longestStreak'] as int? ?? 0,
         totalCompletions: map['totalCompletions'] as int? ?? 0,
-        lastCompletedDate: parseDate(map['lastCompletedDate'] as String?),
+        lastCompletedDate: DateUtils.tryParse(
+          map['lastCompletedDate'] as String?,
+        ),
       );
 
       DebugLogger.verbose(
@@ -334,13 +329,7 @@ class HabitModel {
       return habit;
     } catch (e) {
       DebugLogger.error('Failed to deserialize habit', tag: _tag, error: e);
-
-      return HabitModel(
-        id: map['id'] as String? ?? const Uuid().v4(),
-        title: 'Error loading habit',
-        isDeleted: true,
-        frequency: HabitFrequency.daily,
-      );
+      rethrow;
     }
   }
 

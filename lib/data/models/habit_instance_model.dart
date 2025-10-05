@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -71,25 +72,15 @@ class HabitInstanceModel {
 
   factory HabitInstanceModel.fromMap(Map<String, dynamic> map) {
     try {
-      DateTime? parseDate(String? dateStr) {
-        if (dateStr == null || dateStr.isEmpty) return null;
-        try {
-          return DateTime.parse(dateStr);
-        } catch (e) {
-          DebugLogger.warning('Invalid date format', tag: _tag, data: dateStr);
-          return null;
-        }
-      }
-
       final instance = HabitInstanceModel(
         id: map['id'] as String? ?? const Uuid().v4(),
         habitId: map['habitId'] as String,
-        date: parseDate(map['date'] as String?) ?? DateTime.now(),
+        date: DateUtils.tryParse(map['date'] as String?) ?? DateTime.now(),
         status: HabitInstanceStatus.values.firstWhere(
           (s) => s.name == map['status'],
           orElse: () => HabitInstanceStatus.pending,
         ),
-        completedAt: parseDate(map['completedAt'] as String?),
+        completedAt: DateUtils.tryParse(map['completedAt'] as String?),
         value: map['value'] as int?,
         note: map['note'] as String?,
         isDeleted: map['isDeleted'] as bool? ?? false,
@@ -135,13 +126,9 @@ class HabitInstanceModel {
 
   bool get isCompleted => status == HabitInstanceStatus.completed;
   bool get isPending => status == HabitInstanceStatus.pending;
-  bool get isToday => _isSameDay(date, DateTime.now());
+  bool get isToday => DateUtils.isSameDay(date, DateTime.now());
   bool get isPast => date.isBefore(DateTime.now()) && !isToday;
   bool get isFuture => date.isAfter(DateTime.now()) && !isToday;
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
 
   @override
   String toString() {

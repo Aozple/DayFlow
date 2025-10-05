@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/core/utils/custom_snackbar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +69,9 @@ class CreateNoteColorPicker extends StatelessWidget {
                       },
                       child: Text(
                         'Done',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                     ),
                   ],
@@ -89,7 +92,7 @@ class CreateNoteColorPicker extends StatelessWidget {
                     itemCount: AppColors.userColors.length,
                     itemBuilder: (context, index) {
                       final color = AppColors.userColors[index];
-                      final colorHex = AppColors.toHex(color);
+                      final colorHex = ColorUtils.toHex(color);
                       final isSelected = selectedColorHex == colorHex;
                       return GestureDetector(
                         onTap: () {

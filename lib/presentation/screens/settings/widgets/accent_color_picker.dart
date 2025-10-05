@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/presentation/widgets/color_picker_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ class AccentColorPicker extends StatelessWidget {
   }
 
   static Widget _buildAccentPreview(String colorHex) {
-    final accentColor = AppColors.fromHex(colorHex);
+    final accentColor = ColorUtils.fromHex(colorHex);
 
     return Container(
       padding: const EdgeInsets.all(16),

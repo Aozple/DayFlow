@@ -7,6 +7,10 @@ class MigrationManager {
   static const int currentVersion = 1;
 
   static Future<void> migrate() async {
+    if (!Hive.isBoxOpen('settings')) {
+      await Hive.openBox('settings');
+    }
+
     final settingsBox = Hive.box('settings');
     final storedVersion = settingsBox.get(_versionKey, defaultValue: 0);
 
@@ -37,14 +41,23 @@ class MigrationManager {
 
   static Future<void> _migrateToV1() async {
     try {
+      if (!Hive.isBoxOpen('tasks')) {
+        await Hive.openBox('tasks');
+      }
+
       final tasksBox = Hive.box('tasks');
+      final updates = <dynamic, Map>{};
 
       for (final key in tasksBox.keys) {
         final task = tasksBox.get(key);
         if (task is Map && !task.containsKey('version')) {
-          task['version'] = 1;
-          await tasksBox.put(key, task);
+          updates[key] = {...task, 'version': 1};
         }
+      }
+
+      if (updates.isNotEmpty) {
+        await tasksBox.putAll(updates);
+        DebugLogger.info('Updated ${updates.length} tasks', tag: _tag);
       }
 
       DebugLogger.success('Migration v1 completed', tag: _tag);

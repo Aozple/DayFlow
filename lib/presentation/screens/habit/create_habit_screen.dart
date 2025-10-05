@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/color_utils.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/data/models/habit_instance_model.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
@@ -106,7 +107,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
     _habitType = habit?.habitType ?? HabitType.simple;
     _targetValue = habit?.targetValue;
     _unit = habit?.unit;
-    _selectedColor = habit?.color ?? AppColors.toHex(AppColors.userColors[0]);
+    _selectedColor = habit?.color ?? ColorUtils.toHex(AppColors.userColors[0]);
     if (settingsState is SettingsLoaded) {
       _hasNotification =
           habit?.hasNotification ??
