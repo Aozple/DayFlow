@@ -18,6 +18,8 @@ class AppColors {
   static const Color timelineLineColor = Color(0xFF38383A);
   static const Color hourTextColor = Color(0xFF8E8E93);
 
+  static const Color transparent = Color(0x00000000);
+
   static const List<Color> userColors = [
     Color(0xFFB0B0B5),
     Color(0xFF4A90E2),

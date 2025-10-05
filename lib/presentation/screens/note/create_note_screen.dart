@@ -106,7 +106,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
           widget.prefilledHour != null
               ? TimeOfDay(hour: widget.prefilledHour!, minute: 0)
               : TimeOfDay.now();
-      _selectedColor = AppColors.toHex(AppColors.userColors[4]);
+      _selectedColor = AppColors.toHex(AppColors.userColors[0]);
     }
   }
 

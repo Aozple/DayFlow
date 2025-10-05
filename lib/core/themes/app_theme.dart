@@ -164,7 +164,7 @@ class AppTheme {
 
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.transparent,
         labelStyle: TextStyle(color: AppColors.textSecondary),
         hintStyle: TextStyle(color: AppColors.textTertiary),
       ),
