@@ -1,7 +1,7 @@
-import 'package:dayflow/core/utils/color_utils.dart';
-import 'package:dayflow/core/utils/date_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
-import 'package:dayflow/core/utils/validation_utils.dart';
+import 'package:dayflow/core/utils/app_validation_utils.dart';
 import 'package:dayflow/data/models/note_block.dart';
 import 'package:uuid/uuid.dart';
 
@@ -9,8 +9,6 @@ class TaskModel {
   static const String _tag = 'TaskModel';
 
   static final Map<String, bool> _validationCache = {};
-  static DateTime? _cachedNow;
-  static int? _cacheTimestamp;
 
   final String id;
   final String title;
@@ -53,7 +51,7 @@ class TaskModel {
     this.notificationMinutesBefore,
     this.blocks,
   }) : id = id ?? const Uuid().v4(),
-       createdAt = createdAt ?? DateTime.now(),
+       createdAt = createdAt ?? AppDateUtils.now,
        tags = tags ?? [] {
     _validateModel();
   }
@@ -75,54 +73,56 @@ class TaskModel {
         throw ArgumentError('Title cannot be empty');
       }
 
-      if (priority < ValidationUtils.minPriority ||
-          priority > ValidationUtils.maxPriority) {
+      if (priority < AppValidationUtils.minPriority ||
+          priority > AppValidationUtils.maxPriority) {
         _cacheInvalidResult(validationKey);
         throw ArgumentError(
-          'Priority must be between ${ValidationUtils.minPriority} and ${ValidationUtils.maxPriority}',
+          'Priority must be between ${AppValidationUtils.minPriority} and ${AppValidationUtils.maxPriority}',
         );
       }
 
-      if (tags.length > ValidationUtils.maxTags) {
-        _cacheInvalidResult(validationKey);
-        throw ArgumentError('Too many tags (max ${ValidationUtils.maxTags})');
-      }
-
-      if (title.length > ValidationUtils.maxTitleLength) {
+      if (tags.length > AppValidationUtils.maxTags) {
         _cacheInvalidResult(validationKey);
         throw ArgumentError(
-          'Title too long (max ${ValidationUtils.maxTitleLength} characters)',
+          'Too many tags (max ${AppValidationUtils.maxTags})',
+        );
+      }
+
+      if (title.length > AppValidationUtils.maxTitleLength) {
+        _cacheInvalidResult(validationKey);
+        throw ArgumentError(
+          'Title too long (max ${AppValidationUtils.maxTitleLength} characters)',
         );
       }
 
       if (description != null &&
-          description!.length > ValidationUtils.maxDescriptionLength) {
+          description!.length > AppValidationUtils.maxDescriptionLength) {
         _cacheInvalidResult(validationKey);
         throw ArgumentError(
-          'Description too long (max ${ValidationUtils.maxDescriptionLength} characters)',
+          'Description too long (max ${AppValidationUtils.maxDescriptionLength} characters)',
         );
       }
 
       if (estimatedMinutes != null &&
-          (estimatedMinutes! < ValidationUtils.minEstimatedMinutes ||
-              estimatedMinutes! > ValidationUtils.maxEstimatedMinutes)) {
+          (estimatedMinutes! < AppValidationUtils.minEstimatedMinutes ||
+              estimatedMinutes! > AppValidationUtils.maxEstimatedMinutes)) {
         _cacheInvalidResult(validationKey);
         throw ArgumentError(
-          'Estimated minutes must be between ${ValidationUtils.minEstimatedMinutes} and ${ValidationUtils.maxEstimatedMinutes}',
+          'Estimated minutes must be between ${AppValidationUtils.minEstimatedMinutes} and ${AppValidationUtils.maxEstimatedMinutes}',
         );
       }
 
-      if (!ColorUtils.isValidHex(color)) {
+      if (!AppColorUtils.isValidHex(color)) {
         _cacheInvalidResult(validationKey);
         throw ArgumentError('Invalid color format');
       }
 
       for (int i = 0; i < tags.length; i++) {
         final tag = tags[i];
-        if (tag.length > ValidationUtils.maxTagLength) {
+        if (tag.length > AppValidationUtils.maxTagLength) {
           _cacheInvalidResult(validationKey);
           throw ArgumentError(
-            'Tag "$tag" too long (max ${ValidationUtils.maxTagLength} characters)',
+            'Tag "$tag" too long (max ${AppValidationUtils.maxTagLength} characters)',
           );
         }
       }
@@ -219,9 +219,9 @@ class TaskModel {
                   .where(
                     (tag) =>
                         tag.isNotEmpty &&
-                        tag.length <= ValidationUtils.maxTagLength,
+                        tag.length <= AppValidationUtils.maxTagLength,
                   )
-                  .take(ValidationUtils.maxTags)
+                  .take(AppValidationUtils.maxTags)
                   .toList();
         }
       } catch (e) {
@@ -234,41 +234,42 @@ class TaskModel {
 
       final task = TaskModel(
         id: map['id'] as String? ?? const Uuid().v4(),
-        title: ValidationUtils.validateAndTrimTitle(
+        title: AppValidationUtils.validateAndTrimTitle(
           map['title'] as String?,
-          ValidationUtils.maxTitleLength,
+          AppValidationUtils.maxTitleLength,
           'Untitled',
         ),
         description: map['description'] as String?,
         createdAt:
-            DateUtils.tryParse(map['createdAt'] as String?) ?? DateTime.now(),
-        dueDate: DateUtils.tryParse(map['dueDate'] as String?),
-        completedAt: DateUtils.tryParse(map['completedAt'] as String?),
+            AppDateUtils.tryParse(map['createdAt'] as String?) ??
+            AppDateUtils.now,
+        dueDate: AppDateUtils.tryParse(map['dueDate'] as String?),
+        completedAt: AppDateUtils.tryParse(map['completedAt'] as String?),
         isCompleted: map['isCompleted'] as bool? ?? false,
         isDeleted: map['isDeleted'] as bool? ?? false,
-        priority: ValidationUtils.validatePriority(
+        priority: AppValidationUtils.validatePriority(
           map['priority'],
-          ValidationUtils.minPriority,
-          ValidationUtils.maxPriority,
+          AppValidationUtils.minPriority,
+          AppValidationUtils.maxPriority,
           1,
         ),
-        color: ColorUtils.validateHex(map['color'] as String?) ?? '#6C63FF',
+        color: AppColorUtils.validateHex(map['color'] as String?) ?? '#6C63FF',
         tags: tags,
         isNote: map['isNote'] as bool? ?? false,
         noteContent: map['noteContent'] as String?,
-        estimatedMinutes: ValidationUtils.validateMinutes(
+        estimatedMinutes: AppValidationUtils.validateMinutes(
           map['estimatedMinutes'],
-          ValidationUtils.minEstimatedMinutes,
-          ValidationUtils.maxEstimatedMinutes,
+          AppValidationUtils.minEstimatedMinutes,
+          AppValidationUtils.maxEstimatedMinutes,
         ),
-        actualMinutes: ValidationUtils.validateMinutes(
+        actualMinutes: AppValidationUtils.validateMinutes(
           map['actualMinutes'],
-          ValidationUtils.minEstimatedMinutes,
-          ValidationUtils.maxEstimatedMinutes,
+          AppValidationUtils.minEstimatedMinutes,
+          AppValidationUtils.maxEstimatedMinutes,
         ),
         markdownContent: map['markdownContent'] as String?,
         hasNotification: map['hasNotification'] as bool? ?? false,
-        notificationMinutesBefore: ValidationUtils.validateMinutes(
+        notificationMinutesBefore: AppValidationUtils.validateMinutes(
           map['notificationMinutesBefore'],
           0,
           1440,
@@ -362,34 +363,25 @@ class TaskModel {
     return [];
   }
 
-  static DateTime get _now {
-    final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    if (_cacheTimestamp != currentTimestamp || _cachedNow == null) {
-      _cachedNow = DateTime.now();
-      _cacheTimestamp = currentTimestamp;
-    }
-    return _cachedNow!;
-  }
-
   bool get isOverdue {
     if (dueDate == null || isCompleted) return false;
-    return dueDate!.isBefore(_now);
+    return dueDate!.isBefore(AppDateUtils.now);
   }
 
   bool get isDueToday {
     if (dueDate == null) return false;
-    return DateUtils.isSameDay(dueDate!, _now);
+    return AppDateUtils.isSameDay(dueDate!, AppDateUtils.now);
   }
 
   bool get isDueTomorrow {
     if (dueDate == null) return false;
-    final tomorrow = _now.add(const Duration(days: 1));
-    return DateUtils.isSameDay(dueDate!, tomorrow);
+    final tomorrow = AppDateUtils.now.add(const Duration(days: 1));
+    return AppDateUtils.isSameDay(dueDate!, tomorrow);
   }
 
   Duration? get timeUntilDue {
     if (dueDate == null) return null;
-    return dueDate!.difference(_now);
+    return dueDate!.difference(AppDateUtils.now);
   }
 
   String get priorityLabel {
@@ -423,25 +415,25 @@ class TaskModel {
 
     if (title.isEmpty) {
       errors['title'] = 'Title cannot be empty';
-    } else if (title.length > ValidationUtils.maxTitleLength) {
+    } else if (title.length > AppValidationUtils.maxTitleLength) {
       errors['title'] = 'Title too long';
     }
 
     if (description != null &&
-        description!.length > ValidationUtils.maxDescriptionLength) {
+        description!.length > AppValidationUtils.maxDescriptionLength) {
       errors['description'] = 'Description too long';
     }
 
-    if (priority < ValidationUtils.minPriority ||
-        priority > ValidationUtils.maxPriority) {
+    if (priority < AppValidationUtils.minPriority ||
+        priority > AppValidationUtils.maxPriority) {
       errors['priority'] = 'Invalid priority';
     }
 
-    if (!ColorUtils.isValidHex(color)) {
+    if (!AppColorUtils.isValidHex(color)) {
       errors['color'] = 'Invalid color format';
     }
 
-    if (tags.length > ValidationUtils.maxTags) {
+    if (tags.length > AppValidationUtils.maxTags) {
       errors['tags'] = 'Too many tags';
     }
 

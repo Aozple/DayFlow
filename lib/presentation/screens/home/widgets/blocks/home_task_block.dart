@@ -1,5 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +31,7 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     final taskColor =
         isDefaultColor
             ? AppColors.textSecondary
-            : ColorUtils.fromHex(widget.task.color);
+            : AppColorUtils.fromHex(widget.task.color);
 
     if (widget.task.isNote) {
       return const SizedBox.shrink();

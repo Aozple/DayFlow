@@ -44,7 +44,7 @@ class HabitLoaded extends HabitState {
     this.activeFilter,
     this.statistics,
     DateTime? lastUpdated,
-  }) : lastUpdated = lastUpdated ?? DateTime.now();
+  }) : lastUpdated = lastUpdated ?? AppDateUtils.now;
 
   @override
   List<Object?> get props => [

@@ -1,7 +1,7 @@
 import 'package:dayflow/core/utils/debug_logger.dart';
 
-class ValidationUtils {
-  ValidationUtils._();
+class AppValidationUtils {
+  AppValidationUtils._();
 
   static const int maxTitleLength = 200;
   static const int maxDescriptionLength = 1000;

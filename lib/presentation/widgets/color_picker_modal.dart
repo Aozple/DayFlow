@@ -1,5 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/presentation/widgets/draggable_modal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -219,7 +219,7 @@ class _ColorPickerModalState extends State<ColorPickerModal>
         border: Border.all(color: AppColors.divider.withAlpha(40), width: 1),
         boxShadow: [
           BoxShadow(
-            color: ColorUtils.fromHex(_currentSelectedColor).withAlpha(10),
+            color: AppColorUtils.fromHex(_currentSelectedColor).withAlpha(10),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -279,7 +279,7 @@ class _ColorPickerModalState extends State<ColorPickerModal>
             itemBuilder: (context, index) {
               final colorHex = widget.recentColors![index];
               return _buildColorOption(
-                ColorUtils.fromHex(colorHex),
+                AppColorUtils.fromHex(colorHex),
                 colorHex,
                 size: 52,
               );
@@ -385,7 +385,7 @@ class _ColorPickerModalState extends State<ColorPickerModal>
                         ),
                         child: _buildColorOption(
                           color,
-                          ColorUtils.toHex(color),
+                          AppColorUtils.toHex(color),
                         ),
                       );
                     }).toList(),

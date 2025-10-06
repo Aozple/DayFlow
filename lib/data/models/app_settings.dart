@@ -1,4 +1,4 @@
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 
 class AppSettings {
@@ -49,7 +49,7 @@ class AppSettings {
     try {
       final map = {
         'accentColor':
-            ColorUtils.validateHex(accentColor) ?? defaultAccentColor,
+            AppColorUtils.validateHex(accentColor) ?? defaultAccentColor,
         'firstDayOfWeek': validateFirstDay(firstDayOfWeek),
         'defaultTaskPriority': validatePriority(defaultTaskPriority),
         'defaultNotificationEnabled': defaultNotificationEnabled,
@@ -82,7 +82,7 @@ class AppSettings {
 
       return AppSettings(
         accentColor:
-            ColorUtils.validateHex(
+            AppColorUtils.validateHex(
               map['accentColor'] as String? ?? defaultAccentColor,
             ) ??
             defaultAccentColor,
@@ -205,7 +205,7 @@ class AppSettings {
 
   bool isValid() {
     try {
-      ColorUtils.validateHex(accentColor) ?? defaultAccentColor;
+      AppColorUtils.validateHex(accentColor) ?? defaultAccentColor;
       validateFirstDay(firstDayOfWeek);
       validatePriority(defaultTaskPriority);
       validateMinutesBefore(defaultNotificationMinutesBefore);
@@ -261,7 +261,7 @@ class AppSettings {
 
     // Calculate and cache
     try {
-      final colorValue = ColorUtils.fromHex(accentColor).toARGB32();
+      final colorValue = AppColorUtils.fromHex(accentColor).toARGB32();
 
       // Cache with size limit
       if (_colorCache.length < 20) {

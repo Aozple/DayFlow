@@ -1,4 +1,4 @@
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:flutter/material.dart';
 
 class AppColors {
@@ -46,7 +46,7 @@ class AppColors {
       return surfaceLight;
     }
 
-    return ColorUtils.fromHex(colorHex).withAlpha(25);
+    return AppColorUtils.fromHex(colorHex).withAlpha(25);
   }
 
   static const List<Color> accentColors = [

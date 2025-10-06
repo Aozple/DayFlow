@@ -1,4 +1,6 @@
+import 'package:dayflow/core/constants/app_constants.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/data/models/habit_instance_model.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/data/repositories/habit_repository.dart';
@@ -38,7 +40,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     final habits = _repository.getAll(operationType: 'read');
 
     final currentState = state is HabitLoaded ? state as HabitLoaded : null;
-    final date = selectedDate ?? currentState?.selectedDate ?? DateTime.now();
+    final date = selectedDate ?? currentState?.selectedDate ?? AppDateUtils.now;
 
     final instances = _repository.getInstancesByDate(date);
     final statistics = HabitStatistics.fromHabits(habits, instances);
@@ -58,13 +60,13 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
       operationName: 'Load Habits',
       operation: () async {
         final habits = _repository.getAllHabits();
-        final todayInstances = _repository.getInstancesByDate(DateTime.now());
+        final todayInstances = _repository.getInstancesByDate(AppDateUtils.now);
         final statistics = HabitStatistics.fromHabits(habits, todayInstances);
 
         return HabitLoaded.create(
           habits: habits,
           todayInstances: todayInstances,
-          selectedDate: DateTime.now(),
+          selectedDate: AppDateUtils.now,
           statistics: statistics,
         );
       },
@@ -78,7 +80,7 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
               : HabitLoaded.create(
                 habits: const [],
                 todayInstances: const [],
-                selectedDate: DateTime.now(),
+                selectedDate: AppDateUtils.now,
               ),
     );
   }

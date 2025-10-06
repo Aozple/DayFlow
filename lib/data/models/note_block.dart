@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:uuid/uuid.dart';
-import 'package:dayflow/core/utils/validation_utils.dart';
+import 'package:dayflow/core/utils/app_validation_utils.dart';
 
 typedef BlockFactory = NoteBlock Function(Map<String, dynamic> json);
 
@@ -87,7 +87,7 @@ class HeadingBlock extends NoteBlock {
   }
 
   factory HeadingBlock.fromJson(Map<String, dynamic> json) {
-    final level = ValidationUtils.validateHeadingLevel(json['level']);
+    final level = AppValidationUtils.validateHeadingLevel(json['level']);
     return HeadingBlock(id: json['id'], text: json['text'] ?? '', level: level);
   }
 

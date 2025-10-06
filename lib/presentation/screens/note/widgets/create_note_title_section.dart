@@ -1,5 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -106,7 +106,7 @@ class _CreateNoteTitleSectionState extends State<CreateNoteTitleSection> {
         (char >= 0x0590 && char <= 0x05FF);
   }
 
-  Color get _selectedColor => ColorUtils.fromHex(widget.selectedColor);
+  Color get _selectedColor => AppColorUtils.fromHex(widget.selectedColor);
 
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl

@@ -1,3 +1,5 @@
+import 'package:dayflow/core/constants/app_constants.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,7 +8,7 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
 
   bool _isProcessing = false;
   DateTime? _lastLoadTime;
-  static const Duration minLoadInterval = Duration(milliseconds: 500);
+  static const Duration minLoadInterval = AppConstants.quickExportDuration;
 
   BaseBloc({required this.tag, required State initialState})
     : super(initialState);
@@ -18,9 +20,12 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
     }
 
     if (_lastLoadTime != null && !forceRefresh) {
-      final timeSinceLastLoad = DateTime.now().difference(_lastLoadTime!);
+      final timeSinceLastLoad = AppDateUtils.now.difference(_lastLoadTime!);
       if (timeSinceLastLoad < minLoadInterval) {
-        logVerbose('Too soon to reload');
+        logVerbose(
+          'Too soon to reload',
+          data: '${timeSinceLastLoad.inMilliseconds}ms',
+        );
         return false;
       }
     }
@@ -30,34 +35,39 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
 
   void startProcessing() {
     _isProcessing = true;
-    _lastLoadTime = DateTime.now();
+    _lastLoadTime = AppDateUtils.now;
+    logVerbose('Processing started');
   }
 
   void endProcessing() {
     _isProcessing = false;
+    logVerbose('Processing ended');
   }
 
   bool get isProcessing => _isProcessing;
 
-  void logInfo(String message, {dynamic data}) {
-    DebugLogger.info(message, tag: tag, data: data);
+  void _log(
+    void Function(String, {String? tag, dynamic data}) logMethod,
+    String message, {
+    dynamic data,
+  }) {
+    logMethod(message, tag: tag, data: data);
   }
 
-  void logSuccess(String message, {dynamic data}) {
-    DebugLogger.success(message, tag: tag, data: data);
-  }
+  void logInfo(String message, {dynamic data}) =>
+      _log(DebugLogger.info, message, data: data);
 
-  void logError(String message, {dynamic error}) {
-    DebugLogger.error(message, tag: tag, error: error);
-  }
+  void logSuccess(String message, {dynamic data}) =>
+      _log(DebugLogger.success, message, data: data);
 
-  void logWarning(String message, {dynamic data}) {
-    DebugLogger.warning(message, tag: tag, data: data);
-  }
+  void logError(String message, {dynamic error}) =>
+      DebugLogger.error(message, tag: tag, error: error);
 
-  void logVerbose(String message, {dynamic data}) {
-    DebugLogger.verbose(message, tag: tag, data: data);
-  }
+  void logWarning(String message, {dynamic data}) =>
+      _log(DebugLogger.warning, message, data: data);
+
+  void logVerbose(String message, {dynamic data}) =>
+      _log(DebugLogger.verbose, message, data: data);
 
   Future<void> handleError(
     dynamic error,
@@ -114,6 +124,11 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
   @override
   Future<void> close() {
     logInfo('Closing $tag');
+
+    // Cleanup processing state
+    _isProcessing = false;
+    _lastLoadTime = null;
+
     return super.close();
   }
 }

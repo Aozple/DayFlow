@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:dayflow/core/services/export_import/export_import_service.dart';
 import 'package:dayflow/core/services/export_import/file_manager.dart';
 import 'package:dayflow/core/services/export_import/models/export_import_models.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/data/models/app_settings.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/tasks/task_bloc.dart';
@@ -110,14 +110,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   color:
                       settings != null
-                          ? ColorUtils.fromHex(settings.accentColor)
+                          ? AppColorUtils.fromHex(settings.accentColor)
                           : Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.divider, width: 2),
                   boxShadow: [
                     BoxShadow(
                       color: (settings != null
-                              ? ColorUtils.fromHex(settings.accentColor)
+                              ? AppColorUtils.fromHex(settings.accentColor)
                               : Theme.of(context).colorScheme.primary)
                           .withAlpha(100),
                       blurRadius: 8,

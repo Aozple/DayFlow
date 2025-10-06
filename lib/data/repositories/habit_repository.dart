@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_constants.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:dayflow/data/models/habit_instance_model.dart';
@@ -12,12 +13,13 @@ class HabitRepository extends BaseRepository<HabitModel>
 
   Map<String, dynamic>? _cachedStats;
   DateTime? _lastStatsUpdate;
-  static const Duration _statsCacheDuration = Duration(minutes: 2);
+  static const Duration _statsCacheDuration = AppConstants.defaultCacheDuration;
 
   late final BaseRepository<HabitInstanceModel> _instanceRepo;
 
-  HabitRepository() : super(boxName: AppConstants.habitsBox, tag: _tag) {
-    _instanceRepo = GetIt.I<HabitInstanceRepository>();
+  HabitRepository({BaseRepository<HabitInstanceModel>? instanceRepo})
+    : super(boxName: AppConstants.habitsBox, tag: _tag) {
+    _instanceRepo = instanceRepo ?? GetIt.I<HabitInstanceRepository>();
   }
 
   @override
@@ -88,18 +90,19 @@ class HabitRepository extends BaseRepository<HabitModel>
   @override
   List<HabitInstanceModel> getInstancesByDate(DateTime date) {
     try {
-      final targetYear = date.year;
-      final targetMonth = date.month;
-      final targetDay = date.day;
+      final targetDate = DateTime(date.year, date.month, date.day);
 
       final instances =
           _instanceRepo.getAll(operationType: 'filter').where((instance) {
             if (instance.isDeleted) return false;
 
-            final instanceDate = instance.date;
-            return instanceDate.year == targetYear &&
-                instanceDate.month == targetMonth &&
-                instanceDate.day == targetDay;
+            final instanceDate = DateTime(
+              instance.date.year,
+              instance.date.month,
+              instance.date.day,
+            );
+
+            return instanceDate == targetDate;
           }).toList();
 
       instances.sort((a, b) => a.date.compareTo(b.date));
@@ -109,7 +112,6 @@ class HabitRepository extends BaseRepository<HabitModel>
         tag: tag,
         data: '${instances.length} instances',
       );
-
       return instances;
     } catch (e) {
       DebugLogger.error('Failed to get instances by date', tag: tag, error: e);
@@ -132,7 +134,7 @@ class HabitRepository extends BaseRepository<HabitModel>
     if (instance != null) {
       final updated = instance.copyWith(
         status: HabitInstanceStatus.completed,
-        completedAt: DateTime.now(),
+        completedAt: AppDateUtils.now,
         value: value,
       );
       await updateInstance(updated);
@@ -145,15 +147,14 @@ class HabitRepository extends BaseRepository<HabitModel>
     int daysAhead = AppConstants.defaultDaysAhead,
   }) async {
     try {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
+      final today = AppDateUtils.startOfDay(AppDateUtils.now);
       final endDate = today.add(Duration(days: daysAhead));
 
       var currentDate = today;
       var generatedCount = 0;
 
       while (currentDate.isBefore(endDate) ||
-          _isSameDay(currentDate, endDate)) {
+          AppDateUtils.isSameDay(currentDate, endDate)) {
         if (_shouldGenerateInstance(habit, currentDate)) {
           final existing = await _getInstanceForDate(habit.id, currentDate);
 
@@ -179,7 +180,7 @@ class HabitRepository extends BaseRepository<HabitModel>
 
   Future<void> _regenerateInstances(HabitModel habit) async {
     final instances = getInstancesByHabitId(habit.id);
-    final today = DateTime.now();
+    final today = AppDateUtils.now;
 
     for (final instance in instances) {
       if (instance.date.isAfter(today) &&
@@ -193,10 +194,11 @@ class HabitRepository extends BaseRepository<HabitModel>
 
   Future<void> _deleteHabitInstances(String habitId) async {
     final instances = getInstancesByHabitId(habitId);
-    final today = DateTime.now();
+    final today = AppDateUtils.now;
 
     for (final instance in instances) {
-      if (instance.date.isAfter(today) || _isSameDay(instance.date, today)) {
+      if (instance.date.isAfter(today) ||
+          AppDateUtils.isSameDay(instance.date, today)) {
         final deleted = instance.copyWith(isDeleted: true);
         await updateInstance(deleted);
       }
@@ -249,7 +251,7 @@ class HabitRepository extends BaseRepository<HabitModel>
             longestStreak > currentStreak ? longestStreak : currentStreak;
         lastCompletedDate ??= instance.completedAt;
       } else if (instance.status == HabitInstanceStatus.pending &&
-          instance.date.isBefore(DateTime.now())) {
+          instance.date.isBefore(AppDateUtils.now)) {
         currentStreak = 0;
       }
     }
@@ -307,14 +309,10 @@ class HabitRepository extends BaseRepository<HabitModel>
   ) async {
     final instances = getInstancesByHabitId(habitId);
     try {
-      return instances.firstWhere((i) => _isSameDay(i.date, date));
+      return instances.firstWhere((i) => AppDateUtils.isSameDay(i.date, date));
     } catch (_) {
       return null;
     }
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   @override
@@ -337,23 +335,30 @@ class HabitRepository extends BaseRepository<HabitModel>
       if (!forceRefresh &&
           _cachedStats != null &&
           _lastStatsUpdate != null &&
-          DateTime.now().difference(_lastStatsUpdate!).inSeconds <
-              _statsCacheDuration.inSeconds) {
+          AppDateUtils.now.difference(_lastStatsUpdate!) < _statsCacheDuration) {
         DebugLogger.verbose('Habit statistics cache hit', tag: tag);
         return _cachedStats!;
       }
 
       final habits = getAll(operationType: 'read');
-      final today = DateTime.now();
+      final today = DateTime(
+        AppDateUtils.now.year,
+        AppDateUtils.now.month,
+        AppDateUtils.now.day,
+      );
       final todayInstances = getInstancesByDate(today);
 
       int activeHabits = 0;
       int completedToday = 0;
       int pendingToday = 0;
+      int totalHabits = 0;
 
       for (final habit in habits) {
-        if (habit.isActive) {
-          activeHabits++;
+        if (!habit.isDeleted) {
+          totalHabits++;
+          if (habit.isActive) {
+            activeHabits++;
+          }
         }
       }
 
@@ -369,7 +374,7 @@ class HabitRepository extends BaseRepository<HabitModel>
       final completionRate = todayTotal > 0 ? completedToday / todayTotal : 0.0;
 
       _cachedStats = {
-        'totalHabits': habits.length,
+        'totalHabits': totalHabits,
         'activeHabits': activeHabits,
         'todayTotal': todayTotal,
         'todayCompleted': completedToday,
@@ -377,7 +382,7 @@ class HabitRepository extends BaseRepository<HabitModel>
         'completionRate': completionRate,
       };
 
-      _lastStatsUpdate = DateTime.now();
+      _lastStatsUpdate = AppDateUtils.now;
 
       DebugLogger.success(
         'Habit statistics calculated and cached',

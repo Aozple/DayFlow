@@ -224,8 +224,8 @@ class _HomeTimeSlotState extends State<HomeTimeSlot>
               color:
                   widget.isCurrentHour
                       ? Theme.of(context).colorScheme.primary
-                      : AppColors.divider.withAlpha(150),
-              width: widget.isCurrentHour ? 3 : 1,
+                      : AppColors.divider.withAlpha(100),
+              width: widget.isCurrentHour ? 4 : 1,
             ),
           ),
         ),

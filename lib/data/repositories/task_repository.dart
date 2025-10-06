@@ -1,4 +1,5 @@
 import 'package:dayflow/core/constants/app_constants.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/base/base_repository.dart';
@@ -10,7 +11,7 @@ class TaskRepository extends BaseRepository<TaskModel>
 
   Map<String, dynamic>? _cachedStats;
   DateTime? _lastStatsUpdate;
-  static const Duration _statsCacheDuration = Duration(minutes: 2);
+  static const Duration _statsCacheDuration = AppConstants.defaultCacheDuration;
 
   TaskRepository() : super(boxName: AppConstants.tasksBox, tag: _tag);
 
@@ -39,6 +40,9 @@ class TaskRepository extends BaseRepository<TaskModel>
   @override
   List<TaskModel> getAllTasks() {
     final tasks = getAll();
+
+    if (tasks.length <= 1) return tasks;
+
     tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return tasks;
   }
@@ -57,29 +61,26 @@ class TaskRepository extends BaseRepository<TaskModel>
               ? getAll(operationType: 'filter')
               : getAll(forceRefresh: true);
 
-      final targetYear = date.year;
-      final targetMonth = date.month;
-      final targetDay = date.day;
+      final targetDate = DateTime(date.year, date.month, date.day);
 
-      final filteredTasks = <TaskModel>[];
+      final filteredTasks =
+          tasks.where((task) {
+            if (task.dueDate == null || task.isDeleted) return false;
 
-      for (final task in tasks) {
-        if (task.dueDate != null && !task.isDeleted) {
-          final dueDate = task.dueDate!;
-          if (dueDate.year == targetYear &&
-              dueDate.month == targetMonth &&
-              dueDate.day == targetDay) {
-            filteredTasks.add(task);
-          }
-        }
-      }
+            final taskDate = DateTime(
+              task.dueDate!.year,
+              task.dueDate!.month,
+              task.dueDate!.day,
+            );
+
+            return taskDate == targetDate;
+          }).toList();
 
       DebugLogger.success(
         'Tasks filtered by date',
         tag: tag,
         data: '${filteredTasks.length}/${tasks.length} tasks',
       );
-
       return filteredTasks;
     } catch (e) {
       DebugLogger.error('Failed to get tasks by date', tag: tag, error: e);
@@ -146,52 +147,61 @@ class TaskRepository extends BaseRepository<TaskModel>
       if (!forceRefresh &&
           _cachedStats != null &&
           _lastStatsUpdate != null &&
-          DateTime.now().difference(_lastStatsUpdate!).inSeconds <
-              _statsCacheDuration.inSeconds) {
+          AppDateUtils.now.difference(_lastStatsUpdate!) < _statsCacheDuration) {
         DebugLogger.verbose('Statistics cache hit', tag: tag);
         return _cachedStats!;
       }
 
       final allTasks = getAll(operationType: 'read');
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
+      final today = DateTime(
+        AppDateUtils.now.year,
+        AppDateUtils.now.month,
+        AppDateUtils.now.day,
+      );
 
       int completed = 0;
       int pending = 0;
       int overdue = 0;
       int todayTasks = 0;
+      int totalActive = 0;
 
       for (final task in allTasks) {
         if (task.isDeleted) continue;
 
+        totalActive++;
+
         if (task.isCompleted) {
           completed++;
-        } else {
-          pending++;
+          continue;
+        }
 
-          if (task.dueDate != null) {
-            final dueDate = task.dueDate!;
-            final taskDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+        pending++;
 
-            if (taskDay == today) {
-              todayTasks++;
-            } else if (taskDay.isBefore(today)) {
-              overdue++;
-            }
+        if (task.dueDate != null) {
+          final taskDay = DateTime(
+            task.dueDate!.year,
+            task.dueDate!.month,
+            task.dueDate!.day,
+          );
+
+          if (taskDay == today) {
+            todayTasks++;
+          } else if (taskDay.isBefore(today)) {
+            overdue++;
           }
         }
       }
 
       _cachedStats = {
-        'total': allTasks.length,
+        'total': totalActive,
         'completed': completed,
         'pending': pending,
         'todayTasks': todayTasks,
         'overdue': overdue,
-        'completionRate': allTasks.isEmpty ? 0.0 : completed / allTasks.length,
+        'completionRate': totalActive == 0 ? 0.0 : completed / totalActive,
       };
 
-      _lastStatsUpdate = DateTime.now();
+      _lastStatsUpdate = AppDateUtils.now;
 
       DebugLogger.success(
         'Statistics calculated and cached',

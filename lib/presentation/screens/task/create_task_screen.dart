@@ -1,4 +1,4 @@
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/presentation/screens/home/widgets/blocks/home_task_block.dart';
 import 'package:dayflow/presentation/screens/task/widgets/create_task_notification_section.dart';
 import 'package:dayflow/presentation/widgets/color_picker_modal.dart';
@@ -111,7 +111,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final settingsState = context.read<SettingsBloc>().state;
     _priority =
         settingsState is SettingsLoaded ? settingsState.defaultPriority : 3;
-    _selectedColor = ColorUtils.toHex(AppColors.userColors[0]);
+    _selectedColor = AppColorUtils.toHex(AppColors.userColors[0]);
 
     if (settingsState is SettingsLoaded) {
       _hasNotification = settingsState.settings.defaultNotificationEnabled;

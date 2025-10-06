@@ -1,4 +1,4 @@
-import 'package:dayflow/core/utils/date_utils.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,18 +10,6 @@ class HabitInstanceModel {
   };
 
   static final Map<String, bool> _validationCache = {};
-
-  static DateTime? _cachedNow;
-  static int? _cacheTimestamp;
-
-  static DateTime get _now {
-    final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    if (_cacheTimestamp != currentTimestamp || _cachedNow == null) {
-      _cachedNow = DateTime.now();
-      _cacheTimestamp = currentTimestamp;
-    }
-    return _cachedNow!;
-  }
 
   final String id;
   final String habitId;
@@ -155,9 +143,9 @@ class HabitInstanceModel {
       final instance = HabitInstanceModel(
         id: parseStringSafe(map['id'], const Uuid().v4()),
         habitId: parseStringSafe(map['habitId'], ''),
-        date: DateUtils.tryParse(map['date'] as String?) ?? _now,
+        date: AppDateUtils.tryParse(map['date'] as String?) ?? AppDateUtils.now,
         status: _statusMap[map['status']] ?? HabitInstanceStatus.pending,
-        completedAt: DateUtils.tryParse(map['completedAt'] as String?),
+        completedAt: AppDateUtils.tryParse(map['completedAt'] as String?),
         value: parseIntSafe(map['value'], min: 0),
         note: map['note'] is String ? (map['note'] as String).trim() : null,
         isDeleted: map['isDeleted'] as bool? ?? false,
@@ -214,9 +202,9 @@ class HabitInstanceModel {
 
   bool get isCompleted => status == HabitInstanceStatus.completed;
   bool get isPending => status == HabitInstanceStatus.pending;
-  bool get isToday => DateUtils.isSameDay(date, _now);
-  bool get isPast => date.isBefore(_now) && !isToday;
-  bool get isFuture => date.isAfter(_now) && !isToday;
+  bool get isToday => AppDateUtils.isSameDay(date, AppDateUtils.now);
+  bool get isPast => date.isBefore(AppDateUtils.now) && !isToday;
+  bool get isFuture => date.isAfter(AppDateUtils.now) && !isToday;
 
   @override
   String toString() {

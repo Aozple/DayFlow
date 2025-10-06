@@ -1,5 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +17,7 @@ class HomeNoteBlock extends StatelessWidget {
     final noteColor =
         isDefaultColor
             ? AppColors.textSecondary
-            : ColorUtils.fromHex(note.color);
+            : AppColorUtils.fromHex(note.color);
 
     return GestureDetector(
       onTap: () => context.push('/edit-note', extra: note),

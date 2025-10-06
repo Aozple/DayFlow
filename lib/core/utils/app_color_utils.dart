@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ColorUtils {
-  ColorUtils._();
+class AppColorUtils {
+  AppColorUtils._();
 
   static final _hexRegex = RegExp(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$');
 

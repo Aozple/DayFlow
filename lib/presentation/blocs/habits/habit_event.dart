@@ -94,7 +94,10 @@ class GenerateHabitInstances extends HabitEvent {
   final String habitId;
   final int daysAhead;
 
-  const GenerateHabitInstances(this.habitId, {this.daysAhead = 30});
+  const GenerateHabitInstances(
+    this.habitId, {
+    this.daysAhead = AppConstants.defaultDaysAhead,
+  });
 
   @override
   List<Object?> get props => [habitId, daysAhead];

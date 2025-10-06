@@ -1,15 +1,13 @@
-import 'package:dayflow/core/utils/color_utils.dart';
-import 'package:dayflow/core/utils/date_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
-import 'package:flutter/material.dart' hide DateUtils;
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 class HabitModel {
   static const String _tag = 'HabitModel';
 
   static final Map<String, bool> _validationCache = {};
-  static DateTime? _cachedNow;
-  static int? _cacheTimestamp;
 
   static final Map<String, HabitFrequency> _frequencyMap = {
     for (var f in HabitFrequency.values) f.name: f,
@@ -90,8 +88,8 @@ class HabitModel {
     this.totalCompletions = 0,
     this.lastCompletedDate,
   }) : id = id ?? const Uuid().v4(),
-       createdAt = createdAt ?? DateTime.now(),
-       startDate = startDate ?? createdAt ?? DateTime.now(),
+       createdAt = createdAt ?? AppDateUtils.now,
+       startDate = startDate ?? createdAt ?? AppDateUtils.now,
        tags = tags ?? [] {
     _validateModel();
   }
@@ -123,7 +121,7 @@ class HabitModel {
         throw ArgumentError('Too many tags (max $maxTags)');
       }
 
-      if (!ColorUtils.isValidHex(color)) {
+      if (!AppColorUtils.isValidHex(color)) {
         _cacheInvalidResult(validationKey);
         throw ArgumentError('Invalid color format');
       }
@@ -210,7 +208,7 @@ class HabitModel {
             'End date must be specified for date-based end condition',
           );
         }
-        if (endDate!.isBefore(DateTime.now())) {
+        if (endDate!.isBefore(AppDateUtils.now)) {
           throw ArgumentError('End date cannot be in the past');
         }
         break;
@@ -375,9 +373,9 @@ class HabitModel {
 
       var endCondition =
           _endConditionMap[map['endCondition']] ?? HabitEndCondition.never;
-      var endDate = DateUtils.tryParse(map['endDate'] as String?);
+      var endDate = AppDateUtils.tryParse(map['endDate'] as String?);
 
-      if (endDate != null && endDate.isBefore(_now)) {
+      if (endDate != null && endDate.isBefore(AppDateUtils.now)) {
         endCondition = HabitEndCondition.never;
         endDate = null;
         DebugLogger.warning(
@@ -386,9 +384,11 @@ class HabitModel {
         );
       }
 
-      final createdAt = DateUtils.tryParse(map['createdAt'] as String?) ?? _now;
+      final createdAt =
+          AppDateUtils.tryParse(map['createdAt'] as String?) ??
+          AppDateUtils.now;
       final startDate =
-          DateUtils.tryParse(map['startDate'] as String?) ?? createdAt;
+          AppDateUtils.tryParse(map['startDate'] as String?) ?? createdAt;
 
       final habit = HabitModel(
         id: map['id'] as String? ?? const Uuid().v4(),
@@ -412,7 +412,7 @@ class HabitModel {
         startDate: startDate,
         isDeleted: map['isDeleted'] as bool? ?? false,
 
-        color: ColorUtils.validateHex(map['color'] as String?) ?? '#6C63FF',
+        color: AppColorUtils.validateHex(map['color'] as String?) ?? '#6C63FF',
 
         tags: parseTags(),
 
@@ -456,7 +456,7 @@ class HabitModel {
         longestStreak: parseIntSafe(map['longestStreak'], min: 0) ?? 0,
         totalCompletions: parseIntSafe(map['totalCompletions'], min: 0) ?? 0,
 
-        lastCompletedDate: DateUtils.tryParse(
+        lastCompletedDate: AppDateUtils.tryParse(
           map['lastCompletedDate'] as String?,
         ),
       );
@@ -531,21 +531,12 @@ class HabitModel {
     );
   }
 
-  static DateTime get _now {
-    final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    if (_cacheTimestamp != currentTimestamp || _cachedNow == null) {
-      _cachedNow = DateTime.now();
-      _cacheTimestamp = currentTimestamp;
-    }
-    return _cachedNow!;
-  }
-
   bool get isActive => !isDeleted && !_hasEnded;
 
   bool get _hasEnded {
     switch (endCondition) {
       case HabitEndCondition.onDate:
-        return endDate != null && _now.isAfter(endDate!);
+        return endDate != null && AppDateUtils.now.isAfter(endDate!);
       case HabitEndCondition.afterCount:
         return targetCount != null && totalCompletions >= targetCount!;
       case HabitEndCondition.never:
@@ -557,7 +548,7 @@ class HabitModel {
   bool get shouldShowToday {
     if (!isActive) return false;
 
-    final today = _now;
+    final today = AppDateUtils.now;
     switch (frequency) {
       case HabitFrequency.daily:
         return true;

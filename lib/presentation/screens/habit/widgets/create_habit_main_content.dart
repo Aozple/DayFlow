@@ -1,5 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -158,7 +158,7 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
         (firstChar >= 0x0590 && firstChar <= 0x05FF);
   }
 
-  Color get _selectedColor => ColorUtils.fromHex(widget.selectedColor);
+  Color get _selectedColor => AppColorUtils.fromHex(widget.selectedColor);
 
   String get _titlePlaceholder =>
       _titleDirection == TextDirection.rtl ? 'عنوان عادت...' : 'Habit title *';
@@ -358,7 +358,9 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
               hasStartDate
                   ? [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withAlpha(25),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(25),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -371,7 +373,10 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
             Icon(
               CupertinoIcons.calendar,
               size: 18,
-              color: hasStartDate ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
+              color:
+                  hasStartDate
+                      ? Theme.of(context).colorScheme.primary
+                      : AppColors.textSecondary,
             ),
             const SizedBox(height: 3),
             Text(
@@ -379,7 +384,9 @@ class _CreateHabitMainContentState extends State<CreateHabitMainContent> {
               style: TextStyle(
                 fontSize: 9,
                 color:
-                    hasStartDate ? Theme.of(context).colorScheme.primary : AppColors.textSecondary,
+                    hasStartDate
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.textSecondary,
                 fontWeight: hasStartDate ? FontWeight.w700 : FontWeight.w600,
                 height: 1.0,
               ),

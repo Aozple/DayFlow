@@ -1,5 +1,5 @@
 import 'package:dayflow/core/constants/app_colors.dart';
-import 'package:dayflow/core/utils/color_utils.dart';
+import 'package:dayflow/core/utils/app_color_utils.dart';
 import 'package:dayflow/data/models/habit_instance_model.dart';
 import 'package:dayflow/data/models/habit_model.dart';
 import 'package:flutter/cupertino.dart';
@@ -38,7 +38,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
     final habitColor =
         isDefaultColor
             ? Theme.of(context).colorScheme.primary
-            : ColorUtils.fromHex(widget.habit.color);
+            : AppColorUtils.fromHex(widget.habit.color);
 
     final isCompleted = widget.instance?.isCompleted ?? false;
     final isForToday = _isForToday();
