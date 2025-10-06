@@ -217,6 +217,10 @@ class HabitInstanceModel {
     return other is HabitInstanceModel && other.id == id;
   }
 
+  static void clearCache() {
+    _validationCache.clear();
+  }
+
   @override
   int get hashCode => id.hashCode;
 }

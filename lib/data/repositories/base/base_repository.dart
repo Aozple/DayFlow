@@ -33,6 +33,12 @@ abstract class BaseRepository<T> {
       return action();
     } catch (e) {
       DebugLogger.error('Failed to $operation', tag: tag, error: e);
+
+      if (e.toString().contains('Hive')) {
+        _cachedItems = null;
+        _lastCacheUpdate = null;
+      }
+
       return fallback;
     }
   }
@@ -53,6 +59,12 @@ abstract class BaseRepository<T> {
     _cachedItems = null;
     _lastCacheUpdate = null;
     DebugLogger.verbose('Cache invalidated', tag: tag);
+  }
+
+  void forceCleanup() {
+    _cachedItems = null;
+    _lastCacheUpdate = null;
+    _cachedSettingsBox = null;
   }
 
   bool isCacheValid() {
@@ -84,6 +96,11 @@ abstract class BaseRepository<T> {
   }
 
   void updateCache(List<T> items) {
+    if (items.length > 50) {
+      _cachedItems = null;
+      _lastCacheUpdate = null;
+      return;
+    }
     _cachedItems = items;
     _lastCacheUpdate = AppDateUtils.now;
   }

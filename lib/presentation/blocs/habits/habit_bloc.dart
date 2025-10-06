@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dayflow/core/constants/app_constants.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
 import 'package:dayflow/core/utils/app_date_utils.dart';
@@ -34,12 +36,22 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
     on<FilterHabits>(_onFilterHabits);
     on<SearchHabits>(_onSearchHabits);
     on<ClearError>(_onClearError);
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      _lastSearchQuery = null;
+    });
   }
 
   Future<HabitLoaded> _refreshHabitsState({DateTime? selectedDate}) async {
-    final habits = _repository.getAll(operationType: 'read');
-
     final currentState = state is HabitLoaded ? state as HabitLoaded : null;
+
+    if (currentState != null && selectedDate == null) {
+      final timeDiff = AppDateUtils.now.difference(currentState.lastUpdated);
+      if (timeDiff < const Duration(seconds: 5)) {
+        return currentState;
+      }
+    }
+
+    final habits = _repository.getAll(operationType: 'read');
     final date = selectedDate ?? currentState?.selectedDate ?? AppDateUtils.now;
 
     final instances = _repository.getInstancesByDate(date);
@@ -273,11 +285,28 @@ class HabitBloc extends BaseBloc<HabitEvent, HabitState> {
           await _repository.updateInstance(updatedInstance);
         }
 
-        return await _refreshHabitsState();
+        if (state is HabitLoaded) {
+          final currentState = state as HabitLoaded;
+          final habits = _repository.getAllHabits();
+          final instances = _repository.getInstancesByDate(
+            currentState.selectedDate,
+          );
+          final statistics = HabitStatistics.fromHabits(habits, instances);
+
+          return HabitLoaded.create(
+            habits: habits,
+            todayInstances: instances,
+            selectedDate: currentState.selectedDate,
+            statistics: statistics,
+          );
+        }
+
+        return null;
       },
       emit: emit,
-      successState: (result) => result,
+      successState: (result) => result ?? state,
       errorState: (error) => const HabitError('Failed to uncomplete habit'),
+      checkProcessing: false,
     );
   }
 

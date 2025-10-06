@@ -142,6 +142,7 @@ class TaskExporter extends BaseExporter {
       'actualMinutes': task.actualMinutes,
       'noteContent': task.noteContent,
       'markdownContent': task.markdownContent,
+      'blocks': task.blocks?.map((block) => block.toJson()).toList(),
     };
   }
 

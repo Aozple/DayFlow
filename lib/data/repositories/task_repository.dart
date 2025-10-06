@@ -43,38 +43,48 @@ class TaskRepository extends BaseRepository<TaskModel>
 
     if (tasks.length <= 1) return tasks;
 
-    tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (!isCacheValidForOperation('read')) {
+      tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      updateCache(tasks);
+    }
+
     return tasks;
   }
 
   @override
   List<TaskModel> getTasksByDate(DateTime date, {bool useCache = true}) {
     try {
-      DebugLogger.verbose(
-        'Getting tasks for date',
-        tag: tag,
-        data: date.toString().split(' ')[0],
-      );
-
-      final tasks =
-          useCache
-              ? getAll(operationType: 'filter')
-              : getAll(forceRefresh: true);
-
       final targetDate = DateTime(date.year, date.month, date.day);
 
-      final filteredTasks =
-          tasks.where((task) {
-            if (task.dueDate == null || task.isDeleted) return false;
+      final isToday =
+          targetDate ==
+          DateTime(
+            AppDateUtils.now.year,
+            AppDateUtils.now.month,
+            AppDateUtils.now.day,
+          );
 
-            final taskDate = DateTime(
-              task.dueDate!.year,
-              task.dueDate!.month,
-              task.dueDate!.day,
-            );
+      final tasks =
+          (useCache && isToday)
+              ? getAll(operationType: 'filter')
+              : getAll(forceRefresh: !useCache);
 
-            return taskDate == targetDate;
-          }).toList();
+      final filteredTasks = <TaskModel>[];
+
+      for (final task in tasks) {
+        if (task.dueDate == null || task.isDeleted) continue;
+
+        final taskDate = DateTime(
+          task.dueDate!.year,
+          task.dueDate!.month,
+          task.dueDate!.day,
+        );
+
+        if (taskDate == targetDate) {
+          filteredTasks.add(task);
+        }
+      }
 
       DebugLogger.success(
         'Tasks filtered by date',
@@ -147,7 +157,8 @@ class TaskRepository extends BaseRepository<TaskModel>
       if (!forceRefresh &&
           _cachedStats != null &&
           _lastStatsUpdate != null &&
-          AppDateUtils.now.difference(_lastStatsUpdate!) < _statsCacheDuration) {
+          AppDateUtils.now.difference(_lastStatsUpdate!) <
+              _statsCacheDuration) {
         DebugLogger.verbose('Statistics cache hit', tag: tag);
         return _cachedStats!;
       }

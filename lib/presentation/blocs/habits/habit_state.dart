@@ -78,9 +78,8 @@ class HabitLoaded extends HabitState {
         todayInstances.length == other.todayInstances.length &&
         selectedDate == other.selectedDate &&
         activeFilter == other.activeFilter &&
-        _habitsContentEqual(other.habits) &&
-        _instancesContentEqual(other.todayInstances) &&
-        ((lastUpdated.difference(other.lastUpdated).abs().inSeconds) < 2);
+        _generateHabitsSignature() == other._generateHabitsSignature() &&
+        _generateInstancesSignature() == other._generateInstancesSignature();
   }
 
   List<HabitModel> get activeHabits =>
@@ -265,34 +264,34 @@ class HabitLoaded extends HabitState {
     return buffer.toString();
   }
 
-  bool _habitsContentEqual(List<HabitModel> otherHabits) {
-    if (habits.length != otherHabits.length) return false;
+  // bool _habitsContentEqual(List<HabitModel> otherHabits) {
+  //   if (habits.length != otherHabits.length) return false;
 
-    for (int i = 0; i < habits.length; i++) {
-      final a = habits[i];
-      final b = otherHabits[i];
-      if (a.id != b.id ||
-          a.isActive != b.isActive ||
-          a.title != b.title ||
-          a.currentStreak != b.currentStreak) {
-        return false;
-      }
-    }
-    return true;
-  }
+  //   for (int i = 0; i < habits.length; i++) {
+  //     final a = habits[i];
+  //     final b = otherHabits[i];
+  //     if (a.id != b.id ||
+  //         a.isActive != b.isActive ||
+  //         a.title != b.title ||
+  //         a.currentStreak != b.currentStreak) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
 
-  bool _instancesContentEqual(List<HabitInstanceModel> otherInstances) {
-    if (todayInstances.length != otherInstances.length) return false;
+  // bool _instancesContentEqual(List<HabitInstanceModel> otherInstances) {
+  //   if (todayInstances.length != otherInstances.length) return false;
 
-    for (int i = 0; i < todayInstances.length; i++) {
-      final a = todayInstances[i];
-      final b = otherInstances[i];
-      if (a.id != b.id || a.status != b.status || a.habitId != b.habitId) {
-        return false;
-      }
-    }
-    return true;
-  }
+  //   for (int i = 0; i < todayInstances.length; i++) {
+  //     final a = todayInstances[i];
+  //     final b = otherInstances[i];
+  //     if (a.id != b.id || a.status != b.status || a.habitId != b.habitId) {
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
 }
 
 class HabitError extends HabitState {

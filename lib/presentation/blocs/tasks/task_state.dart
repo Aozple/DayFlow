@@ -41,7 +41,7 @@ class TaskLoaded extends TaskState {
     this.activeFilter,
     this.statistics,
     DateTime? lastUpdated,
-  }) : lastUpdated = lastUpdated ?? DateTime.now();
+  }) : lastUpdated = lastUpdated ?? AppDateUtils.now;
 
   @override
   List<Object?> get props => [
@@ -124,7 +124,7 @@ class TaskLoaded extends TaskState {
             !task.isCompleted &&
             !task.isDeleted &&
             task.dueDate != null &&
-            task.dueDate!.isAfter(DateTime.now()),
+            task.dueDate!.isAfter(AppDateUtils.now),
   );
 
   List<TaskModel> _filterTasks({required bool Function(TaskModel) predicate}) {
@@ -406,7 +406,7 @@ class TaskStatistics {
                 (t) =>
                     !t.isCompleted &&
                     t.dueDate != null &&
-                    t.dueDate!.isAfter(DateTime.now()),
+                    t.dueDate!.isAfter(AppDateUtils.now),
               )
               .length,
       tasksByPriority: byPriority,

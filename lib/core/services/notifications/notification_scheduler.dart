@@ -65,34 +65,49 @@ class NotificationScheduler {
     if (!_isHabitEligible(habit)) return false;
 
     try {
-      final notificationTime = _calculateHabitNotificationTime(
-        habit,
-        specificDate,
-      );
-      if (notificationTime == null) return false;
+      await _cancelExistingHabitNotifications(habit);
 
-      final payload = _createHabitPayload(habit);
-      final details = _createHabitNotificationDetails(habit);
-      final notificationId = _generateId(habit.id, _habitIdBase);
+      final baseDate = specificDate ?? DateTime.now();
+      int scheduledCount = 0;
 
-      await _plugin.zonedSchedule(
-        notificationId,
-        _getHabitTitle(habit),
-        _getHabitBody(habit),
-        tz.TZDateTime.from(notificationTime, tz.local),
-        details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
+      for (int i = 0; i < 30; i++) {
+        final targetDate = baseDate.add(Duration(days: i));
+
+        if (_shouldScheduleForDate(habit, targetDate)) {
+          final notificationTime = DateTime(
+            targetDate.year,
+            targetDate.month,
+            targetDate.day,
+            habit.preferredTime!.hour,
+            habit.preferredTime!.minute,
+          );
+
+          if (!_isTimeInPast(notificationTime)) {
+            final notificationId = _generateId(habit.id, _habitIdBase) + i;
+
+            await _plugin.zonedSchedule(
+              notificationId,
+              _getHabitTitle(habit),
+              _getHabitBody(habit),
+              tz.TZDateTime.from(notificationTime, tz.local),
+              _createHabitNotificationDetails(habit),
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              uiLocalNotificationDateInterpretation:
+                  UILocalNotificationDateInterpretation.absoluteTime,
+              payload: _createHabitPayload(habit),
+            );
+
+            scheduledCount++;
+          }
+        }
+      }
 
       DebugLogger.success(
-        'Habit notification scheduled',
+        'Habit notifications scheduled',
         tag: _tag,
-        data: habit.id,
+        data: '$scheduledCount notifications for ${habit.id}',
       );
-      return true;
+      return scheduledCount > 0;
     } catch (e) {
       DebugLogger.error(
         'Failed to schedule habit notification',
@@ -104,9 +119,15 @@ class NotificationScheduler {
   }
 
   Future<void> cancelNotification(String entityId, String type) async {
-    final baseId = type == NotificationTypes.habit ? _habitIdBase : _taskIdBase;
-    final notificationId = _generateId(entityId, baseId);
-    await _plugin.cancel(notificationId);
+    if (type == NotificationTypes.habit) {
+      for (int i = 0; i < 30; i++) {
+        final notificationId = _generateId(entityId, _habitIdBase) + i;
+        await _plugin.cancel(notificationId);
+      }
+    } else {
+      final notificationId = _generateId(entityId, _taskIdBase);
+      await _plugin.cancel(notificationId);
+    }
     DebugLogger.info('Notification cancelled', tag: _tag, data: entityId);
   }
 
@@ -327,22 +348,26 @@ class NotificationScheduler {
     return task.dueDate!.subtract(Duration(minutes: minutesBefore));
   }
 
-  DateTime? _calculateHabitNotificationTime(
-    HabitModel habit,
-    DateTime? specificDate,
-  ) {
-    if (habit.preferredTime == null) return null;
-    final baseDate = specificDate ?? DateTime.now();
-    final notificationTime = DateTime(
-      baseDate.year,
-      baseDate.month,
-      baseDate.day,
-      habit.preferredTime!.hour,
-      habit.preferredTime!.minute,
-    );
-    return _isTimeInPast(notificationTime)
-        ? notificationTime.add(const Duration(days: 1))
-        : notificationTime;
+  Future<void> _cancelExistingHabitNotifications(HabitModel habit) async {
+    for (int i = 0; i < 30; i++) {
+      final notificationId = _generateId(habit.id, _habitIdBase) + i;
+      await _plugin.cancel(notificationId);
+    }
+  }
+
+  bool _shouldScheduleForDate(HabitModel habit, DateTime date) {
+    switch (habit.frequency) {
+      case HabitFrequency.daily:
+        return true;
+      case HabitFrequency.weekly:
+        return habit.weekdays?.contains(date.weekday) ?? false;
+      case HabitFrequency.monthly:
+        return date.day == habit.monthDay;
+      case HabitFrequency.custom:
+        if (habit.customInterval == null) return false;
+        final daysDiff = date.difference(habit.startDate).inDays;
+        return daysDiff >= 0 && daysDiff % habit.customInterval! == 0;
+    }
   }
 
   bool _isTimeInPast(DateTime time) {

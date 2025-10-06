@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,7 +19,7 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
     }
 
     if (_lastLoadTime != null && !forceRefresh) {
-      final timeSinceLastLoad = DateTime.now().difference(_lastLoadTime!);
+      final timeSinceLastLoad = AppDateUtils.now.difference(_lastLoadTime!);
       if (timeSinceLastLoad < minLoadInterval) {
         logVerbose('Too soon to reload');
         return false;
@@ -30,7 +31,7 @@ abstract class BaseBloc<Event, State> extends Bloc<Event, State> {
 
   void startProcessing() {
     _isProcessing = true;
-    _lastLoadTime = DateTime.now();
+    _lastLoadTime = AppDateUtils.now;
   }
 
   void endProcessing() {

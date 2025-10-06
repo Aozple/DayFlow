@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
 import 'package:dayflow/presentation/blocs/base/base_bloc.dart';
@@ -16,6 +17,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
       GetIt.I<NotificationService>();
 
   String? _lastSearchQuery;
+  Timer? _searchCacheTimer;
 
   TaskBloc() : super(tag: 'TaskBloc', initialState: const TaskInitial()) {
     on<LoadTasks>(_onLoadTasks);
@@ -29,17 +31,13 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     on<FilterTasks>(_onFilterTasks);
   }
 
-  Future<TaskLoaded> _refreshTasksState({DateTime? selectedDate}) async {
+  TaskLoaded _getUpdatedState({DateTime? selectedDate}) {
+    final currentState = state is TaskLoaded ? state as TaskLoaded : null;
+
     final tasks = _repository.getAll(operationType: 'read');
-
-    DateTime? currentSelectedDate;
-    if (state is TaskLoaded) {
-      currentSelectedDate = (state as TaskLoaded).selectedDate;
-    }
-
     return TaskLoaded.create(
       tasks: tasks,
-      selectedDate: selectedDate ?? currentSelectedDate,
+      selectedDate: selectedDate ?? currentState?.selectedDate,
     );
   }
 
@@ -72,7 +70,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     try {
       logInfo('Loading by date: ${event.date.toString().split(' ')[0]}');
 
-      final refreshedState = await _refreshTasksState(selectedDate: event.date);
+      final refreshedState = _getUpdatedState();
 
       emit(refreshedState);
 
@@ -103,7 +101,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
           await _notificationService.scheduleTaskNotification(event.task);
         }
 
-        return await _refreshTasksState();
+        return _getUpdatedState();
       },
       emit: emit,
       successState: (result) => result,
@@ -123,7 +121,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
           await _notificationService.cancelTaskNotification(event.task.id);
         }
 
-        return await _refreshTasksState();
+        return _getUpdatedState();
       },
       emit: emit,
       successState: (result) => result,
@@ -139,7 +137,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
       operationName: 'Toggle Task',
       operation: () async {
         await _repository.toggleTaskComplete(event.taskId);
-        return await _refreshTasksState();
+        return _getUpdatedState();
       },
       emit: emit,
       successState: (result) => result,
@@ -153,7 +151,7 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
       operation: () async {
         await _repository.deleteTask(event.taskId);
         await _notificationService.cancelTaskNotification(event.taskId);
-        return await _refreshTasksState();
+        return _getUpdatedState();
       },
       emit: emit,
       successState: (result) => result,
@@ -172,6 +170,11 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
     try {
       logInfo('Processing search: "${event.query}"');
       _lastSearchQuery = event.query;
+
+      _searchCacheTimer?.cancel();
+      _searchCacheTimer = Timer(const Duration(seconds: 30), () {
+        _lastSearchQuery = null;
+      });
 
       if (state is TaskLoaded) {
         final currentState = state as TaskLoaded;
@@ -229,5 +232,12 @@ class TaskBloc extends BaseBloc<TaskEvent, TaskState> {
         oldFilter.isCompleted != newFilter.isCompleted ||
         oldFilter.hasNotification != newFilter.hasNotification ||
         oldFilter.tags != newFilter.tags;
+  }
+
+  @override
+  Future<void> close() {
+    _searchCacheTimer?.cancel();
+    _lastSearchQuery = null;
+    return super.close();
   }
 }

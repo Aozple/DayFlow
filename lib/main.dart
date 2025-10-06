@@ -1,8 +1,13 @@
 import 'package:dayflow/core/di/service_locator.dart';
 import 'package:dayflow/core/services/notifications/notification_service.dart';
 import 'package:dayflow/core/constants/app_constants.dart';
+import 'package:dayflow/core/utils/custom_snackbar.dart';
 import 'package:dayflow/core/utils/debug_logger.dart';
 import 'package:dayflow/data/migrations/migration_manager.dart';
+import 'package:dayflow/data/models/app_settings.dart';
+import 'package:dayflow/data/models/habit_instance_model.dart';
+import 'package:dayflow/data/models/habit_model.dart';
+import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/presentation/blocs/habits/habit_bloc.dart';
 import 'package:dayflow/presentation/blocs/settings/settings_bloc.dart';
@@ -76,6 +81,7 @@ void main() async {
     DebugLogger.success('App initialized successfully', tag: 'AppInit');
     runApp(const DayFlowApp());
   } catch (error, stackTrace) {
+    await _clearAllCaches();
     DebugLogger.error(
       'Failed to initialize app',
       tag: 'AppInit',
@@ -122,6 +128,14 @@ class DayFlowApp extends StatelessWidget {
   }
 }
 
+Future<void> _clearAllCaches() async {
+  AppSettings.clearCache();
+  TaskModel.clearCache();
+  HabitModel.clearCache();
+  HabitInstanceModel.clearCache();
+  CustomSnackBar.clearCache();
+}
+
 class _AppInitializer extends StatefulWidget {
   final Widget child;
   const _AppInitializer({required this.child});
@@ -142,6 +156,12 @@ class _AppInitializerState extends State<_AppInitializer> {
         context.read<SettingsBloc>().add(const LoadSettings());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _clearAllCaches();
+    super.dispose();
   }
 
   @override

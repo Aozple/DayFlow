@@ -1,3 +1,4 @@
+import 'package:dayflow/core/utils/app_date_utils.dart';
 import 'package:dayflow/data/models/app_settings.dart';
 import 'package:dayflow/data/repositories/settings_repository.dart';
 import 'package:dayflow/presentation/blocs/base/base_bloc.dart';
@@ -17,13 +18,13 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
   SettingsBloc()
     : super(tag: 'SettingsBloc', initialState: const SettingsInitial()) {
     on<LoadSettings>(_onLoadSettings);
-    on<UpdateAccentColor>(_onUpdateAccentColor);
-    on<UpdateFirstDayOfWeek>(_onUpdateFirstDayOfWeek);
-    on<UpdateDefaultPriority>(_onUpdateDefaultPriority);
-    on<UpdateNotificationEnabled>(_onUpdateNotificationEnabled);
-    on<UpdateDefaultNotificationTime>(_onUpdateDefaultNotificationTime);
-    on<UpdateNotificationSound>(_onUpdateNotificationSound);
-    on<UpdateNotificationVibration>(_onUpdateNotificationVibration);
+    on<UpdateAccentColor>(_onUpdateAnySetting);
+    on<UpdateFirstDayOfWeek>(_onUpdateAnySetting);
+    on<UpdateDefaultPriority>(_onUpdateAnySetting);
+    on<UpdateNotificationEnabled>(_onUpdateAnySetting);
+    on<UpdateDefaultNotificationTime>(_onUpdateAnySetting);
+    on<UpdateNotificationSound>(_onUpdateAnySetting);
+    on<UpdateNotificationVibration>(_onUpdateAnySetting);
     on<ResetSettings>(_onResetSettings);
     on<BatchUpdateSettings>(_onBatchUpdateSettings);
   }
@@ -54,127 +55,71 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
     );
   }
 
-  Future<void> _onUpdateAccentColor(
-    UpdateAccentColor event,
+  Future<void> _onUpdateAnySetting(
+    SettingsEvent event,
     Emitter<SettingsState> emit,
   ) async {
     if (_shouldDebounce()) {
-      logVerbose('Debouncing accent color update');
+      logVerbose('Debouncing update');
       return;
     }
 
-    await _updateSingleSetting(
-      emit,
-      settingName: 'accent color',
-      updater: (settings) => settings.copyWith(accentColor: event.colorHex),
-      onSuccess: (settings) {
-        logSuccess('Accent color updated to ${settings.accentColor}');
-      },
-    );
-  }
-
-  Future<void> _onUpdateFirstDayOfWeek(
-    UpdateFirstDayOfWeek event,
-    Emitter<SettingsState> emit,
-  ) async {
-    if (_shouldDebounce()) {
-      logVerbose('Debouncing first day update');
-      return;
+    if (event is UpdateAccentColor) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'accent color',
+        updater: (settings) => settings.copyWith(accentColor: event.colorHex),
+        onSuccess: (settings) {
+          logSuccess('Accent color updated to ${settings.accentColor}');
+        },
+      );
+    } else if (event is UpdateFirstDayOfWeek) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'first day of week',
+        updater: (settings) => settings.copyWith(firstDayOfWeek: event.day),
+      );
+    } else if (event is UpdateDefaultPriority) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'default priority',
+        updater:
+            (settings) =>
+                settings.copyWith(defaultTaskPriority: event.priority),
+      );
+    } else if (event is UpdateNotificationEnabled) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'notification enabled',
+        updater:
+            (settings) =>
+                settings.copyWith(defaultNotificationEnabled: event.enabled),
+      );
+    } else if (event is UpdateDefaultNotificationTime) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'notification time',
+        updater:
+            (settings) => settings.copyWith(
+              defaultNotificationMinutesBefore: event.minutesBefore,
+            ),
+      );
+    } else if (event is UpdateNotificationSound) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'notification sound',
+        updater:
+            (settings) => settings.copyWith(notificationSound: event.enabled),
+      );
+    } else if (event is UpdateNotificationVibration) {
+      await _updateSingleSetting(
+        emit,
+        settingName: 'notification vibration',
+        updater:
+            (settings) =>
+                settings.copyWith(notificationVibration: event.enabled),
+      );
     }
-
-    await _updateSingleSetting(
-      emit,
-      settingName: 'first day of week',
-      updater: (settings) => settings.copyWith(firstDayOfWeek: event.day),
-    );
-  }
-
-  Future<void> _onUpdateDefaultPriority(
-    UpdateDefaultPriority event,
-    Emitter<SettingsState> emit,
-  ) async {
-    if (_shouldDebounce()) {
-      logVerbose('Debouncing priority update');
-      return;
-    }
-
-    await _updateSingleSetting(
-      emit,
-      settingName: 'default priority',
-      updater:
-          (settings) => settings.copyWith(defaultTaskPriority: event.priority),
-    );
-  }
-
-  Future<void> _onUpdateNotificationEnabled(
-    UpdateNotificationEnabled event,
-    Emitter<SettingsState> emit,
-  ) async {
-    if (_shouldDebounce()) {
-      logVerbose('Debouncing notification enabled update');
-      return;
-    }
-
-    await _updateSingleSetting(
-      emit,
-      settingName: 'notification enabled',
-      updater:
-          (settings) =>
-              settings.copyWith(defaultNotificationEnabled: event.enabled),
-    );
-  }
-
-  Future<void> _onUpdateDefaultNotificationTime(
-    UpdateDefaultNotificationTime event,
-    Emitter<SettingsState> emit,
-  ) async {
-    if (_shouldDebounce()) {
-      logVerbose('Debouncing notification time update');
-      return;
-    }
-
-    await _updateSingleSetting(
-      emit,
-      settingName: 'notification time',
-      updater:
-          (settings) => settings.copyWith(
-            defaultNotificationMinutesBefore: event.minutesBefore,
-          ),
-    );
-  }
-
-  Future<void> _onUpdateNotificationSound(
-    UpdateNotificationSound event,
-    Emitter<SettingsState> emit,
-  ) async {
-    if (_shouldDebounce()) {
-      logVerbose('Debouncing notification sound update');
-      return;
-    }
-
-    await _updateSingleSetting(
-      emit,
-      settingName: 'notification sound',
-      updater:
-          (settings) => settings.copyWith(notificationSound: event.enabled),
-    );
-  }
-
-  Future<void> _onUpdateNotificationVibration(
-    UpdateNotificationVibration event,
-    Emitter<SettingsState> emit,
-  ) async {
-    if (_shouldDebounce()) {
-      logVerbose('Debouncing notification vibration update');
-      return;
-    }
-
-    await _updateSingleSetting(
-      emit,
-      settingName: 'notification vibration',
-      updater:
-          (settings) => settings.copyWith(notificationVibration: event.enabled),
-    );
   }
 
   Future<void> _onBatchUpdateSettings(
@@ -239,7 +184,7 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
   }) async {
     if (!canProcess()) return;
 
-    _lastUpdateTime = DateTime.now();
+    _lastUpdateTime = AppDateUtils.now;
 
     await performOperation(
       operationName: 'Update $settingName',
@@ -267,6 +212,15 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
 
   AppSettings _getCurrentSettings() {
     if (_cachedSettings != null) {
+      final cacheAge = AppDateUtils.now.difference(
+        _lastUpdateTime ?? AppDateUtils.now,
+      );
+      if (cacheAge > const Duration(minutes: 5)) {
+        _cachedSettings = null;
+      }
+    }
+
+    if (_cachedSettings != null) {
       return _cachedSettings!;
     }
 
@@ -282,7 +236,14 @@ class SettingsBloc extends BaseBloc<SettingsEvent, SettingsState> {
 
   bool _shouldDebounce() {
     if (_lastUpdateTime == null) return false;
-    final timeSinceLastUpdate = DateTime.now().difference(_lastUpdateTime!);
+    final timeSinceLastUpdate = AppDateUtils.now.difference(_lastUpdateTime!);
     return timeSinceLastUpdate < _updateDebounce;
+  }
+
+  @override
+  Future<void> close() {
+    _cachedSettings = null;
+    _lastUpdateTime = null;
+    return super.close();
   }
 }

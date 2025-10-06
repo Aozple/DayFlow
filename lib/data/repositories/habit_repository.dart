@@ -15,12 +15,10 @@ class HabitRepository extends BaseRepository<HabitModel>
   DateTime? _lastStatsUpdate;
   static const Duration _statsCacheDuration = AppConstants.defaultCacheDuration;
 
-  late final BaseRepository<HabitInstanceModel> _instanceRepo;
+  BaseRepository<HabitInstanceModel> get _instanceRepo =>
+      GetIt.I<HabitInstanceRepository>();
 
-  HabitRepository({BaseRepository<HabitInstanceModel>? instanceRepo})
-    : super(boxName: AppConstants.habitsBox, tag: _tag) {
-    _instanceRepo = instanceRepo ?? GetIt.I<HabitInstanceRepository>();
-  }
+  HabitRepository() : super(boxName: AppConstants.habitsBox, tag: _tag);
 
   @override
   HabitModel fromMap(Map<String, dynamic> map) => HabitModel.fromMap(map);
@@ -321,11 +319,16 @@ class HabitRepository extends BaseRepository<HabitModel>
     await _instanceRepo.clearAll();
   }
 
+  void clearStatisticsCache() {
+    _cachedStats = null;
+    _lastStatsUpdate = null;
+    DebugLogger.info('Statistics cache cleared', tag: _tag);
+  }
+
   @override
   void invalidateCache() {
     super.invalidateCache();
-    _cachedStats = null;
-    _lastStatsUpdate = null;
+    clearStatisticsCache();
     DebugLogger.verbose('Habit statistics cache invalidated', tag: tag);
   }
 
@@ -335,7 +338,8 @@ class HabitRepository extends BaseRepository<HabitModel>
       if (!forceRefresh &&
           _cachedStats != null &&
           _lastStatsUpdate != null &&
-          AppDateUtils.now.difference(_lastStatsUpdate!) < _statsCacheDuration) {
+          AppDateUtils.now.difference(_lastStatsUpdate!) <
+              _statsCacheDuration) {
         DebugLogger.verbose('Habit statistics cache hit', tag: tag);
         return _cachedStats!;
       }

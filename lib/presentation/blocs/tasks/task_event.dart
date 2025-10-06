@@ -7,7 +7,6 @@ abstract class TaskEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-
 class LoadTasks extends TaskEvent {
   final bool forceRefresh;
 
@@ -27,22 +26,6 @@ class LoadTasksByDate extends TaskEvent {
   List<Object?> get props => [date, includeCompleted];
 }
 
-class LoadTasksByDateRange extends TaskEvent {
-  final DateTime startDate;
-  final DateTime endDate;
-  final bool includeCompleted;
-
-  const LoadTasksByDateRange({
-    required this.startDate,
-    required this.endDate,
-    this.includeCompleted = true,
-  });
-
-  @override
-  List<Object?> get props => [startDate, endDate, includeCompleted];
-}
-
-
 class AddTask extends TaskEvent {
   final TaskModel task;
   final bool showNotification;
@@ -53,15 +36,6 @@ class AddTask extends TaskEvent {
   List<Object?> get props => [task, showNotification];
 }
 
-class AddMultipleTasks extends TaskEvent {
-  final List<TaskModel> tasks;
-
-  const AddMultipleTasks(this.tasks);
-
-  @override
-  List<Object?> get props => [tasks];
-}
-
 class UpdateTask extends TaskEvent {
   final TaskModel task;
   final bool preserveNotification;
@@ -70,16 +44,6 @@ class UpdateTask extends TaskEvent {
 
   @override
   List<Object?> get props => [task, preserveNotification];
-}
-
-class BatchUpdateTasks extends TaskEvent {
-  final List<TaskModel> tasks;
-  final Map<String, dynamic>? updates;
-
-  const BatchUpdateTasks({required this.tasks, this.updates});
-
-  @override
-  List<Object?> get props => [tasks, updates];
 }
 
 class ToggleTaskComplete extends TaskEvent {
@@ -102,17 +66,6 @@ class DeleteTask extends TaskEvent {
   List<Object?> get props => [taskId, permanent];
 }
 
-class DeleteMultipleTasks extends TaskEvent {
-  final List<String> taskIds;
-  final bool permanent;
-
-  const DeleteMultipleTasks(this.taskIds, {this.permanent = false});
-
-  @override
-  List<Object?> get props => [taskIds, permanent];
-}
-
-
 class FilterTasks extends TaskEvent {
   final TaskFilter filter;
 
@@ -132,45 +85,9 @@ class SearchTasks extends TaskEvent {
   List<Object?> get props => [query, options];
 }
 
-
 class ClearError extends TaskEvent {
   const ClearError();
 }
-
-class RestoreTasks extends TaskEvent {
-  final List<String> taskIds;
-
-  const RestoreTasks(this.taskIds);
-
-  @override
-  List<Object?> get props => [taskIds];
-}
-
-class ExportTasks extends TaskEvent {
-  final String format; 
-  final TaskFilter? filter;
-
-  const ExportTasks({this.format = 'json', this.filter});
-
-  @override
-  List<Object?> get props => [format, filter];
-}
-
-class ImportTasks extends TaskEvent {
-  final String data;
-  final String format;
-  final bool merge; 
-
-  const ImportTasks({
-    required this.data,
-    required this.format,
-    this.merge = true,
-  });
-
-  @override
-  List<Object?> get props => [data, format, merge];
-}
-
 
 class TaskFilter extends Equatable {
   final List<int>? priorities;

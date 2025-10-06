@@ -1,6 +1,7 @@
 import 'package:dayflow/core/constants/app_constants.dart';
 import 'package:dayflow/core/services/export_import/importers/base_importer.dart';
 import 'package:dayflow/core/services/export_import/models/export_import_models.dart';
+import 'package:dayflow/data/models/note_block.dart';
 import 'package:dayflow/data/models/task_model.dart';
 import 'package:dayflow/data/repositories/task_repository.dart';
 
@@ -139,6 +140,18 @@ class TaskImporter extends BaseImporter {
   }
 
   TaskModel _taskFromJson(Map<String, dynamic> json) {
+    List<NoteBlock>? blocks;
+    if (json['blocks'] != null) {
+      try {
+        blocks =
+            (json['blocks'] as List).map((blockJson) {
+              return blockFromJson(blockJson);
+            }).toList();
+      } catch (e) {
+        logWarning('Failed to parse blocks', data: e.toString());
+      }
+    }
+
     return TaskModel(
       id: json['id'] ?? '',
       title: json['title'] ?? 'Untitled',
@@ -164,6 +177,7 @@ class TaskImporter extends BaseImporter {
       actualMinutes: json['actualMinutes'],
       noteContent: json['noteContent'],
       markdownContent: json['markdownContent'],
+      blocks: blocks,
     );
   }
 }

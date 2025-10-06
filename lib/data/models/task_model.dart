@@ -53,7 +53,7 @@ class TaskModel {
   }) : id = id ?? const Uuid().v4(),
        createdAt = createdAt ?? AppDateUtils.now,
        tags = tags ?? [] {
-    _validateModel();
+    // _validateModel();
   }
 
   void _validateModel() {
@@ -285,7 +285,7 @@ class TaskModel {
       return task;
     } catch (e) {
       DebugLogger.error('Failed to deserialize task', tag: _tag, error: e);
-      rethrow;
+      return TaskModel(title: 'Corrupted Task');
     }
   }
 
@@ -449,6 +449,10 @@ class TaskModel {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is TaskModel && other.id == id;
+  }
+
+  static void clearCache() {
+    _validationCache.clear();
   }
 
   @override

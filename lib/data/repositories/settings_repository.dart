@@ -42,8 +42,25 @@ class SettingsRepository implements ISettingsRepository {
 
   bool _isCacheValid() {
     if (_cachedSettings == null || _lastCacheUpdate == null) return false;
+
     final age = AppDateUtils.now.difference(_lastCacheUpdate!);
-    return age < _cacheDuration;
+
+    if (age > _cacheDuration) {
+      DebugLogger.verbose(
+        'Cache expired',
+        tag: _tag,
+        data: '${age.inSeconds}s old',
+      );
+      return false;
+    }
+
+    if (age > const Duration(minutes: 5)) {
+      DebugLogger.warning('Cache too old, forcing refresh', tag: _tag);
+      _invalidateCache();
+      return false;
+    }
+
+    return true;
   }
 
   void _updateCache(AppSettings settings) {
@@ -218,19 +235,16 @@ class SettingsRepository implements ISettingsRepository {
   }
 
   @override
-  Future<bool> updateAccentColor(String colorHex) async {
-    return await _updateSingleField('accentColor', colorHex);
-  }
+  Future<bool> updateAccentColor(String colorHex) =>
+      _updateSingleField('accentColor', colorHex);
 
   @override
-  Future<bool> updateFirstDayOfWeek(String day) async {
-    return await _updateSingleField('firstDayOfWeek', day);
-  }
+  Future<bool> updateFirstDayOfWeek(String day) =>
+      _updateSingleField('firstDayOfWeek', day);
 
   @override
-  Future<bool> updateDefaultPriority(int priority) async {
-    return await _updateSingleField('defaultTaskPriority', priority);
-  }
+  Future<bool> updateDefaultPriority(int priority) =>
+      _updateSingleField('defaultTaskPriority', priority);
 
   @override
   String exportSettings() {
@@ -278,13 +292,33 @@ class SettingsRepository implements ISettingsRepository {
   ) async {
     if (!_isInitialized || _prefs == null) {
       DebugLogger.warning('Cannot $operation - not initialized', tag: _tag);
-      return false;
+
+      try {
+        await init();
+        if (!_isInitialized || _prefs == null) {
+          return false;
+        }
+      } catch (e) {
+        DebugLogger.error(
+          'Re-init failed during $operation',
+          tag: _tag,
+          error: e,
+        );
+        return false;
+      }
     }
 
     try {
       return await action();
     } catch (e) {
       DebugLogger.error('Error during $operation', tag: _tag, error: e);
+
+      if (e.toString().contains('SharedPreferences')) {
+        _isInitialized = false;
+        _prefs = null;
+        _invalidateCache();
+      }
+
       return false;
     }
   }

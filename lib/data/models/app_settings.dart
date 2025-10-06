@@ -255,19 +255,17 @@ class AppSettings {
   }
 
   int get accentColorValue {
-    // Check static cache first
     final cached = _colorCache[accentColor];
     if (cached != null) return cached;
 
-    // Calculate and cache
     try {
       final colorValue = AppColorUtils.fromHex(accentColor).toARGB32();
 
-      // Cache with size limit
-      if (_colorCache.length < 20) {
-        _colorCache[accentColor] = colorValue;
+      if (_colorCache.length >= 10) {
+        _colorCache.clear();
       }
 
+      _colorCache[accentColor] = colorValue;
       return colorValue;
     } catch (_) {
       const fallbackValue = 0xFF0A84FF;
@@ -362,5 +360,9 @@ class AppSettings {
         'priority: $defaultTaskPriority, '
         'notification: $defaultNotificationEnabled'
         ')';
+  }
+
+  static void clearCache() {
+    _colorCache.clear();
   }
 }

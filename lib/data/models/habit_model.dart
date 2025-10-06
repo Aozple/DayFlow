@@ -91,7 +91,16 @@ class HabitModel {
        createdAt = createdAt ?? AppDateUtils.now,
        startDate = startDate ?? createdAt ?? AppDateUtils.now,
        tags = tags ?? [] {
-    _validateModel();
+    // _validateModel();
+  }
+
+  bool get isValid {
+    try {
+      _validateModel();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   void _validateModel() {
@@ -470,7 +479,10 @@ class HabitModel {
       return habit;
     } catch (e) {
       DebugLogger.error('Failed to deserialize habit', tag: _tag, error: e);
-      rethrow;
+      return HabitModel(
+        title: 'Corrupted Habit',
+        frequency: HabitFrequency.daily,
+      );
     }
   }
 
@@ -639,6 +651,10 @@ class HabitModel {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is HabitModel && other.id == id;
+  }
+
+  static void clearCache() {
+    _validationCache.clear();
   }
 
   @override
