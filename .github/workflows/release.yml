@@ -97,14 +97,13 @@ jobs:
       
       - name: Rename APK files
         run: |
-          cd build/app/outputs/flutter-apk
-          mv app-arm64-v8a-release.apk DayFlow-v${{ env.versionName }}-arm64-v8a.apk
-          mv app-armeabi-v7a-release.apk DayFlow-v${{ env.versionName }}-armeabi-v7a.apk
-          mv app-x86_64-release.apk DayFlow-v${{ env.versionName }}-x86_64.apk
-          mv app-release.apk DayFlow-v${{ env.versionName }}-universal.apk
-          
-          cd ../../bundle/release
-          mv app-release.aab DayFlow-v${{ env.versionName }}.aab
+          # Rename APKs
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/DayFlow-v${{ env.versionName }}-arm64-v8a.apk
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/DayFlow-v${{ env.versionName }}-armeabi-v7a.apk
+          mv build/app/outputs/flutter-apk/app-x86_64-release.apk build/app/outputs/flutter-apk/DayFlow-v${{ env.versionName }}-x86_64.apk
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/DayFlow-v${{ env.versionName }}-universal.apk
+          # Rename AAB
+          mv build/app/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/DayFlow-v${{ env.versionName }}.aab
       
       - name: Calculate SHA256
         run: |
