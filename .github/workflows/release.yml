@@ -61,7 +61,7 @@ jobs:
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=app/upload-keystore.jks
+          storeFile=${{ github.workspace }}/android/app/upload-keystore.jks
           EOF
 
       - name: Set versionName and versionCode
