@@ -119,10 +119,40 @@ class HabitRepository extends BaseRepository<HabitModel>
 
   @override
   Future<void> updateInstance(HabitInstanceModel instance) async {
-    await _instanceRepo.update(instance);
+    HabitInstanceModel toSave = instance;
+    try {
+      final habit = getHabit(instance.habitId);
+      if (habit != null &&
+          habit.habitType == HabitType.quantifiable &&
+          habit.targetValue != null) {
+        final int v = instance.value ?? 0;
+        final int target = habit.targetValue!;
 
-    if (instance.status == HabitInstanceStatus.completed) {
-      await _updateHabitStreak(instance.habitId);
+        if (v >= target && instance.status != HabitInstanceStatus.completed) {
+          toSave = instance.copyWith(
+            status: HabitInstanceStatus.completed,
+            completedAt: instance.completedAt ?? AppDateUtils.now,
+          );
+        } else if (v < target &&
+            instance.status == HabitInstanceStatus.completed) {
+          toSave = instance.copyWith(
+            status: HabitInstanceStatus.pending,
+            completedAt: null,
+          );
+        }
+      }
+    } catch (e) {
+      DebugLogger.warning(
+        'Auto-complete check failed',
+        tag: tag,
+        data: e.toString(),
+      );
+    }
+
+    await _instanceRepo.update(toSave);
+
+    if (toSave.status == HabitInstanceStatus.completed) {
+      await _updateHabitStreak(toSave.habitId);
     }
   }
 

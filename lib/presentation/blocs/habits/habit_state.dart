@@ -55,7 +55,7 @@ class HabitLoaded extends HabitState {
     selectedDate,
     activeFilter,
     statistics,
-    lastUpdated.millisecondsSinceEpoch ~/ 1000,
+    lastUpdated.millisecondsSinceEpoch,
   ];
 
   @override
@@ -258,40 +258,16 @@ class HabitLoaded extends HabitState {
 
     final buffer = StringBuffer();
     for (final instance in todayInstances) {
-      buffer.write('${instance.id}_${instance.status.name}');
-      if (buffer.length > 200) break;
+      final int value = instance.value ?? -1;
+      final int completedAtMs =
+          instance.completedAt?.millisecondsSinceEpoch ?? 0;
+      buffer.write(
+        '${instance.id}_${instance.status.name}_${value}_$completedAtMs;',
+      );
+      if (buffer.length > 400) break;
     }
     return buffer.toString();
   }
-
-  // bool _habitsContentEqual(List<HabitModel> otherHabits) {
-  //   if (habits.length != otherHabits.length) return false;
-
-  //   for (int i = 0; i < habits.length; i++) {
-  //     final a = habits[i];
-  //     final b = otherHabits[i];
-  //     if (a.id != b.id ||
-  //         a.isActive != b.isActive ||
-  //         a.title != b.title ||
-  //         a.currentStreak != b.currentStreak) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
-
-  // bool _instancesContentEqual(List<HabitInstanceModel> otherInstances) {
-  //   if (todayInstances.length != otherInstances.length) return false;
-
-  //   for (int i = 0; i < todayInstances.length; i++) {
-  //     final a = todayInstances[i];
-  //     final b = otherInstances[i];
-  //     if (a.id != b.id || a.status != b.status || a.habitId != b.habitId) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
 }
 
 class HabitError extends HabitState {
