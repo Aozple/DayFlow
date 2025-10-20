@@ -37,8 +37,6 @@ class NotificationScheduler {
         tz.TZDateTime.from(notificationTime, tz.local),
         details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
       );
 
@@ -92,8 +90,6 @@ class NotificationScheduler {
               tz.TZDateTime.from(notificationTime, tz.local),
               _createHabitNotificationDetails(habit),
               androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-              uiLocalNotificationDateInterpretation:
-                  UILocalNotificationDateInterpretation.absoluteTime,
               payload: _createHabitPayload(habit),
             );
 

@@ -30,31 +30,45 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
         widget.task.color == '#2C2C2E' || widget.task.color == '#8E8E93';
     final taskColor =
         isDefaultColor
-            ? AppColors.textSecondary
+            ? Theme.of(context).colorScheme.primary
             : AppColorUtils.fromHex(widget.task.color);
 
     if (widget.task.isNote) {
       return const SizedBox.shrink();
     }
 
-    return GestureDetector(
-      onTap: () => context.push('/task-details', extra: widget.task),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: _buildContainerDecoration(taskColor, isDefaultColor),
-        child: Row(
-          children: [
-            _buildColorIndicator(taskColor),
-            const SizedBox(width: 12),
-
-            Expanded(child: _buildMainContent(taskColor)),
-            const SizedBox(width: 8),
-
-            _buildVerticalOptionsButton(taskColor),
-            const SizedBox(width: 8),
-
-            _buildCompletionCheckbox(taskColor),
-          ],
+    return Dismissible(
+      key: ValueKey(widget.task.id),
+      direction: DismissDirection.startToEnd,
+      background: Container(
+        decoration: BoxDecoration(
+          color: taskColor.withAlpha(50),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: Alignment.centerLeft,
+        child: Icon(CupertinoIcons.ellipsis, color: taskColor),
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          HapticFeedback.lightImpact();
+          widget.onOptions(widget.task);
+        }
+        return false;
+      },
+      child: GestureDetector(
+        onTap: () => context.push('/task-details', extra: widget.task),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: _buildContainerDecoration(taskColor, isDefaultColor),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: _buildMainContent(taskColor, isDefaultColor)),
+              const SizedBox(width: 8),
+              _buildCompletionCheckbox(taskColor),
+            ],
+          ),
         ),
       ),
     );
@@ -65,122 +79,50 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
     bool isDefaultColor,
   ) {
     Color backgroundColor;
-    Color borderColor;
 
     if (widget.task.isCompleted) {
       backgroundColor = AppColors.surface.withAlpha(75);
-      borderColor = AppColors.divider.withAlpha(25);
     } else if (isDefaultColor) {
       backgroundColor = AppColors.surfaceLight;
-      borderColor = AppColors.divider.withAlpha(50);
     } else {
       backgroundColor = taskColor.withAlpha(20);
-      borderColor = taskColor.withAlpha(60);
     }
 
     return BoxDecoration(
       color: backgroundColor,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: borderColor, width: 1),
+      border: Border.all(color: taskColor, width: 2),
       boxShadow:
           widget.task.isCompleted
-              ? [
+              ? null
+              : [
                 BoxShadow(
-                  color: taskColor.withAlpha(20),
+                  color:
+                      isDefaultColor
+                          ? Colors.black.withAlpha(10)
+                          : taskColor.withAlpha(15),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
-              ]
-              : null,
+              ],
     );
   }
 
-  Widget _buildVerticalOptionsButton(Color taskColor) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        widget.onOptions(widget.task);
-      },
-      child: Container(
-        width: 20,
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.surface.withAlpha(30),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildDot(
-              widget.task.isCompleted
-                  ? AppColors.textTertiary.withAlpha(60)
-                  : taskColor.withAlpha(120),
-            ),
-            const SizedBox(height: 4),
-            _buildDot(
-              widget.task.isCompleted
-                  ? AppColors.textTertiary.withAlpha(60)
-                  : taskColor.withAlpha(120),
-            ),
-            const SizedBox(height: 4),
-            _buildDot(
-              widget.task.isCompleted
-                  ? AppColors.textTertiary.withAlpha(60)
-                  : taskColor.withAlpha(120),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDot(Color color) {
-    return Container(
-      width: 4,
-      height: 4,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Widget _buildColorIndicator(Color taskColor) {
-    final priorityColor = AppColors.getPriorityColor(widget.task.priority);
-
-    return Container(
-      width: 4,
-      height: 48,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors:
-              widget.task.isCompleted
-                  ? [
-                    AppColors.textTertiary.withAlpha(50),
-                    AppColors.textTertiary.withAlpha(30),
-                  ]
-                  : [priorityColor, priorityColor.withAlpha(150)],
-        ),
-        borderRadius: BorderRadius.circular(2),
-      ),
-    );
-  }
-
-  Widget _buildMainContent(Color taskColor) {
+  Widget _buildMainContent(Color taskColor, bool isDefaultColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildTitleRow(taskColor),
-
+        _buildTitleRow(),
         if (_shouldShowMetadata()) ...[
-          const SizedBox(height: 6),
-          _buildMetadataRow(taskColor),
+          const SizedBox(height: 8),
+          _buildMetadataRow(taskColor, isDefaultColor),
         ],
       ],
     );
   }
 
-  Widget _buildTitleRow(Color taskColor) {
+  Widget _buildTitleRow() {
     final textColor =
         widget.task.isCompleted
             ? AppColors.textSecondary.withAlpha(120)
@@ -190,7 +132,6 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
       children: [
         _buildPriorityBadge(),
         const SizedBox(width: 8),
-
         Expanded(
           child: Text(
             widget.task.title,
@@ -214,123 +155,115 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
 
   Widget _buildPriorityBadge() {
     final priorityColor = AppColors.getPriorityColor(widget.task.priority);
+    final iconColor =
+        widget.task.isCompleted ? AppColors.textTertiary : priorityColor;
     final isHighPriority = widget.task.priority >= 4;
 
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color:
-            widget.task.isCompleted
-                ? AppColors.textTertiary.withAlpha(15)
-                : priorityColor.withAlpha(15),
+        color: iconColor.withAlpha(15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Icon(
         isHighPriority ? CupertinoIcons.exclamationmark : CupertinoIcons.flag,
-        size: 10,
-        color: widget.task.isCompleted ? AppColors.textTertiary : priorityColor,
+        size: 12,
+        color: iconColor,
       ),
     );
   }
 
-  Widget _buildMetadataRow(Color taskColor) {
+  Widget _buildMetadataRow(Color taskColor, bool isDefaultColor) {
     final metadataColor =
         widget.task.isCompleted
             ? AppColors.textTertiary
             : AppColors.textSecondary;
+    final List<Widget> chips = [];
 
+    if (widget.task.dueDate != null) {
+      chips.add(
+        _buildInfoChip(
+          icon: CupertinoIcons.clock,
+          text: DateFormat('HH:mm').format(widget.task.dueDate!),
+          color: metadataColor,
+        ),
+      );
+    }
+    if (widget.task.tags.isNotEmpty) {
+      chips.add(
+        _buildInfoChip(
+          icon: CupertinoIcons.tag_fill,
+          text: '#${widget.task.tags.length}',
+          color: widget.task.isCompleted ? metadataColor : taskColor,
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: List.generate(chips.length, (index) {
+          return Padding(
+            padding: EdgeInsets.only(right: index == chips.length - 1 ? 0 : 12),
+            child: chips[index],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (widget.task.dueDate != null) ...[
-          Icon(CupertinoIcons.clock, size: 10, color: metadataColor),
-          const SizedBox(width: 4),
-          Text(
-            DateFormat('HH:mm').format(widget.task.dueDate!),
-            style: TextStyle(
-              color: metadataColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+        Icon(icon, size: 10, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
           ),
-          if (widget.task.hasNotification) ...[
-            const SizedBox(width: 4),
-            Icon(
-              CupertinoIcons.bell_solid,
-              size: 8,
-              color:
-                  widget.task.isCompleted
-                      ? AppColors.textTertiary.withAlpha(100)
-                      : Theme.of(context).colorScheme.primary.withAlpha(150),
-            ),
-          ],
-          if (widget.task.tags.isNotEmpty) const SizedBox(width: 12),
-        ],
-
-        if (widget.task.tags.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color:
-                  widget.task.isCompleted
-                      ? AppColors.textTertiary.withAlpha(10)
-                      : taskColor.withAlpha(10),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              '#${widget.task.tags.length}',
-              style: TextStyle(
-                color:
-                    widget.task.isCompleted
-                        ? AppColors.textTertiary
-                        : taskColor,
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }
 
   Widget _buildCompletionCheckbox(Color taskColor) {
+    final isCompleted = widget.task.isCompleted;
+    final checkboxColor =
+        isCompleted
+            ? AppColors.textTertiary
+            : Theme.of(context).colorScheme.primary;
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         widget.onToggleComplete(widget.task);
       },
-      child: Container(
-        width: 32,
-        height: 32,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color:
-              widget.task.isCompleted
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          shape: BoxShape.circle,
+          color: isCompleted ? checkboxColor : Colors.transparent,
           border: Border.all(
-            color:
-                widget.task.isCompleted
-                    ? Theme.of(context).colorScheme.primary
-                    : AppColors.divider,
+            color: isCompleted ? checkboxColor : AppColors.divider,
             width: 2,
           ),
-          boxShadow:
-              widget.task.isCompleted
-                  ? [
-                    BoxShadow(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withAlpha(30),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                  : null,
         ),
         child:
-            widget.task.isCompleted
-                ? const Icon(Icons.done_rounded, size: 18, color: Colors.white)
+            isCompleted
+                ? const Icon(Icons.check_rounded, color: Colors.white, size: 24)
                 : null,
       ),
     );
