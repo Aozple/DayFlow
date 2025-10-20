@@ -24,10 +24,8 @@ class TimePickerModal extends StatefulWidget {
     String title = 'Select Time',
     bool allowClearTime = false,
   }) {
-    return showModalBottomSheet<TimeOfDay>(
+    return showCupertinoModalPopup<TimeOfDay>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder:
           (context) => TimePickerModal(
             selectedTime: selectedTime,
@@ -113,7 +111,10 @@ class _TimePickerModalState extends State<TimePickerModal> {
       child: Text(
         'Done',
         style: TextStyle(
-          color: _hasChanges ? Theme.of(context).colorScheme.primary : AppColors.textTertiary,
+          color:
+              _hasChanges
+                  ? Theme.of(context).colorScheme.primary
+                  : AppColors.textTertiary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -190,7 +191,10 @@ class _TimePickerModalState extends State<TimePickerModal> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.surface,
+                color:
+                    isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.surface,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color:

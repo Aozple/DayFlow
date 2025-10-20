@@ -40,10 +40,8 @@ class ExportSelectionDialog extends StatefulWidget {
     ExportResult? lastExportResult,
     VoidCallback? onQuickReExport,
   }) {
-    return showModalBottomSheet(
+    return showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder:
           (context) => ExportSelectionDialog(
             onExport: onExport,

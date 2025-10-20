@@ -31,10 +31,8 @@ class ImportSelectionDialog extends StatefulWidget {
     required BuildContext context,
     required Function(ImportConfig) onImport,
   }) {
-    return showModalBottomSheet(
+    return showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (context) => ImportSelectionDialog(onImport: onImport),
     );
   }

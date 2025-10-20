@@ -98,10 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    final result = await showModalBottomSheet<UniversalFilterOptions>(
+    final result = await showCupertinoModalPopup<UniversalFilterOptions>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder:
           (context) => UniversalFilterModal(
             initialFilters: _currentFilters,

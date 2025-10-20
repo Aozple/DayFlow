@@ -108,7 +108,11 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
             color: Theme.of(context).colorScheme.primary.withAlpha(20),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(CupertinoIcons.today, size: 16, color: Theme.of(context).colorScheme.primary),
+          child: Icon(
+            CupertinoIcons.today,
+            size: 16,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
         const SizedBox(width: 10),
         const Text(
@@ -459,15 +463,13 @@ class _StatisticsOverviewCardState extends State<StatisticsOverviewCard>
   }
 
   void _showMetricDetails(Map<String, dynamic> metric) {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder:
           (context) => DraggableModal(
             title: metric['label'],
-            initialHeight: 270,
-            minHeight: 260,
+            initialHeight: 300,
+            minHeight: 280,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(

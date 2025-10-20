@@ -35,8 +35,6 @@ class _DraggableModalState extends State<DraggableModal>
 
   double _currentHeight = 0;
   double _dragStartHeight = 0;
-  bool _isExpanded = false;
-  bool _isFullScreen = false;
 
   @override
   void initState() {
@@ -76,59 +74,42 @@ class _DraggableModalState extends State<DraggableModal>
         widget.minHeight,
         maxHeight,
       );
-
-      _isFullScreen = _currentHeight >= screenHeight - 50;
     });
   }
 
   void _handleDragEnd(DragEndDetails details) {
     final screenHeight = MediaQuery.of(context).size.height;
     final velocity = details.velocity.pixelsPerSecond.dy;
+    final startHeight = _currentHeight;
 
     double targetHeight;
 
     if (velocity < -500) {
-      if (widget.allowFullScreen) {
-        targetHeight = screenHeight;
-        _isFullScreen = true;
-      } else {
-        targetHeight = screenHeight * 0.9;
-      }
-      _isExpanded = true;
+      targetHeight = widget.allowFullScreen ? screenHeight : screenHeight * 0.9;
     } else if (velocity > 500) {
-      if (_isFullScreen) {
+      if (startHeight >= screenHeight - 50) {
         targetHeight = screenHeight * 0.75;
-        _isFullScreen = false;
-        _isExpanded = true;
       } else if (_currentHeight < widget.initialHeight * 0.7) {
         Navigator.of(context).pop();
         return;
       } else {
         targetHeight = widget.initialHeight;
-        _isExpanded = false;
-        _isFullScreen = false;
       }
     } else {
-      if (_currentHeight > screenHeight * 0.85) {
+      if (startHeight > screenHeight * 0.85) {
         targetHeight = screenHeight;
-        _isFullScreen = true;
-        _isExpanded = true;
-      } else if (_currentHeight > screenHeight * 0.6) {
+      } else if (startHeight > screenHeight * 0.6) {
         targetHeight = screenHeight * 0.75;
-        _isExpanded = true;
-        _isFullScreen = false;
-      } else if (_currentHeight < widget.initialHeight * 0.5) {
+      } else if (startHeight < widget.initialHeight * 0.5) {
         Navigator.of(context).pop();
         return;
       } else {
         targetHeight = widget.initialHeight;
-        _isExpanded = false;
-        _isFullScreen = false;
       }
     }
 
     _heightAnimation = Tween<double>(
-      begin: _currentHeight,
+      begin: startHeight,
       end: targetHeight,
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
@@ -143,8 +124,8 @@ class _DraggableModalState extends State<DraggableModal>
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return AnimatedBuilder(
       animation: _heightAnimation,
@@ -154,162 +135,117 @@ class _DraggableModalState extends State<DraggableModal>
                 ? _heightAnimation.value
                 : _currentHeight;
 
-        final isCurrentlyFullScreen = height >= screenHeight - 10;
+        final isCurrentlyFullScreen = height >= screenHeight - 16;
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: height,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(isCurrentlyFullScreen ? 0 : 20),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(50),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
+        return Material(
+          type: MaterialType.transparency,
+          child: Container(
+            height: height,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(isCurrentlyFullScreen ? 0 : 20),
               ),
-            ],
-          ),
-          child: Material(
-            type: MaterialType.transparency,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.196),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
             child: Column(
               children: [
-                if (isCurrentlyFullScreen)
-                  Container(height: topPadding, color: AppColors.surface),
-
-                GestureDetector(
-                  onVerticalDragStart: _handleDragStart,
-                  onVerticalDragUpdate: _handleDragUpdate,
-                  onVerticalDragEnd: _handleDragEnd,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(isCurrentlyFullScreen ? 0 : 20),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        if (!isCurrentlyFullScreen)
-                          Container(
-                            margin: const EdgeInsets.only(top: 12),
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: AppColors.divider,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: isCurrentlyFullScreen ? 16 : 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isCurrentlyFullScreen
-                                    ? AppColors.surfaceLight
-                                    : AppColors.surface,
-                            border: const Border(
-                              bottom: BorderSide(
-                                color: AppColors.divider,
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              widget.leftAction ??
-                                  CupertinoButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed:
-                                        widget.onClose ??
-                                        () => Navigator.pop(context),
-                                    child: Text(
-                                      isCurrentlyFullScreen
-                                          ? 'Close'
-                                          : 'Cancel',
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-
-                              Column(
-                                children: [
-                                  if (widget.title != null)
-                                    Text(
-                                      widget.title!,
-                                      style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-
-                                  if (!isCurrentlyFullScreen &&
-                                      !_isExpanded) ...[
-                                    const SizedBox(height: 2),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary.withAlpha(20),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            CupertinoIcons.arrow_up,
-                                            size: 10,
-                                            color: Theme.of(context).colorScheme.primary,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'Swipe up',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Theme.of(context).colorScheme.primary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-
-                              widget.rightAction ?? const SizedBox(width: 60),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
+                _buildHeader(isCurrentlyFullScreen, topPadding),
                 Expanded(
-                  child:
-                      isCurrentlyFullScreen
-                          ? widget.child
-                          : Padding(
-                            padding: EdgeInsets.only(
-                              bottom: MediaQuery.of(context).padding.bottom,
-                            ),
-                            child: widget.child,
-                          ),
+                  child: SafeArea(
+                    top: false,
+                    bottom: true,
+                    left: false,
+                    right: false,
+                    child: widget.child,
+                  ),
                 ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHeader(bool isCurrentlyFullScreen, double topPadding) {
+    return GestureDetector(
+      onVerticalDragStart: _handleDragStart,
+      onVerticalDragUpdate: _handleDragUpdate,
+      onVerticalDragEnd: _handleDragEnd,
+      behavior: HitTestBehavior.translucent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(isCurrentlyFullScreen ? 0 : 20),
+        ),
+        child: Column(
+          children: [
+            if (!isCurrentlyFullScreen)
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.only(
+                top: isCurrentlyFullScreen ? topPadding : 0.0,
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      isCurrentlyFullScreen
+                          ? AppColors.surfaceLight
+                          : AppColors.surface,
+                  border: const Border(
+                    bottom: BorderSide(color: AppColors.divider, width: 0.5),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    widget.leftAction ??
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed:
+                              widget.onClose ?? () => Navigator.pop(context),
+                          child: Text(
+                            isCurrentlyFullScreen ? 'Close' : 'Cancel',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                    if (widget.title != null)
+                      Text(
+                        widget.title!,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    widget.rightAction ?? const SizedBox(width: 60),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

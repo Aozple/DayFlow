@@ -40,10 +40,8 @@ class ColorPickerModal extends StatefulWidget {
     bool showPreview = true,
     List<Color>? customColors,
   }) {
-    return showModalBottomSheet<String>(
+    return showCupertinoModalPopup<String>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder:
           (context) => ColorPickerModal(
             selectedColor: selectedColor,

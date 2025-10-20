@@ -27,10 +27,8 @@ class DatePickerModal extends StatefulWidget {
     DateTime? minDate,
     DateTime? maxDate,
   }) {
-    return showModalBottomSheet<DateTime>(
+    return showCupertinoModalPopup<DateTime>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder:
           (context) => DatePickerModal(
             selectedDate: selectedDate,
