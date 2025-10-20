@@ -42,7 +42,7 @@ class _HomeTaskBlockState extends State<HomeTaskBlock> {
       direction: DismissDirection.startToEnd,
       background: Container(
         decoration: BoxDecoration(
-          color: taskColor.withAlpha(50),
+          color: taskColor.withAlpha(25),
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20),

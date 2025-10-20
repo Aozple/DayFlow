@@ -25,7 +25,7 @@ class HomeNoteBlock extends StatelessWidget {
       direction: DismissDirection.startToEnd,
       background: Container(
         decoration: BoxDecoration(
-          color: noteColor.withAlpha(50),
+          color: noteColor.withAlpha(25),
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -20,93 +20,74 @@ class HomeDateItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = _isSameDay(date, selectedDate);
     final isToday = _isSameDay(date, DateTime.now());
-    final screenWidth = MediaQuery.of(context).size.width;
-    final itemWidth = (screenWidth - 32) / 7;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
-        width: itemWidth,
         height: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-        child: Container(
-          decoration: BoxDecoration(
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? colorScheme.primary
+                  : isToday
+                  ? colorScheme.primary.withAlpha(25)
+                  : AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
             color:
                 isSelected
-                    ? Theme.of(context).colorScheme.primary
+                    ? Colors.transparent
                     : isToday
-                    ? Theme.of(context).colorScheme.primary.withAlpha(25)
-                    : AppColors.surface,
-            borderRadius: BorderRadius.circular(8),
-            border:
-                isToday && !isSelected
-                    ? Border.all(
-                      color: Theme.of(context).colorScheme.primary.withAlpha(60),
-                      width: 0.5,
-                    )
-                    : Border.all(
-                      color: AppColors.divider.withAlpha(100),
-                      width: 0.5,
+                    ? colorScheme.primary.withAlpha(60)
+                    : AppColors.divider.withAlpha(100),
+            width: 0.5,
+          ),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withAlpha(30),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
                     ),
-            boxShadow:
-                isSelected
-                    ? [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withAlpha(30),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                    : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _getDayName(date),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                  color:
-                      isSelected
-                          ? Colors.white
-                          : isToday
-                          ? Theme.of(context).colorScheme.primary
-                          : AppColors.textSecondary,
-                ),
+                  ]
+                  : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _getDayName(date),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+                color:
+                    isSelected
+                        ? Colors.white
+                        : isToday
+                        ? colorScheme.primary
+                        : AppColors.textSecondary,
               ),
-              const SizedBox(height: 2),
-
-              Text(
-                date.day.toString(),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color:
-                      isSelected
-                          ? Colors.white
-                          : isToday
-                          ? Theme.of(context).colorScheme.primary
-                          : AppColors.textPrimary,
-                ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              date.day.toString(),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color:
+                    isSelected
+                        ? Colors.white
+                        : isToday
+                        ? colorScheme.primary
+                        : AppColors.textPrimary,
               ),
-
-              if (isToday && !isSelected) ...[
-                const SizedBox(height: 2),
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ] else
-                const SizedBox(height: 6),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -130,11 +111,10 @@ class HomeDateItem extends StatelessWidget {
         case 5:
           return 'FRI';
         default:
-          return DateFormat('E').format(date).substring(0, 3).toUpperCase();
+          return '';
       }
-    } else {
-      return DateFormat('E').format(date).substring(0, 3).toUpperCase();
     }
+    return DateFormat('E').format(date).substring(0, 3).toUpperCase();
   }
 
   bool _isSameDay(DateTime a, DateTime b) {

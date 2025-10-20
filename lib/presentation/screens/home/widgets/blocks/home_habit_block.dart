@@ -58,7 +58,7 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
       direction: DismissDirection.startToEnd,
       background: Container(
         decoration: BoxDecoration(
-          color: habitColor.withAlpha(50),
+          color: habitColor.withAlpha(25),
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -197,6 +197,10 @@ class _HomeHabitBlockState extends State<HomeHabitBlock> {
               color: textColor,
               fontSize: 14,
               fontWeight: isCompleted ? FontWeight.w500 : FontWeight.w600,
+              decoration:
+                  isCompleted
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
               height: 1.2,
             ),
             maxLines: 1,
